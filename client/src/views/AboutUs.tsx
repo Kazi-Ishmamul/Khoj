@@ -37,9 +37,9 @@ const developers = [
         socials: {
             gmail: 'mailto:shoaibhossainmugdho@gmail.com',
             facebook: 'https://www.facebook.com/share/1ce74DWfSS/?mibextid=wwXIfr',
-            x: 'https://x.com/AdlaceFrost',
+            x: 'https://x.com/KaziIshmamul',
             github: 'https://github.com/BughunterX9',
-            linkedin: 'https://www.linkedin.com/in/faiyaz-fardin-4a32381bb/'
+            linkedin: 'https://www.linkedin.com/in/kazi-ishmamul-haque-a52067372/'
         }
     }
 ];
