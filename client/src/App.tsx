@@ -7,7 +7,7 @@ import MainLayout from './layouts/MainLayout';
 import UserLayout from './layouts/UserLayout';
 import AdminLayout from './layouts/AdminLayout';
 
-import Home from './views/Home';
+import HomePage from './views/HomePage';
 import Login from './views/Login';
 import Registration from './views/Registration';
 import AboutUs from './views/AboutUs';
@@ -36,7 +36,7 @@ function App() {
       <Routes>
         {/* Main Public Routes Layout */}
         <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Registration />} />
           <Route path="/about" element={<AboutUs />} />
