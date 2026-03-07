@@ -93,7 +93,7 @@ const Login = () => {
 
             } else {
 
-                navigate('/user-dashboard');
+                navigate('/user-dashboard/items');
 
             }
 
