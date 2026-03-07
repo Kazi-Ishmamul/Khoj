@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FaKey, FaWallet, FaMobileAlt, FaSuitcase, FaUsers, FaCheckCircle, FaClipboardList, FaArrowRight, FaStar, FaMapMarkerAlt, FaCalendarAlt, FaBolt, FaGem } from "react-icons/fa";
+import { FaKey, FaWallet, FaMobileAlt, FaSuitcase, FaUsers, FaCheckCircle, FaClipboardList, FaArrowRight, FaMapMarkerAlt, FaCalendarAlt, FaBolt, FaGem } from "react-icons/fa";
 
 const exampleItems = [
   {
@@ -72,30 +72,6 @@ const stats = [
   { label: "Items Recovered", value: 1240, icon: "🎯" },
   { label: "Active Users", value: 3200, icon: "👥" },
   { label: "Items Reported", value: 5400, icon: "📦" },
-];
-
-const testimonials = [
-  {
-    name: "Ayesha Khan",
-    role: "Delhi",
-    story: "Lost my wallet at the metro and got it back the same day thanks to Khoj!",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    rating: 5,
-  },
-  {
-    name: "Rahul Sharma",
-    role: "Mumbai",
-    story: "Found a phone and used Khoj to connect with the owner. So rewarding!",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-    rating: 5,
-  },
-  {
-    name: "Priya Patel",
-    role: "Bangalore",
-    story: "The community here is so supportive. Got my laptop bag back within 48 hours!",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-    rating: 5,
-  },
 ];
 
 const fadeIn = {
@@ -514,52 +490,6 @@ export default function HomePage() {
               </motion.div>
             ))}
           </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section className="py-20 px-4">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            variants={fadeIn}
-            className="max-w-6xl mx-auto"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-center bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Success Stories
-            </h2>
-            <p className="text-center text-gray-400 mb-16">Real stories from our community</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {testimonials.map((t, idx) => (
-                <motion.div
-                  key={t.name}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: idx * 0.1 }}
-                  className="group rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur border border-gray-700/50 p-8 hover:border-gray-600 transition"
-                >
-                  <div className="flex items-center gap-4 mb-4">
-                    <img
-                      src={t.avatar}
-                      alt={t.name}
-                      className="w-12 h-12 rounded-full border-2 border-purple-500/30"
-                    />
-                    <div>
-                      <h4 className="text-white font-bold">{t.name}</h4>
-                      <p className="text-gray-400 text-sm">{t.role}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1 mb-3">
-                    {[...Array(t.rating)].map((_, i) => (
-                      <FaStar key={i} className="text-yellow-400" size={16} />
-                    ))}
-                  </div>
-                  <p className="text-gray-300 italic">"{t.story}"</p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
         </section>
 
         {/* CTA Section */}
