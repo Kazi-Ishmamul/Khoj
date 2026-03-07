@@ -128,8 +128,15 @@ const AnimatedCounter = ({ value }: { value: number }) => {
 export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
-      {/* Animated Background Blobs */}
+      {/* Animated Background Blobs and Blurry Text */}
       <div className="fixed inset-0 opacity-20 z-0">
+        {/* Blurry Khoj Text Background */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-9xl md:text-[12rem] font-black blur-3xl opacity-30 text-purple-600 select-none">
+            Khoj
+          </div>
+        </div>
+
         <motion.div
           animate={{ x: [0, 100, 0], y: [0, 50, 0] }}
           transition={{ duration: 20, repeat: Infinity }}
@@ -154,6 +161,19 @@ export default function HomePage() {
           >
             <span className="text-2xl">✨</span>
             <span className="text-sm font-medium">Find Lost, Return Found</span>
+          </motion.div>
+
+          {/* Khoj Heading */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={fadeIn}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="mb-6"
+          >
+            <h2 className="text-8xl md:text-9xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-2xl">
+              Khoj
+            </h2>
           </motion.div>
 
           <motion.h1
