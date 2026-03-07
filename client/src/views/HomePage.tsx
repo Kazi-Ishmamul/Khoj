@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FaKey, FaWallet, FaMobileAlt, FaSuitcase, FaUsers, FaCheckCircle, FaClipboardList, FaArrowRight, FaStar, FaMapMarkerAlt, FaCalendarAlt } from "react-icons/fa";
+import { FaKey, FaWallet, FaMobileAlt, FaSuitcase, FaUsers, FaCheckCircle, FaClipboardList, FaArrowRight, FaStar, FaMapMarkerAlt, FaCalendarAlt, FaBolt, FaGem } from "react-icons/fa";
 
 const exampleItems = [
   {
@@ -127,175 +127,306 @@ const AnimatedCounter = ({ value }: { value: number }) => {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
-      {/* Animated Background Blobs and Blurry Text */}
-      <div className="fixed inset-0 opacity-20 z-0">
-        {/* Blurry Khoj Text Background */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-9xl md:text-[12rem] font-black blur-3xl opacity-30 text-purple-600 select-none">
-            Khoj
+    <div className="min-h-screen flex flex-col bg-black text-white overflow-hidden relative">
+      {/* Enhanced Animated Background */}
+      <div className="fixed inset-0 overflow-hidden z-0">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950 to-black" />
+        
+        {/* Massive blurry KHOJ background text - even bigger and more unique */}
+        <motion.div
+          animate={{
+            y: [0, -30, 0],
+            opacity: [0.04, 0.08, 0.04],
+            scale: [1, 1.02, 1],
+          }}
+          transition={{ duration: 15, repeat: Infinity }}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
+          <div 
+            className="font-black tracking-wider text-blue-600/30 select-none"
+            style={{
+              fontSize: 'clamp(200px, 40vw, 800px)',
+              lineHeight: '1',
+              textShadow: `
+                0 0 40px rgba(59, 130, 246, 0.6),
+                0 0 80px rgba(139, 92, 246, 0.4),
+                0 0 120px rgba(59, 130, 246, 0.3),
+                0 0 160px rgba(244, 63, 94, 0.2)
+              `,
+              filter: 'blur(2px)',
+              transform: 'perspective(1000px) rotateX(0deg)',
+            }}
+          >
+            KHOJ
           </div>
-        </div>
+        </motion.div>
+
+        {/* Animated gradient orbs */}
+        <motion.div
+          animate={{
+            x: [0, 150, 0],
+            y: [0, 100, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{ duration: 20, repeat: Infinity }}
+          className="absolute -top-32 -left-32 w-96 h-96 bg-blue-600 rounded-full blur-3xl opacity-20"
+        />
+        
+        <motion.div
+          animate={{
+            x: [0, -150, 0],
+            y: [0, -100, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{ duration: 25, repeat: Infinity, delay: 1 }}
+          className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600 rounded-full blur-3xl opacity-25"
+        />
 
         <motion.div
-          animate={{ x: [0, 100, 0], y: [0, 50, 0] }}
-          transition={{ duration: 20, repeat: Infinity }}
-          className="absolute w-96 h-96 bg-blue-500 rounded-full blur-3xl top-20 left-20"
+          animate={{
+            x: [0, 100, -100, 0],
+            y: [0, -100, 100, 0],
+          }}
+          transition={{ duration: 30, repeat: Infinity, delay: 2 }}
+          className="absolute top-1/2 left-1/4 w-80 h-80 bg-pink-600 rounded-full blur-3xl opacity-10"
         />
-        <motion.div
-          animate={{ x: [0, -100, 0], y: [0, -50, 0] }}
-          transition={{ duration: 25, repeat: Infinity }}
-          className="absolute w-96 h-96 bg-purple-500 rounded-full blur-3xl bottom-20 right-20"
-        />
+
+        {/* Floating animated shapes */}
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 blur-md"
+            style={{
+              width: Math.random() * 300 + 50,
+              height: Math.random() * 300 + 50,
+              left: Math.random() * 100 + '%',
+              top: Math.random() * 100 + '%',
+            }}
+            animate={{
+              y: [0, Math.random() * 200 - 100, 0],
+              x: [0, Math.random() * 200 - 100, 0],
+              opacity: [0.05, 0.15, 0.05],
+            }}
+            transition={{
+              duration: Math.random() * 20 + 15,
+              repeat: Infinity,
+              delay: i * 0.5,
+            }}
+          />
+        ))}
       </div>
 
       <div className="relative z-10">
         {/* Hero Section */}
         <section className="min-h-screen flex flex-col items-center justify-center px-4 py-20 text-center">
+          {/* Top Badge */}
           <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full border border-blue-400/30 backdrop-blur"
+            className="mb-10 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full border border-blue-400/50 backdrop-blur-md hover:border-blue-300/80 transition-all"
           >
-            <span className="text-2xl">✨</span>
-            <span className="text-sm font-medium">Find Lost, Return Found</span>
+            <motion.span
+              animate={{ rotate: 360 }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              className="text-2xl"
+            >
+              ⚡
+            </motion.span>
+            <span className="text-sm font-semibold bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">Find Lost. Return Found. Build Community.</span>
           </motion.div>
 
-          {/* Khoj Heading */}
+          {/* MASSIVE KHOJ Title - Ultra Bold and Unique */}
           <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-            transition={{ duration: 0.8, delay: 0.1 }}
-            className="mb-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="mb-6 relative"
           >
-            <h2 className="text-8xl md:text-9xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-2xl">
-              Khoj
-            </h2>
+            <motion.div
+              animate={{
+                textShadow: [
+                  '0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3)',
+                  '0 0 40px rgba(59, 130, 246, 0.8), 0 0 80px rgba(139, 92, 246, 0.5)',
+                  '0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3)',
+                ],
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+              className="text-[120px] sm:text-[150px] md:text-[200px] lg:text-[280px] font-black tracking-wider leading-none"
+              style={{
+                background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 25%, #f472b6 50%, #06b6d4 75%, #60a5fa 100%)',
+                backgroundSize: '300% 300%',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              K
+              <span className="inline-block">H</span>
+              <span className="inline-block">O</span>
+              <span className="inline-block">J</span>
+            </motion.div>
+            
+            {/* Glow effect behind title */}
+            <div className="absolute inset-0 blur-3xl opacity-30 pointer-events-none" style={{
+              background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%)',
+            }} />
           </motion.div>
 
+          {/* Subheading with unique styling */}
           <motion.h1
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-8 max-w-4xl leading-tight"
           >
-            Find What Matters
+            <span className="text-white">Find What </span>
+            <span className="text-transparent bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text">
+              Matters Most
+            </span>
           </motion.h1>
 
+          {/* Description with enhanced styling */}
           <motion.p
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl md:text-2xl mb-12 text-gray-300 max-w-2xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="text-base sm:text-lg md:text-xl text-gray-300 mb-12 max-w-2xl leading-relaxed"
           >
-            Reconnect lost items with their owners. Join thousands helping each other recover what matters most.
+            Reconnect lost items with their rightful owners through our revolutionary community platform. 
+            <span className="block text-gray-400 mt-2">Every item has a story. Every item deserves to come home.</span>
           </motion.p>
 
+          {/* Enhanced CTA Buttons */}
           <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex flex-col sm:flex-row gap-6 mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="flex flex-col sm:flex-row gap-6 mb-20"
           >
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(59, 130, 246, 0.5)" }}
-              whileTap={{ scale: 0.95 }}
-              className="group px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full font-semibold text-white shadow-lg hover:shadow-blue-500/50 transition flex items-center gap-2 justify-center"
+              whileHover={{ 
+                scale: 1.08,
+                boxShadow: '0 0 50px rgba(59, 130, 246, 0.8), 0 0 100px rgba(139, 92, 246, 0.4)',
+              }}
+              whileTap={{ scale: 0.92 }}
+              className="group relative px-10 py-5 font-bold text-lg text-white overflow-hidden rounded-2xl transition-all duration-300"
             >
-              Report Lost Item
-              <FaArrowRight className="group-hover:translate-x-1 transition" />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 group-hover:scale-110 transition-transform duration-300" />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-white" />
+              <span className="relative flex items-center gap-3 justify-center">
+                <FaBolt size={20} className="group-hover:animate-spin" />
+                Report Lost Item
+                <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
+              </span>
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(34, 197, 94, 0.5)" }}
-              whileTap={{ scale: 0.95 }}
-              className="group px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 rounded-full font-semibold text-white shadow-lg hover:shadow-green-500/50 transition flex items-center gap-2 justify-center"
+              whileHover={{ 
+                scale: 1.08,
+                boxShadow: '0 0 50px rgba(34, 197, 94, 0.8), 0 0 100px rgba(16, 185, 129, 0.4)',
+              }}
+              whileTap={{ scale: 0.92 }}
+              className="group relative px-10 py-5 font-bold text-lg text-white overflow-hidden rounded-2xl transition-all duration-300"
             >
-              Report Found Item
-              <FaArrowRight className="group-hover:translate-x-1 transition" />
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-green-500 to-teal-500 group-hover:scale-110 transition-transform duration-300" />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-white" />
+              <span className="relative flex items-center gap-3 justify-center">
+                <FaGem size={20} className="group-hover:animate-bounce" />
+                Report Found Item
+                <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
+              </span>
             </motion.button>
           </motion.div>
 
-          {/* Animated Hero Illustration */}
-          <div className="relative w-full h-64 md:h-80 flex justify-center items-center">
-            <svg className="absolute w-full h-full opacity-30" viewBox="0 0 400 300">
-              <circle cx="200" cy="150" r="100" fill="none" stroke="url(#grad)" strokeWidth="2" opacity="0.5" />
-              <defs>
-                <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#3b82f6" />
-                  <stop offset="100%" stopColor="#ec4899" />
-                </linearGradient>
-              </defs>
-            </svg>
-
+          {/* Hero Items Grid - Redesigned */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-3xl"
+          >
             {heroItems.map((item, idx) => (
               <motion.div
                 key={item.label}
-                className="absolute"
-                style={{ left: `${15 + idx * 22}%`, top: `${35 - idx * 8}%` }}
-                animate={{
-                  y: [0, -30, 0],
-                  rotate: [0, 5, -5, 0],
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 3 + idx * 0.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: item.delay,
-                }}
+                whileHover={{ y: -10, scale: 1.05 }}
+                className="group relative p-6 rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-800/60 border border-gray-700/50 backdrop-blur-md hover:border-gray-500 transition-all"
               >
-                <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur border border-white/10 rounded-2xl shadow-xl p-6 hover:border-white/30 transition">
-                  <div className="text-blue-300">{item.icon}</div>
-                  <div className="text-xs mt-2 text-gray-300">{item.label}</div>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-purple-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative flex flex-col items-center gap-3">
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 3, delay: idx * 0.2, repeat: Infinity }}
+                    className="text-4xl text-blue-400 group-hover:text-cyan-400 transition-colors"
+                  >
+                    {item.icon}
+                  </motion.div>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">
+                    {item.label}
+                  </span>
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
 
-        {/* Features Section */}
-        <section className="py-20 px-4">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            variants={fadeIn}
-            transition={{ duration: 0.8 }}
-            className="max-w-6xl mx-auto"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              How Khoj Works
-            </h2>
-            <p className="text-center text-gray-400 mb-16">Simple, fast, and community-driven</p>
+        {/* Features Section - Redesigned */}
+        <section className="py-32 px-4 relative">
+          <div className="max-w-6xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-center mb-20"
+            >
+              <h2 className="text-5xl md:text-6xl font-black mb-6">
+                <span className="text-white">How </span>
+                <span className="text-transparent bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text">
+                  Khoj Works
+                </span>
+              </h2>
+              <p className="text-gray-400 text-lg">Three simple steps to reconnect what matters</p>
+            </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {features.map((feature) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+              {features.map((feature, idx) => (
                 <motion.div
                   key={feature.title}
-                  whileHover={{ y: -15, scale: 1.05 }}
                   initial={{ opacity: 0, y: 50 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: feature.delay }}
-                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur border border-gray-700/50 p-8 hover:border-gray-600 transition"
+                  whileHover={{ y: -15, scale: 1.05 }}
+                  transition={{ duration: 0.6, delay: idx * 0.15 }}
+                  className="group relative overflow-hidden rounded-3xl backdrop-blur-xl border border-gray-700/50 p-10 hover:border-gray-500/80 transition-all bg-gray-900/40"
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition duration-500`} />
-                  <div className="relative">
-                    <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} mb-6`}>
-                      <div className="text-white">{feature.icon}</div>
-                    </div>
-                    <h3 className="text-2xl font-bold mb-3 text-white">{feature.title}</h3>
-                    <p className="text-gray-400">{feature.desc}</p>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-15 transition duration-500`} />
+                  
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className={`absolute -right-16 -top-16 w-40 h-40 bg-gradient-to-br ${feature.color} rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition`}
+                  />
+
+                  <div className="relative z-10">
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, delay: idx * 0.3, repeat: Infinity }}
+                      className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} mb-6 text-white`}
+                    >
+                      {feature.icon}
+                    </motion.div>
+                    
+                    <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-400 group-hover:bg-clip-text transition">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-400 leading-relaxed text-lg">{feature.desc}</p>
                   </div>
+
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
                 </motion.div>
               ))}
             </div>
-          </motion.div>
+          </div>
         </section>
 
         {/* Community Section */}
