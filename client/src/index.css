@@ -42,3 +42,9 @@ footer {
     padding-right: 300px;
   }
 }
+
+/* Hide default browser eye icon for password fields (especially Edge/IE) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
