@@ -1,22 +1,16 @@
-CREATE DATABASE IF NOT EXISTS `attendance_tracker` DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;
+CREATE DATABASE IF NOT EXISTS `khoj` DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;
 
-DROP TABLE IF EXISTS `attendances`;
-DROP TABLE IF EXISTS `sessions`;
+USE `khoj`;
 
-CREATE TABLE sessions (
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    duration INT NOT NULL,
-    active BOOLEAN DEFAULT TRUE
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    address TEXT NOT NULL,
+    pic_path VARCHAR(255) DEFAULT 'assets/profile_pictures/default_profile_pic.png',
+    password VARCHAR(255) NOT NULL,
+    role ENUM('user', 'admin') DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE `attendances` (
-    `id` INT  AUTO_INCREMENT PRIMARY KEY,
-    `session_id` INT  NOT NULL,
-    `roll` VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`session_id`) REFERENCES `sessions`(`id`)
-);

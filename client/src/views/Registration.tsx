@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
 const EyeIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
@@ -35,6 +36,8 @@ const Registration = () => {
     });
 
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -98,14 +101,11 @@ const Registration = () => {
             isValid = false;
         }
 
-        // Profile Pic validation
-        if (!formData.profile_pic) {
-            newErrors.profile_pic = 'Profile picture required.';
-            isValid = false;
-        } else {
-            const allowedTypes = ['image/jpeg', 'image/jpg'];
+        // Profile Pic validation (Optional)
+        if (formData.profile_pic) {
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
             if (!allowedTypes.includes(formData.profile_pic.type)) {
-                newErrors.profile_pic = 'Only JPG/JPEG formats are allowed.';
+                newErrors.profile_pic = 'Only JPG/JPEG/PNG formats are allowed.';
                 isValid = false;
             }
         }
@@ -139,16 +139,40 @@ const Registration = () => {
         return isValid;
     };
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
-
+        setErrorMessage('');
+        
         if (validate()) {
-            setSuccessMessage('Registration successful! Redirecting to login...');
+            setIsLoading(true);
+            try {
+                const formDataToSend = new FormData();
+                formDataToSend.append('name', formData.name);
+                formDataToSend.append('email', formData.email);
+                formDataToSend.append('phone', formData.phone);
+                formDataToSend.append('address', formData.address);
+                formDataToSend.append('password', formData.password);
+                if (formData.profile_pic) {
+                    formDataToSend.append('profile_pic', formData.profile_pic);
+                }
 
-            // Redirect to login after 2 seconds
-            setTimeout(() => {
-                navigate('/login');
-            }, 2000);
+                const response = await axios.post('http://localhost:8000/api/register', formDataToSend, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+
+                if (response.status === 201) {
+                    setSuccessMessage('Registration successful! Redirecting to login...');
+                    setTimeout(() => {
+                        navigate('/login');
+                    }, 2000);
+                }
+            } catch (error: any) {
+                setErrorMessage(error.response?.data?.message || 'Registration failed.');
+            } finally {
+                setIsLoading(false);
+            }
         }
     };
 
@@ -169,12 +193,17 @@ const Registration = () => {
                                 {successMessage}
                             </div>
                         )}
+                        {errorMessage && (
+                            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg font-medium text-center shadow-sm">
+                                {errorMessage}
+                            </div>
+                        )}
 
                         <form onSubmit={handleRegister} className="space-y-5">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Name */}
                                 <div>
-                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Full Name</label>
+                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Full Name <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         name="name"
@@ -187,7 +216,7 @@ const Registration = () => {
 
                                 {/* Phone */}
                                 <div>
-                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Phone Number</label>
+                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Phone Number <span className="text-red-500">*</span></label>
                                     <input
                                         type="tel"
                                         name="phone"
@@ -201,7 +230,7 @@ const Registration = () => {
 
                             {/* Email */}
                             <div>
-                                <label className="block text-slate-600 font-semibold text-sm mb-2">Email Address</label>
+                                <label className="block text-slate-600 font-semibold text-sm mb-2">Email Address <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     name="email"
@@ -214,7 +243,7 @@ const Registration = () => {
 
                             {/* Address */}
                             <div>
-                                <label className="block text-slate-600 font-semibold text-sm mb-2">Address</label>
+                                <label className="block text-slate-600 font-semibold text-sm mb-2">Address <span className="text-red-500">*</span></label>
                                 <textarea
                                     name="address"
                                     rows={2}
@@ -227,10 +256,10 @@ const Registration = () => {
 
                             {/* Profile Pic */}
                             <div>
-                                <label className="block text-slate-600 font-semibold text-sm mb-2">Profile Picture</label>
+                                <label className="block text-slate-600 font-semibold text-sm mb-2">Profile Picture (Optional)</label>
                                 <input
                                     type="file"
-                                    accept=".jpg,.jpeg,image/jpeg"
+                                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                                     onChange={handleFileChange}
                                     className={`w-full px-3 py-2 rounded-lg border ${errors.profile_pic ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer`}
                                 />
@@ -240,7 +269,7 @@ const Registration = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Password */}
                                 <div>
-                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Password</label>
+                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Password <span className="text-red-500">*</span></label>
                                     <div className="relative">
                                         <input
                                             type={showPassword ? "text" : "password"}
@@ -262,7 +291,7 @@ const Registration = () => {
 
                                 {/* Confirm Password */}
                                 <div>
-                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Confirm Password</label>
+                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Confirm Password <span className="text-red-500">*</span></label>
                                     <div className="relative">
                                         <input
                                             type={showConfirmPassword ? "text" : "password"}
@@ -286,10 +315,10 @@ const Registration = () => {
                             {/* Submit Button */}
                             <button
                                 type="submit"
-                                disabled={!!successMessage}
+                                disabled={!!successMessage || isLoading}
                                 className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold rounded-lg shadow-lg shadow-blue-500/30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 mt-8 active:scale-[0.98]"
                             >
-                                REGISTER
+                                {isLoading ? 'REGISTERING...' : 'REGISTER'}
                             </button>
                         </form>
 
