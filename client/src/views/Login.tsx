@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
 const EyeIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
@@ -22,6 +23,9 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
 
     const navigate = useNavigate();
+
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
 
 
@@ -79,26 +83,35 @@ const Login = () => {
 
 
 
-    const handleLogin = (e: React.FormEvent) => {
-
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-
-
+        setErrorMessage('');
+        setSuccessMessage('');
 
         if (validate()) {
-
-            if (email.toLowerCase().includes('admin')) {
-
-                navigate('/admin-dashboard');
-
-            } else {
-
-                navigate('/user-dashboard/items');
-
+            try {
+                const response = await axios.post('http://localhost:8000/api/login', {
+                    email,
+                    password
+                });
+                
+                const data = response.data;
+                localStorage.setItem('token', data.access_token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                
+                setSuccessMessage('Login successful!');
+                
+                setTimeout(() => {
+                    if (data.user.role === 'admin') {
+                        navigate('/admin-dashboard');
+                    } else {
+                        navigate('/user-dashboard/items');
+                    }
+                }, 1000);
+            } catch (error: any) {
+                setErrorMessage(error.response?.data?.error || 'Login failed. Please check your credentials.');
             }
-
         }
-
     };
 
 
@@ -170,12 +183,19 @@ const Login = () => {
                         <h2 className="text-4xl font-bold mb-3 text-slate-800">Login</h2>
 
                         <p className="text-slate-500 text-sm mb-10 font-medium leading-relaxed">
-
                             Welcome back! Please enter your credentials to connect with the community.
-
                         </p>
 
-
+                        {successMessage && (
+                            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg font-medium text-center shadow-sm">
+                                {successMessage}
+                            </div>
+                        )}
+                        {errorMessage && (
+                            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg font-medium text-center shadow-sm">
+                                {errorMessage}
+                            </div>
+                        )}
 
                         <form onSubmit={handleLogin} className="space-y-6">
 
