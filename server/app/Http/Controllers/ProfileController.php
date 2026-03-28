@@ -60,12 +60,9 @@ class ProfileController extends Controller
             if ($request->has('address'))
                 $user->address = $request->address;
 
-            // Handle Profile Picture Upload
-            if ($request->hasFile('profile_pic')) {
-                $file = $request->file('profile_pic');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $file->move(public_path('assets/profile_pictures'), $filename);
-                $user->pic_path = 'assets/profile_pictures/' . $filename;
+            // Handle Profile Picture Update
+            if ($request->has('pic_url')) {
+                $user->pic_url = $request->pic_url;
             }
 
             $user->save();
