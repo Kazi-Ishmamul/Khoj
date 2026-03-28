@@ -51,6 +51,15 @@ class ApiAuthController extends Controller
             'role' => 'user',
         ]);
 
+        \App\Models\UserInfo::create([
+            'user_id' => $user->id,
+            'bio' => '',
+            'fb_url' => '',
+            'x_url' => '',
+            'insta_url' => '',
+            'linkedin_url' => '',
+        ]);
+
             $token = JWTAuth::fromUser($user);
 
             return response()->json([

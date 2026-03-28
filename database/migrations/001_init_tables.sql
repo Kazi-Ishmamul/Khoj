@@ -1,6 +1,10 @@
-CREATE DATABASE IF NOT EXISTS `khoj` DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;
+CREATE DATABASE IF NOT EXISTS `khoj` 
+    DEFAULT CHARACTER SET latin1 
+    COLLATE latin1_danish_ci;
 
 USE `khoj`;
+
+Drop  table IF Exists 'users'
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
