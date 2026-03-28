@@ -5,6 +5,7 @@ CREATE DATABASE IF NOT EXISTS `khoj`
 USE `khoj`;
 
 Drop  table IF Exists 'users'
+Drop  table IF Exists 'user_info'
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -12,9 +13,27 @@ CREATE TABLE users (
     phone VARCHAR(20) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     address TEXT NOT NULL,
-    pic_path VARCHAR(255) DEFAULT 'assets/profile_pictures/default_profile_pic.png',
-    password VARCHAR(255) NOT NULL,
+    pic_url VARCHAR(512),
     role ENUM('user', 'admin') DEFAULT 'user',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+CREATE TABLE user_info (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    bio TEXT,
+
+    fb_url VARCHAR(255),
+    x_url VARCHAR(255),
+    insta_url VARCHAR(255),
+    linkedin_url VARCHAR(255),
+
+    items_lost_count INT DEFAULT 0,
+    items_found_count INT DEFAULT 0,
+    report_strikes INT DEFAULT 0,
+
+    CONSTRAINT fk_user_stats FOREIGN KEY (user_id) 
+        REFERENCES users(id) 
+        ON DELETE CASCADE
+);
