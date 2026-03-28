@@ -146,19 +146,35 @@ const Registration = () => {
         if (validate()) {
             setIsLoading(true);
             try {
-                const formDataToSend = new FormData();
-                formDataToSend.append('name', formData.name);
-                formDataToSend.append('email', formData.email);
-                formDataToSend.append('phone', formData.phone);
-                formDataToSend.append('address', formData.address);
-                formDataToSend.append('password', formData.password);
+                let picUrl = '';
+
                 if (formData.profile_pic) {
-                    formDataToSend.append('profile_pic', formData.profile_pic);
+                    const uploadData = new FormData();
+                    uploadData.append('file', formData.profile_pic);
+                    uploadData.append('upload_preset', 'khoj-profile');
+
+                    try {
+                        const cloudinaryRes = await axios.post('https://api.cloudinary.com/v1_1/dait0sacc/image/upload', uploadData);
+                        picUrl = cloudinaryRes.data.secure_url;
+                    } catch (uploadError) {
+                        setErrorMessage('Failed to upload image to Cloudinary.');
+                        setIsLoading(false);
+                        return;
+                    }
                 }
 
-                const response = await axios.post('http://localhost:8000/api/register', formDataToSend, {
+                const postData = {
+                    name: formData.name,
+                    email: formData.email,
+                    phone: formData.phone,
+                    address: formData.address,
+                    password: formData.password,
+                    pic_url: picUrl
+                };
+
+                const response = await axios.post('http://localhost:8000/api/register', postData, {
                     headers: {
-                        'Content-Type': 'multipart/form-data'
+                        'Content-Type': 'application/json'
                     }
                 });
 

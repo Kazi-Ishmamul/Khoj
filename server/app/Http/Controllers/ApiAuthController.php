@@ -31,14 +31,11 @@ class ApiAuthController extends Controller
 
         try {
 
-        $pic_path = 'assets/profile_pictures/default_profile_pic.png';
-
-        if ($request->hasFile('profile_pic')) {
-            $file = $request->file('profile_pic');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            // Assuming storing in public/assets/profile_pictures
-            $file->move(public_path('assets/profile_pictures'), $filename);
-            $pic_path = 'assets/profile_pictures/' . $filename;
+        $pic_url = $request->pic_url;
+        if (empty($pic_url)) {
+            // Generate a UI Avatar fallback using the provided name
+            $encodedName = urlencode($request->name);
+            $pic_url = "https://ui-avatars.com/api/?name={$encodedName}&background=random";
         }
 
         $user = User::create([
@@ -46,7 +43,7 @@ class ApiAuthController extends Controller
             'phone' => $request->phone,
             'email' => $request->email,
             'address' => $request->address,
-            'pic_path' => $pic_path,
+            'pic_url' => $pic_url,
             'password' => Hash::make($request->password),
             'role' => 'user',
         ]);

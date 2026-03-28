@@ -50,11 +50,11 @@ const Profile = () => {
                 });
                 const u = data.user;
                 const i = u.info || {};
-                const isDefaultPic = !u.pic_path ||
-                    u.pic_path === 'assets/profile_pictures/default_profile_pic.png';
+                const isDefaultPic = !u.pic_url ||
+                    u.pic_url === 'assets/profile_pictures/default_profile_pic.png';
                 const pic = isDefaultPic
                     ? mkAvatar(u.name)
-                    : (u.pic_path.startsWith('http') ? u.pic_path : `http://localhost:8000/${u.pic_path}`);
+                    : (u.pic_url.startsWith('http') ? u.pic_url : `http://localhost:8000/${u.pic_url}`);
 
                 const loaded: ProfileData = {
                     name: u.name || '', email: u.email || '', phone: u.phone || '',
@@ -109,20 +109,41 @@ const Profile = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
+            let finalPicUrl = userData.profilePic;
+
+            if (picFile) {
+                const uploadData = new FormData();
+                uploadData.append('file', picFile);
+                uploadData.append('upload_preset', 'khoj-profile');
+
+                try {
+                    const cloudinaryRes = await axios.post('https://api.cloudinary.com/v1_1/dait0sacc/image/upload', uploadData);
+                    finalPicUrl = cloudinaryRes.data.secure_url;
+                } catch (err) {
+                    toast.error('Failed to upload image to Cloudinary.');
+                    setSaving(false);
+                    return;
+                }
+            }
+
             const token = localStorage.getItem('token');
             const form = new FormData();
             Object.entries({
                 name: editData.name, phone: editData.phone, address: editData.address,
                 bio: editData.bio, fb_url: editData.fb_url, x_url: editData.x_url,
                 insta_url: editData.insta_url, linkedin_url: editData.linkedin_url,
-            }).forEach(([k, v]) => form.append(k, v));
-            if (picFile) form.append('profile_pic', picFile);
+            }).forEach(([k, v]) => {
+                if (v !== undefined && v !== null) {
+                    form.append(k, v.toString());
+                }
+            });
+            form.append('pic_url', finalPicUrl);
 
             await axios.post('http://localhost:8000/api/profile', form, {
                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
             });
 
-            setUserData(prev => ({ ...prev, ...editData, profilePic: picPreview || prev.profilePic }));
+            setUserData(prev => ({ ...prev, ...editData, profilePic: finalPicUrl }));
             toast.success('Profile updated!');
             closeEdit();
         } catch {
