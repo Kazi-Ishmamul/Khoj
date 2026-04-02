@@ -1,43 +1,21 @@
 // Items.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
-interface Report {
+interface Item {
     id: number;
-    itemName: string;
+    user_id: number;
+    item_name: string;
     category: string;
     description: string;
-    dateTime: string;
+    date_time: string;
     location: string;
     status: 'lost' | 'found';
-    contact: string;
-    image?: string;
+    contact_info: string;
+    item_image_url?: string;
+    resolution_status: 'not_claimed' | 'claimed' | 'resolved';
+    valid: number;
 }
-
-const mockReports: Report[] = [
-    {
-        id: 1,
-        itemName: "Black iPhone 14",
-        category: "Electronics",
-        description: "Lost in cafeteria, has a blue case with stars",
-        dateTime: "2025-03-12 14:30",
-        location: "NSU Campus, Dhaka",
-        status: "lost",
-        contact: "01812-345678",
-        image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400",
-    },
-    {
-        id: 2,
-        itemName: "Red Wallet",
-        category: "Accessories",
-        description: "Found near library stairs",
-        dateTime: "2025-03-15 09:15",
-        location: "BRAC University",
-        status: "found",
-        contact: "found@bracu.ac.bd",
-        image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400",
-    },
-    // add more as needed
-];
 
 const ITEMS_PER_PAGE = 15;
 
@@ -46,6 +24,28 @@ export default function Items() {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [showReportModal, setShowReportModal] = useState(false);
+    const [fetchedItems, setFetchedItems] = useState<Item[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Fetch items from API on component mount
+    useEffect(() => {
+        const fetchItems = async () => {
+            try {
+                setLoading(true);
+                const response = await axios.get('http://localhost:8000/api/items');
+                setFetchedItems(response.data.items);
+                setError(null);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'An error occurred');
+                setFetchedItems([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchItems();
+    }, []);
 
     // Report form state
     const [formData, setFormData] = useState({
@@ -56,13 +56,22 @@ export default function Items() {
         location: '',
         status: 'lost' as 'lost' | 'found',
         contact: '',
-        image: null as File | null,
     });
+
+    const [itemImage, setItemImage] = useState<File | null>(null);
+    const [itemImagePreview, setItemImagePreview] = useState<string | null>(null);
 
     // Toggleable actions per item (local state only — use backend in production)
     const [itemActions, setItemActions] = useState<Record<number, { claimed?: boolean; reported?: boolean }>>({});
 
     const toggleClaim = (id: number) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login to claim items');
+            return;
+        }
+
+        // Update local state immediately for UI feedback
         setItemActions(prev => {
             const current = prev[id] || {};
             const willBeClaimed = !current.claimed;
@@ -70,9 +79,19 @@ export default function Items() {
                 ...prev,
                 [id]: {
                     claimed: willBeClaimed,
-                    reported: false, // mutually exclusive
+                    reported: false,
                 },
             };
+        });
+
+        // Send to backend
+        axios.put(`http://localhost:8000/api/items/${id}/claim`, {}, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        }).catch(err => {
+            console.error('Error toggling claim:', err);
+            alert('Failed to update claim status');
         });
     };
 
@@ -90,12 +109,13 @@ export default function Items() {
         });
     };
 
+
     // Filter + search logic
-    const filteredReports = mockReports.filter((report) => {
+    const filteredReports = fetchedItems.filter((report) => {
         const matchesFilter = filter === 'all' || report.status === filter;
         const matchesSearch =
             searchTerm === '' ||
-            report.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            report.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             report.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
             report.location.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesFilter && matchesSearch;
@@ -113,26 +133,78 @@ export default function Items() {
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) {
-            setFormData(prev => ({ ...prev, image: e.target.files![0] }));
-        }
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setItemImage(file);
+        setItemImagePreview(URL.createObjectURL(file));
     };
 
-    const handleSubmitReport = (e: React.FormEvent) => {
+    const handleSubmitReport = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("New report submitted:", formData);
-        alert("Report submitted! (mock — in real app send to backend)");
-        setFormData({
-            itemName: '',
-            category: '',
-            description: '',
-            dateTime: new Date().toISOString().slice(0, 16),
-            location: '',
-            status: 'lost',
-            contact: '',
-            image: null,
-        });
-        setShowReportModal(false);
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            alert('Please login to report items');
+            return;
+        }
+
+        try {
+            let imageUrl = 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400';
+
+            // Upload image to Cloudinary if provided
+            if (itemImage) {
+                const uploadData = new FormData();
+                uploadData.append('file', itemImage);
+                uploadData.append('upload_preset', 'khoj-profile');
+
+                try {
+                    const cloudinaryRes = await axios.post('https://api.cloudinary.com/v1_1/dait0sacc/image/upload', uploadData);
+                    imageUrl = cloudinaryRes.data.secure_url;
+                } catch (err) {
+                    alert('Failed to upload image to Cloudinary.');
+                    return;
+                }
+            }
+
+            // Submit report to backend
+            const reportData = {
+                item_name: formData.itemName,
+                category: formData.category,
+                description: formData.description,
+                date_time: formData.dateTime,
+                location: formData.location,
+                status: formData.status,
+                contact_info: formData.contact,
+                item_image_url: imageUrl
+            };
+
+            await axios.post('http://localhost:8000/api/items', reportData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            alert('Report submitted successfully!');
+            setFormData({
+                itemName: '',
+                category: '',
+                description: '',
+                dateTime: new Date().toISOString().slice(0, 16),
+                location: '',
+                status: 'lost',
+                contact: '',
+            });
+            setItemImage(null);
+            setItemImagePreview(null);
+            setShowReportModal(false);
+
+            // Refresh items list
+            const itemsResponse = await axios.get('http://localhost:8000/api/items');
+            setFetchedItems(itemsResponse.data.items);
+        } catch (err) {
+            console.error('Error submitting report:', err);
+            alert(err instanceof Error ? err.message : 'Failed to submit report');
+        }
     };
 
     return (
@@ -186,7 +258,15 @@ export default function Items() {
                 </div>
 
                 {/* Items Grid */}
-                {paginatedReports.length === 0 ? (
+                {loading ? (
+                    <div className="text-center py-16 bg-white rounded-xl shadow-sm">
+                        <p className="text-xl text-gray-500">Loading items...</p>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-16 bg-white rounded-xl shadow-sm">
+                        <p className="text-xl text-red-500">Error: {error}</p>
+                    </div>
+                ) : paginatedReports.length === 0 ? (
                     <div className="text-center py-16 bg-white rounded-xl shadow-sm">
                         <p className="text-xl text-gray-500">No items found.</p>
                     </div>
@@ -199,16 +279,16 @@ export default function Items() {
                                     key={report.id}
                                     className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-gray-100 flex flex-col"
                                 >
-                                    {report.image && (
+                                    {report.item_image_url && (
                                         <img
-                                            src={report.image}
-                                            alt={report.itemName}
+                                            src={report.item_image_url}
+                                            alt={report.item_name}
                                             className="w-full h-48 object-cover"
                                         />
                                     )}
                                     <div className="p-5 flex-1 flex flex-col">
                                         <div className="flex justify-between items-start mb-2">
-                                            <h3 className="text-xl font-semibold text-gray-800">{report.itemName}</h3>
+                                            <h3 className="text-xl font-semibold text-gray-800">{report.item_name}</h3>
                                             <span
                                                 className={`px-3 py-1 rounded-full text-sm font-medium ${report.status === 'lost' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                                                     }`}
@@ -222,8 +302,8 @@ export default function Items() {
 
                                         <div className="text-sm text-gray-500 space-y-1 mb-6">
                                             <p><span className="font-medium">Location:</span> {report.location}</p>
-                                            <p><span className="font-medium">When:</span> {report.dateTime}</p>
-                                            <p><span className="font-medium">Contact:</span> {report.contact}</p>
+                                            <p><span className="font-medium">When:</span> {report.date_time}</p>
+                                            <p><span className="font-medium">Contact:</span> {report.contact_info}</p>
                                         </div>
 
                                         <div className="mt-auto flex gap-3">
@@ -385,13 +465,22 @@ export default function Items() {
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Image (optional)</label>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleImageChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                        />
+                                        <label className="block text-sm font-medium text-gray-700 mb-3">Item Image (optional)</label>
+                                        <div className="flex items-center gap-4">
+                                            {itemImagePreview && (
+                                                <img
+                                                    src={itemImagePreview}
+                                                    alt="Preview"
+                                                    className="w-20 h-20 rounded-lg object-cover border-2 border-blue-300"
+                                                />
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageChange}
+                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="md:col-span-2 flex justify-end gap-4 mt-6">
