@@ -87,11 +87,28 @@ export default function Items() {
         // Send to backend
         axios.put(`http://localhost:8000/api/items/${id}/claim`, {}, {
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
             }
+        }).then(response => {
+            console.log('Claim response:', response.data);
+            alert(response.data.message || 'Claim updated successfully');
         }).catch(err => {
             console.error('Error toggling claim:', err);
-            alert('Failed to update claim status');
+            const errorMsg = err.response?.data?.message || 'Failed to update claim status';
+            alert(errorMsg);
+            // Revert UI change on error
+            setItemActions(prev => {
+                const current = prev[id] || {};
+                return {
+                    ...prev,
+                    [id]: {
+                        ...current,
+                        claimed: !current.claimed
+                    }
+                };
+            });
         });
     };
 
