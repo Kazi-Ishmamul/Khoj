@@ -2,6 +2,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
+interface User {
+    id: number;
+    name: string;
+    pic_url?: string;
+}
+
 interface Item {
     id: number;
     user_id: number;
@@ -15,6 +21,7 @@ interface Item {
     item_image_url?: string;
     resolution_status: 'not_claimed' | 'claimed' | 'resolved';
     valid: number;
+    user?: User;
 }
 
 const ITEMS_PER_PAGE = 15;
@@ -27,12 +34,24 @@ export default function Items() {
     const [fetchedItems, setFetchedItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
     // Fetch items from API on component mount
     useEffect(() => {
         const fetchItems = async () => {
             try {
                 setLoading(true);
+                // Get current user ID from localStorage
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    try {
+                        const user = JSON.parse(userStr);
+                        setCurrentUserId(user.id);
+                    } catch (e) {
+                        console.error('Failed to parse user from localStorage');
+                    }
+                }
+
                 const response = await axios.get('http://localhost:8000/api/items');
                 setFetchedItems(response.data.items);
                 setError(null);
@@ -129,6 +148,10 @@ export default function Items() {
 
     // Filter + search logic
     const filteredReports = fetchedItems.filter((report) => {
+        // Exclude user's own items
+        if (currentUserId && report.user_id === currentUserId) {
+            return false;
+        }
         const matchesFilter = filter === 'all' || report.status === filter;
         const matchesSearch =
             searchTerm === '' ||
@@ -304,6 +327,17 @@ export default function Items() {
                                         />
                                     )}
                                     <div className="p-5 flex-1 flex flex-col">
+                                        {/* User Info */}
+                                        {report.user && (
+                                            <div className="flex items-center gap-3 mb-4 pb-3 border-b">
+                                                <img
+                                                    src={report.user.pic_url || 'https://ui-avatars.com/api/?name=User&background=random'}
+                                                    alt={report.user.name}
+                                                    className="w-10 h-10 rounded-full object-cover"
+                                                />
+                                                <span className="text-sm font-medium text-gray-700">{report.user.name}</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between items-start mb-2">
                                             <h3 className="text-xl font-semibold text-gray-800">{report.item_name}</h3>
                                             <span

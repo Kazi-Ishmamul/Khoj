@@ -15,14 +15,16 @@ class ActivityController extends Controller
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        // 1. Lost Items - Reported by me with status 'lost'
+        // 1. Lost Items - Reported by me with status 'lost' and NOT claimed
         $lostItems = Item::where('user_id', $user->id)
             ->where('status', 'lost')
+            ->where('resolution_status', 'not_claimed')
             ->get();
 
-        // 2. Found Items - Reported by me with status 'found'
+        // 2. Found Items - Reported by me with status 'found' and NOT claimed
         $foundItems = Item::where('user_id', $user->id)
             ->where('status', 'found')
+            ->where('resolution_status', 'not_claimed')
             ->get();
 
         // 3. Claim Requests - Items others reported that I've claimed (pending claims only - validity = 0)
