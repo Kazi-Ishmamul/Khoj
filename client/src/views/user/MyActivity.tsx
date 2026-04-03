@@ -1,10 +1,21 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
+interface UserInfo {
+    bio?: string | null;
+    fb_url?: string | null;
+    x_url?: string | null;
+    insta_url?: string | null;
+    linkedin_url?: string | null;
+}
+
 interface User {
     id: number;
     name: string;
+    email?: string;
+    phone?: string;
     pic_url?: string;
+    info?: UserInfo | null;
 }
 
 interface Item {
@@ -53,6 +64,8 @@ export default function MyActivity() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<number | null>(null);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [showUserModal, setShowUserModal] = useState(false);
 
     // Fetch activity data on component mount
     useEffect(() => {
@@ -319,15 +332,21 @@ export default function MyActivity() {
                                     {/* Item Poster Info */}
                                     {item.user && (
                                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-4 border border-blue-100">
-                                            <div className="flex items-center gap-3">
+                                            <div
+                                                className="flex items-center gap-3 cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedUser(item.user!);
+                                                    setShowUserModal(true);
+                                                }}
+                                            >
                                                 <img
                                                     src={item.user.pic_url || 'https://ui-avatars.com/api/?name=User&background=random'}
                                                     alt={item.user.name}
-                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-blue-500 transition-all"
                                                 />
                                                 <div>
                                                     <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Posted by</p>
-                                                    <p className="text-sm font-bold text-gray-900">{item.user.name}</p>
+                                                    <p className="text-sm font-bold text-gray-900 hover:text-blue-600 transition-colors">{item.user.name}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -352,17 +371,23 @@ export default function MyActivity() {
                                     {/* Claimer Info */}
                                     {item.claimedByUser && (activeTab === 'claim_requests' || activeTab === 'claims_received' || activeTab === 'resolved') && (
                                         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-4 border border-purple-200">
-                                            <div className="flex items-center gap-3">
+                                            <div
+                                                className="flex items-center gap-3 cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedUser(item.claimedByUser!);
+                                                    setShowUserModal(true);
+                                                }}
+                                            >
                                                 <img
                                                     src={item.claimedByUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.claimedByUser.name) + '&background=random'}
                                                     alt={item.claimedByUser.name}
-                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-purple-500 transition-all"
                                                 />
                                                 <div>
                                                     <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
                                                         {activeTab === 'claim_requests' ? '🙋 Your Claim' : activeTab === 'claims_received' ? '👤 Claimed by' : '✓ Resolved with'}
                                                     </p>
-                                                    <p className="text-sm font-bold text-gray-900">{item.claimedByUser.name}</p>
+                                                    <p className="text-sm font-bold text-gray-900 hover:text-purple-600 transition-colors">{item.claimedByUser.name}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -437,6 +462,156 @@ export default function MyActivity() {
                     </div>
                 )}
             </div>
+
+            {/* User Profile Modal */}
+            {showUserModal && selectedUser && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+                        onClick={() => setShowUserModal(false)}
+                    />
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+
+                            {/* Modal Header Banner */}
+                            <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 h-28 flex-shrink-0">
+                                <button
+                                    onClick={() => setShowUserModal(false)}
+                                    aria-label="Close"
+                                    className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:shadow-xl transition-all duration-150"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div className="px-7 pb-7">
+                                {/* Profile Picture - overlapping banner */}
+                                <div className="flex flex-col items-center -mt-12 mb-4 relative z-10">
+                                    <img
+                                        src={selectedUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedUser.name) + '&background=4F46E5&color=fff&size=150'}
+                                        alt={selectedUser.name}
+                                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl bg-white"
+                                    />
+                                    <h2 className="text-xl font-bold text-gray-900 text-center mt-3">{selectedUser.name}</h2>
+                                    {selectedUser.info?.bio && (
+                                        <div className="mt-3 px-2 text-center">
+                                            <p className="text-sm text-gray-600 italic leading-relaxed">"{selectedUser.info.bio}"</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Contact Info */}
+                                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-4 mb-4 border border-blue-100 space-y-3">
+                                    {selectedUser.email && (
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                                                </svg>
+                                            </span>
+                                            <div>
+                                                <p className="text-xs text-gray-400 font-medium">Email</p>
+                                                <p className="text-sm font-semibold text-gray-800">{selectedUser.email}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {selectedUser.phone && (
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.98-2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.09a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.33v-.41z"/>
+                                                </svg>
+                                            </span>
+                                            <div>
+                                                <p className="text-xs text-gray-400 font-medium">Phone</p>
+                                                <p className="text-sm font-semibold text-gray-800">{selectedUser.phone}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Social Media Icons */}
+                                {selectedUser.info && (() => {
+                                    const socials = [
+                                        {
+                                            key: 'fb',
+                                            url: selectedUser.info!.fb_url,
+                                            label: 'Facebook',
+                                            color: 'hover:bg-blue-600',
+                                            icon: (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                                                </svg>
+                                            ),
+                                        },
+                                        {
+                                            key: 'x',
+                                            url: selectedUser.info!.x_url,
+                                            label: 'X (Twitter)',
+                                            color: 'hover:bg-black',
+                                            icon: (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                                </svg>
+                                            ),
+                                        },
+                                        {
+                                            key: 'insta',
+                                            url: selectedUser.info!.insta_url,
+                                            label: 'Instagram',
+                                            color: 'hover:bg-gradient-to-br hover:from-purple-600 hover:via-pink-500 hover:to-orange-400',
+                                            icon: (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                                                </svg>
+                                            ),
+                                        },
+                                        {
+                                            key: 'linkedin',
+                                            url: selectedUser.info!.linkedin_url,
+                                            label: 'LinkedIn',
+                                            color: 'hover:bg-blue-700',
+                                            icon: (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                                                    <rect x="2" y="9" width="4" height="12"/>
+                                                    <circle cx="4" cy="4" r="2"/>
+                                                </svg>
+                                            ),
+                                        },
+                                    ].filter(s => s.url);
+
+                                    return socials.length > 0 ? (
+                                        <div className="mb-5">
+                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 text-center">Connect on Social</p>
+                                            <div className="flex justify-center gap-3">
+                                                {socials.map(social => (
+                                                    <a
+                                                        key={social.key}
+                                                        href={social.url!}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        title={social.label}
+                                                        className={`w-11 h-11 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center transition-all duration-200 hover:text-white hover:scale-110 hover:shadow-lg ${social.color}`}
+                                                    >
+                                                        {social.icon}
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : null;
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

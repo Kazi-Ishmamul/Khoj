@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface UserInfo {
+    bio?: string | null;
     fb_url?: string | null;
     x_url?: string | null;
     insta_url?: string | null;
@@ -637,6 +638,11 @@ export default function Items() {
                                         className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl bg-white"
                                     />
                                     <h2 className="text-2xl font-bold text-gray-900 text-center mt-3">{selectedUser.name}</h2>
+                                    {selectedUser.info?.bio && (
+                                        <div className="mt-3 px-2 text-center">
+                                            <p className="text-sm text-gray-600 italic leading-relaxed">"{selectedUser.info.bio}"</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Contact Info */}
