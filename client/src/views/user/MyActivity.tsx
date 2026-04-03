@@ -279,107 +279,131 @@ export default function MyActivity() {
                         {paginatedItems.map(item => (
                             <div
                                 key={item.id}
-                                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-gray-100 flex flex-col"
+                                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col group"
                             >
-                                {item.item_image_url && (
-                                    <img
-                                        src={item.item_image_url}
-                                        alt={item.item_name}
-                                        className="w-full h-48 object-cover"
-                                    />
-                                )}
-                                <div className="p-5 flex-1 flex flex-col">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex-1">
-                                            <h3 className="text-xl font-semibold text-gray-800">{item.item_name}</h3>
-                                            <p className="text-sm text-gray-600 mt-1">{item.category}</p>
-                                        </div>
-                                        <span
-                                            className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ml-2 ${getStatusBg(item.status)}`}
-                                        >
-                                            {item.status.toUpperCase()}
-                                        </span>
-                                    </div>
+                                {/* Image Container with Status Badge */}
+                                <div className="relative overflow-hidden h-56 bg-gradient-to-br from-gray-100 to-gray-200">
+                                    {item.item_image_url && (
+                                        <img
+                                            src={item.item_image_url}
+                                            alt={item.item_name}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        />
+                                    )}
+                                    {/* Status Badge - Floating */}
+                                    <span
+                                        className={`absolute top-3 right-3 px-4 py-2 rounded-full text-xs font-bold backdrop-blur-md ${
+                                            item.status === 'lost'
+                                                ? 'bg-red-500/90 text-white shadow-lg'
+                                                : 'bg-green-500/90 text-white shadow-lg'
+                                        }`}
+                                    >
+                                        {item.status === 'lost' ? '🔴 LOST' : '🟢 FOUND'}
+                                    </span>
+                                </div>
+
+                                <div className="p-6 flex-1 flex flex-col">
+                                    {/* Item Title and Category */}
+                                    <h3 className="text-2xl font-bold text-gray-900 mb-1 line-clamp-2">
+                                        {item.item_name}
+                                    </h3>
+                                    <p className="text-sm font-semibold text-blue-600 mb-4 capitalize">
+                                        {item.category || 'Uncategorized'}
+                                    </p>
+
+                                    {/* Description */}
+                                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+                                        {item.description}
+                                    </p>
 
                                     {/* Item Poster Info */}
                                     {item.user && (
-                                        <div className="flex items-center gap-3 mb-4 pb-3 border-b">
-                                            <img
-                                                src={item.user.pic_url || 'https://ui-avatars.com/api/?name=User&background=random'}
-                                                alt={item.user.name}
-                                                className="w-9 h-9 rounded-full object-cover"
-                                            />
-                                            <div>
-                                                <p className="text-xs text-gray-500">Posted by</p>
-                                                <p className="text-sm font-medium text-gray-700">{item.user.name}</p>
+                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-4 border border-blue-100">
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={item.user.pic_url || 'https://ui-avatars.com/api/?name=User&background=random'}
+                                                    alt={item.user.name}
+                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+                                                />
+                                                <div>
+                                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Posted by</p>
+                                                    <p className="text-sm font-bold text-gray-900">{item.user.name}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
 
-                                    <p className="text-gray-700 mb-4 line-clamp-2">{item.description}</p>
-
-                                    <div className="text-sm text-gray-500 space-y-1 mb-4">
-                                        <p>
-                                            <span className="font-medium">📍 Location:</span> {item.location}
-                                        </p>
-                                        <p>
-                                            <span className="font-medium">📅 When:</span> {new Date(item.date_time).toLocaleDateString()}
-                                        </p>
-                                        <p>
-                                            <span className="font-medium">📞 Contact:</span> {item.contact_info}
-                                        </p>
+                                    {/* Info Grid */}
+                                    <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+                                        <div className="bg-gray-50 rounded-lg p-2">
+                                            <p className="text-gray-500 font-semibold mb-1">📍 Location</p>
+                                            <p className="text-gray-800 font-medium line-clamp-1">{item.location}</p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-2">
+                                            <p className="text-gray-500 font-semibold mb-1">📅 When</p>
+                                            <p className="text-gray-800 font-medium">{new Date(item.date_time).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-2 col-span-2">
+                                            <p className="text-gray-500 font-semibold mb-1">📞 Contact</p>
+                                            <p className="text-gray-800 font-medium truncate">{item.contact_info}</p>
+                                        </div>
                                     </div>
 
-                                    {/* Claimer Info for Claim Requests, Claims Received, and Resolved */}
+                                    {/* Claimer Info */}
                                     {item.claimedByUser && (activeTab === 'claim_requests' || activeTab === 'claims_received' || activeTab === 'resolved') && (
-                                        <div className="flex items-center gap-3 mb-4 pb-3 border-b bg-blue-50 p-3 rounded-lg">
-                                            <img
-                                                src={item.claimedByUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.claimedByUser.name) + '&background=random'}
-                                                alt={item.claimedByUser.name}
-                                                className="w-9 h-9 rounded-full object-cover"
-                                            />
-                                            <div>
-                                                <p className="text-xs text-gray-500">
-                                                    {activeTab === 'claim_requests' ? 'Your claim' : activeTab === 'claims_received' ? 'Claimed by' : 'Resolved with'}
-                                                </p>
-                                                <p className="text-sm font-medium text-gray-700">{item.claimedByUser.name}</p>
+                                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-4 border border-purple-200">
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={item.claimedByUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.claimedByUser.name) + '&background=random'}
+                                                    alt={item.claimedByUser.name}
+                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+                                                />
+                                                <div>
+                                                    <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
+                                                        {activeTab === 'claim_requests' ? '🙋 Your Claim' : activeTab === 'claims_received' ? '👤 Claimed by' : '✓ Resolved with'}
+                                                    </p>
+                                                    <p className="text-sm font-bold text-gray-900">{item.claimedByUser.name}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
 
+                                    {/* Resolution Status */}
                                     <div className="mt-auto">
-                                        <span
-                                            className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                                                item.resolution_status === 'resolved'
-                                                    ? 'bg-green-100 text-green-700'
+                                        {activeTab !== 'claims_received' && (
+                                            <span
+                                                className={`inline-block px-4 py-2 rounded-full text-xs font-bold mb-3 ${
+                                                    item.resolution_status === 'resolved'
+                                                        ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-300'
+                                                        : item.resolution_status === 'claimed'
+                                                            ? 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-300'
+                                                            : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300'
+                                                }`}
+                                            >
+                                                {item.resolution_status === 'resolved'
+                                                    ? '✅ Resolved'
                                                     : item.resolution_status === 'claimed'
-                                                        ? 'bg-yellow-100 text-yellow-700'
-                                                        : 'bg-gray-100 text-gray-700'
-                                            }`}
-                                        >
-                                            {item.resolution_status === 'resolved'
-                                                ? '✅ Resolved'
-                                                : item.resolution_status === 'claimed'
-                                                    ? '⏳ Pending'
-                                                    : '⭕ Not Claimed'}
-                                        </span>
+                                                        ? '⏳ Pending Review'
+                                                        : '⭕ Not Claimed'}
+                                            </span>
+                                        )}
 
                                         {/* Accept/Decline buttons for Claims Received */}
                                         {activeTab === 'claims_received' && item.claims && item.claims.length > 0 && (
-                                            <div className="flex gap-2 mt-4">
+                                            <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleAcceptClaim(item.claims![0].claim_id)}
                                                     disabled={actionLoading === item.claims![0].claim_id}
-                                                    className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-100 shadow-md hover:shadow-lg"
                                                 >
-                                                    {actionLoading === item.claims![0].claim_id ? 'Processing...' : 'Accept'}
+                                                    {actionLoading === item.claims![0].claim_id ? '⏳ Processing...' : '✓ Accept'}
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeclineClaim(item.claims![0].claim_id)}
                                                     disabled={actionLoading === item.claims![0].claim_id}
-                                                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-100 shadow-md hover:shadow-lg"
                                                 >
-                                                    {actionLoading === item.claims![0].claim_id ? 'Processing...' : 'Decline'}
+                                                    {actionLoading === item.claims![0].claim_id ? '⏳ Processing...' : '✕ Decline'}
                                                 </button>
                                             </div>
                                         )}
