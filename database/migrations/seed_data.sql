@@ -18,7 +18,7 @@ INSERT INTO users (name, phone, email, address, pic_url, password, role) VALUES
 */
 
 -- 2. Populating the 'user_info' table
--- We map these to the IDs 1, 2, 3, 4, and 5 created above
+-- We map these to the IDs 1, 2, 3 and 4 created above
 INSERT INTO user_info (user_id, bio, fb_url, x_url, insta_url, linkedin_url, items_lost_count, items_found_count, report_strikes) VALUES
 (1, 'System Administrator for Khoj application.', 'https://facebook.com/khoj_admin', NULL, NULL, 'https://linkedin.com/in/khoj-admin', 0, 0, 0),
 (2, 'CSE student and frequent traveler. Always losing my keys.', 'https://facebook.com/shoaib', 'https://x.com/shoaib', 'https://instagram.com/shoaib', 'https://linkedin.com/in/shoaib', 0, 0, 0),

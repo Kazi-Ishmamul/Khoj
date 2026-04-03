@@ -2,6 +2,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
+interface User {
+    id: number;
+    name: string;
+    pic_url?: string;
+}
+
 interface Item {
     id: number;
     user_id: number;
@@ -15,6 +21,7 @@ interface Item {
     item_image_url?: string;
     resolution_status: 'not_claimed' | 'claimed' | 'resolved';
     valid: number;
+    user?: User;
 }
 
 const ITEMS_PER_PAGE = 15;
@@ -27,12 +34,24 @@ export default function Items() {
     const [fetchedItems, setFetchedItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
     // Fetch items from API on component mount
     useEffect(() => {
         const fetchItems = async () => {
             try {
                 setLoading(true);
+                // Get current user ID from localStorage
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    try {
+                        const user = JSON.parse(userStr);
+                        setCurrentUserId(user.id);
+                    } catch (e) {
+                        console.error('Failed to parse user from localStorage');
+                    }
+                }
+
                 const response = await axios.get('http://localhost:8000/api/items');
                 setFetchedItems(response.data.items);
                 setError(null);
@@ -87,11 +106,28 @@ export default function Items() {
         // Send to backend
         axios.put(`http://localhost:8000/api/items/${id}/claim`, {}, {
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
             }
+        }).then(response => {
+            console.log('Claim response:', response.data);
+            alert(response.data.message || 'Claim updated successfully');
         }).catch(err => {
             console.error('Error toggling claim:', err);
-            alert('Failed to update claim status');
+            const errorMsg = err.response?.data?.message || 'Failed to update claim status';
+            alert(errorMsg);
+            // Revert UI change on error
+            setItemActions(prev => {
+                const current = prev[id] || {};
+                return {
+                    ...prev,
+                    [id]: {
+                        ...current,
+                        claimed: !current.claimed
+                    }
+                };
+            });
         });
     };
 
@@ -112,6 +148,10 @@ export default function Items() {
 
     // Filter + search logic
     const filteredReports = fetchedItems.filter((report) => {
+        // Exclude user's own items
+        if (currentUserId && report.user_id === currentUserId) {
+            return false;
+        }
         const matchesFilter = filter === 'all' || report.status === filter;
         const matchesSearch =
             searchTerm === '' ||
@@ -277,54 +317,98 @@ export default function Items() {
                             return (
                                 <div
                                     key={report.id}
-                                    className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-gray-100 flex flex-col"
+                                    className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col group"
                                 >
-                                    {report.item_image_url && (
-                                        <img
-                                            src={report.item_image_url}
-                                            alt={report.item_name}
-                                            className="w-full h-48 object-cover"
-                                        />
-                                    )}
-                                    <div className="p-5 flex-1 flex flex-col">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h3 className="text-xl font-semibold text-gray-800">{report.item_name}</h3>
-                                            <span
-                                                className={`px-3 py-1 rounded-full text-sm font-medium ${report.status === 'lost' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                                                    }`}
-                                            >
-                                                {report.status.toUpperCase()}
-                                            </span>
+                                    {/* Image Container with Status Badge */}
+                                    <div className="relative overflow-hidden h-56 bg-gradient-to-br from-gray-100 to-gray-200">
+                                        {report.item_image_url && (
+                                            <img
+                                                src={report.item_image_url}
+                                                alt={report.item_name}
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            />
+                                        )}
+                                        {/* Status Badge - Floating */}
+                                        <span
+                                            className={`absolute top-3 right-3 px-4 py-2 rounded-full text-xs font-bold backdrop-blur-md ${
+                                                report.status === 'lost'
+                                                    ? 'bg-red-500/90 text-white shadow-lg'
+                                                    : 'bg-green-500/90 text-white shadow-lg'
+                                            }`}
+                                        >
+                                            {report.status === 'lost' ? '🔴 LOST' : '🟢 FOUND'}
+                                        </span>
+                                    </div>
+
+                                    <div className="p-6 flex-1 flex flex-col">
+                                        {/* Item Title */}
+                                        <h3 className="text-2xl font-bold text-gray-900 mb-1 line-clamp-2">
+                                            {report.item_name}
+                                        </h3>
+                                        <p className="text-sm font-semibold text-blue-600 mb-4 capitalize">
+                                            {report.category || 'Uncategorized'}
+                                        </p>
+
+                                        {/* Description */}
+                                        <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+                                            {report.description}
+                                        </p>
+
+                                        {/* User Info Card */}
+                                        {report.user && (
+                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-4 border border-blue-100">
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={report.user.pic_url || 'https://ui-avatars.com/api/?name=User&background=random'}
+                                                        alt={report.user.name}
+                                                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+                                                    />
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Posted by</p>
+                                                        <p className="text-sm font-bold text-gray-900">{report.user.name}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Info Grid */}
+                                        <div className="grid grid-cols-2 gap-3 mb-5 text-xs">
+                                            <div className="bg-gray-50 rounded-lg p-2">
+                                                <p className="text-gray-500 font-semibold mb-1">📍 Location</p>
+                                                <p className="text-gray-800 font-medium line-clamp-1">{report.location}</p>
+                                            </div>
+                                            <div className="bg-gray-50 rounded-lg p-2">
+                                                <p className="text-gray-500 font-semibold mb-1">📅 Date</p>
+                                                <p className="text-gray-800 font-medium">{new Date(report.date_time).toLocaleDateString()}</p>
+                                            </div>
+                                            <div className="bg-gray-50 rounded-lg p-2 col-span-2">
+                                                <p className="text-gray-500 font-semibold mb-1">📞 Contact</p>
+                                                <p className="text-gray-800 font-medium truncate">{report.contact_info}</p>
+                                            </div>
                                         </div>
 
-                                        <p className="text-sm text-gray-600 mb-3">{report.category}</p>
-                                        <p className="text-gray-700 mb-4 line-clamp-3">{report.description}</p>
-
-                                        <div className="text-sm text-gray-500 space-y-1 mb-6">
-                                            <p><span className="font-medium">Location:</span> {report.location}</p>
-                                            <p><span className="font-medium">When:</span> {report.date_time}</p>
-                                            <p><span className="font-medium">Contact:</span> {report.contact_info}</p>
-                                        </div>
-
-                                        <div className="mt-auto flex gap-3">
+                                        {/* Action Buttons */}
+                                        <div className="mt-auto flex gap-2">
                                             <button
                                                 onClick={() => toggleClaim(report.id)}
-                                                className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${action.claimed
-                                                    ? 'bg-green-600 text-white hover:bg-green-700'
-                                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
-                                                    }`}
+                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${
+                                                    action.claimed
+                                                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl'
+                                                        : 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 border border-green-300'
+                                                }`}
                                             >
-                                                {action.claimed ? 'Claimed ✓' : 'Claim'}
+                                                {action.claimed ? '✓ Claimed' : '🙋 Claim'}
                                             </button>
 
                                             <button
                                                 onClick={() => toggleReport(report.id)}
-                                                className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${action.reported
-                                                    ? 'bg-orange-600 text-white hover:bg-orange-700'
-                                                    : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                                                    }`}
+                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${
+                                                    action.reported
+                                                        ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg hover:shadow-xl'
+                                                        : 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 hover:from-orange-200 hover:to-red-200 border border-orange-300'
+                                                }`}
                                             >
-                                                {action.reported ? 'Reported ⚠' : 'Report'}
+                                                {action.reported ? '⚠ Reported' : '🚩 Report'}
                                             </button>
                                         </div>
                                     </div>
