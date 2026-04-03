@@ -13,7 +13,7 @@ class ItemController extends Controller
     {
         $items = Item::where('valid', 1)
             ->where('resolution_status', 'not_claimed')
-            ->with('user')
+            ->with(['user', 'user.info'])
             ->get();
         return response()->json(['items' => $items]);
     }
