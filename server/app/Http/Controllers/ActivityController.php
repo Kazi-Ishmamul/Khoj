@@ -19,12 +19,14 @@ class ActivityController extends Controller
         $lostItems = Item::where('user_id', $user->id)
             ->where('status', 'lost')
             ->where('resolution_status', 'not_claimed')
+            ->with('user')
             ->get();
 
         // 2. Found Items - Reported by me with status 'found' and NOT claimed
         $foundItems = Item::where('user_id', $user->id)
             ->where('status', 'found')
             ->where('resolution_status', 'not_claimed')
+            ->with('user')
             ->get();
 
         // 3. Claim Requests - Items others reported that I've claimed (pending claims only - validity = 0)
@@ -33,26 +35,56 @@ class ActivityController extends Controller
                   ->where('validity', 0); // Only pending claims
         })
         ->where('user_id', '!=', $user->id) // Not my items
-        ->with(['claims' => function ($query) use ($user) {
+        ->with(['user', 'claims' => function ($query) use ($user) {
             $query->where('claimed_by_id', $user->id)
-                  ->where('validity', 0); // Only pending claims
+                  ->where('validity', 0)
+                  ->with('claimedBy'); // Load the claimer user info
         }])
         ->get();
+
+        // Transform to ensure claimedBy is included
+        $claimRequests = $claimRequests->map(function ($item) {
+            if ($item->claims && $item->claims->count() > 0) {
+                $item->claimedByUser = $item->claims->first()->claimedBy;
+            }
+            return $item;
+        });
 
         // 4. Claims Received - Items I reported that others have claimed (pending claims only - validity = 0)
         $claimsReceived = Item::where('user_id', $user->id)
             ->whereHas('claims', function ($query) {
                 $query->where('validity', 0); // Only pending claims
             })
-            ->with(['claims' => function ($query) {
-                $query->where('validity', 0); // Only pending claims
+            ->with(['user', 'claims' => function ($query) {
+                $query->where('validity', 0)
+                      ->with('claimedBy'); // Load the claimer user info
             }])
             ->get();
+
+        // Transform to ensure claimedBy is included
+        $claimsReceived = $claimsReceived->map(function ($item) {
+            if ($item->claims && $item->claims->count() > 0) {
+                $item->claimedByUser = $item->claims->first()->claimedBy;
+            }
+            return $item;
+        });
 
         // 5. Resolved - Items reported by me that are resolved AND items I claimed that were accepted
         $myResolvedItems = Item::where('user_id', $user->id)
             ->where('resolution_status', 'resolved')
+            ->with(['user', 'claims' => function ($query) {
+                $query->where('validity', '!=', -1)
+                      ->with('claimedBy'); // Load the claimer user info
+            }])
             ->get();
+
+        // Transform to ensure claimedBy is included for my resolved items
+        $myResolvedItems = $myResolvedItems->map(function ($item) {
+            if ($item->claims && $item->claims->count() > 0) {
+                $item->claimedByUser = $item->claims->first()->claimedBy;
+            }
+            return $item;
+        });
 
         // Items I claimed that were accepted
         $myAcceptedClaimsItems = Item::whereHas('claims', function ($query) use ($user) {
@@ -60,11 +92,20 @@ class ActivityController extends Controller
                   ->where('validity', 1); // Accepted claims
         })
         ->where('user_id', '!=', $user->id) // Not my items
-        ->with(['claims' => function ($query) use ($user) {
+        ->with(['user', 'claims' => function ($query) use ($user) {
             $query->where('claimed_by_id', $user->id)
-                  ->where('validity', 1); // Accepted claims
+                  ->where('validity', 1)
+                  ->with('claimedBy'); // Load the claimer user info
         }])
         ->get();
+
+        // Transform to ensure claimedBy is included for accepted claims
+        $myAcceptedClaimsItems = $myAcceptedClaimsItems->map(function ($item) {
+            if ($item->claims && $item->claims->count() > 0) {
+                $item->claimedByUser = $item->claims->first()->claimedBy;
+            }
+            return $item;
+        });
 
         $resolved = $myResolvedItems->merge($myAcceptedClaimsItems);
 

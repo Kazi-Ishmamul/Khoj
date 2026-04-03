@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
+interface User {
+    id: number;
+    name: string;
+    pic_url?: string;
+}
+
 interface Item {
     id: number;
     user_id: number;
@@ -14,7 +20,9 @@ interface Item {
     item_image_url?: string;
     resolution_status: 'not_claimed' | 'claimed' | 'resolved';
     valid: number;
+    user?: User;
     claims?: Claim[];
+    claimedByUser?: User;
 }
 
 interface Claim {
@@ -23,6 +31,7 @@ interface Claim {
     claimed_by_id: number;
     validity: number;
     created_at?: string;
+    claimedBy?: User;
 }
 
 interface ActivityData {
@@ -280,16 +289,33 @@ export default function MyActivity() {
                                     />
                                 )}
                                 <div className="p-5 flex-1 flex flex-col">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h3 className="text-xl font-semibold text-gray-800">{item.item_name}</h3>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex-1">
+                                            <h3 className="text-xl font-semibold text-gray-800">{item.item_name}</h3>
+                                            <p className="text-sm text-gray-600 mt-1">{item.category}</p>
+                                        </div>
                                         <span
-                                            className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBg(item.status)}`}
+                                            className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ml-2 ${getStatusBg(item.status)}`}
                                         >
                                             {item.status.toUpperCase()}
                                         </span>
                                     </div>
 
-                                    <p className="text-sm text-gray-600 mb-3">{item.category}</p>
+                                    {/* Item Poster Info */}
+                                    {item.user && (
+                                        <div className="flex items-center gap-3 mb-4 pb-3 border-b">
+                                            <img
+                                                src={item.user.pic_url || 'https://ui-avatars.com/api/?name=User&background=random'}
+                                                alt={item.user.name}
+                                                className="w-9 h-9 rounded-full object-cover"
+                                            />
+                                            <div>
+                                                <p className="text-xs text-gray-500">Posted by</p>
+                                                <p className="text-sm font-medium text-gray-700">{item.user.name}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <p className="text-gray-700 mb-4 line-clamp-2">{item.description}</p>
 
                                     <div className="text-sm text-gray-500 space-y-1 mb-4">
@@ -303,6 +329,23 @@ export default function MyActivity() {
                                             <span className="font-medium">📞 Contact:</span> {item.contact_info}
                                         </p>
                                     </div>
+
+                                    {/* Claimer Info for Claim Requests, Claims Received, and Resolved */}
+                                    {item.claimedByUser && (activeTab === 'claim_requests' || activeTab === 'claims_received' || activeTab === 'resolved') && (
+                                        <div className="flex items-center gap-3 mb-4 pb-3 border-b bg-blue-50 p-3 rounded-lg">
+                                            <img
+                                                src={item.claimedByUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.claimedByUser.name) + '&background=random'}
+                                                alt={item.claimedByUser.name}
+                                                className="w-9 h-9 rounded-full object-cover"
+                                            />
+                                            <div>
+                                                <p className="text-xs text-gray-500">
+                                                    {activeTab === 'claim_requests' ? 'Your claim' : activeTab === 'claims_received' ? 'Claimed by' : 'Resolved with'}
+                                                </p>
+                                                <p className="text-sm font-medium text-gray-700">{item.claimedByUser.name}</p>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="mt-auto">
                                         <span
