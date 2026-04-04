@@ -18,11 +18,7 @@ import MyActivity from './views/user/MyActivity';
 import Notifications from './views/user/Notifications';
 import Profile from './views/user/Profile';
 
-import AdminDashboard from './views/admin/AdminDashboard';
-import ManagePosts from './views/admin/ManagePosts';
 import Reports from './views/admin/Reports';
-import History from './views/admin/History';
-import Helpdesk from './views/admin/Helpdesk';
 import AdminProfile from './views/admin/AdminProfile';
 import AllUsers from './views/admin/AllUsers';
 
@@ -55,11 +51,8 @@ function App() {
 
         {/* Admin Routes Layout */}
         <Route path="/admin-dashboard" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="manage-posts" element={<ManagePosts />} />
+          <Route index element={<Navigate to="users" replace />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="history" element={<History />} />
-          <Route path="helpdesk" element={<Helpdesk />} />
           <Route path="profile" element={<AdminProfile />} />
           <Route path="users" element={<AllUsers />} />
         </Route>
