@@ -160,7 +160,7 @@ const Login = () => {
                     </div>
 
                     {/* Right Side - Login Form */}
-                    <div className="w-full md:w-1/2 p-10 lg:p-14 flex flex-col justify-center relative z-10">
+                    <div className="w-full md:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-10 lg:p-14 flex flex-col justify-center relative z-10">
                         <div className="max-w-md mx-auto w-full">
                             <h2 className="text-3xl md:text-4xl font-bold mb-2 text-white">Login</h2>
                             <p className="text-slate-400 text-sm mb-10 font-medium leading-relaxed">
