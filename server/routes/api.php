@@ -28,6 +28,7 @@ Route::middleware('jwt.auth')->group(function () {
     Route::post('/logout', [App\Http\Controllers\ApiAuthController::class, 'logout']);
     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'show']);
     Route::post('/profile', [App\Http\Controllers\ProfileController::class, 'update']);
+    Route::get('/users', [App\Http\Controllers\UserController::class, 'index']);
     Route::post('/items', [App\Http\Controllers\ItemController::class, 'store']);
     Route::put('/items/{id}/claim', [App\Http\Controllers\ItemController::class, 'toggleClaim']);
     Route::get('/my-activity', [App\Http\Controllers\ActivityController::class, 'myActivity']);

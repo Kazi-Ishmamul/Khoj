@@ -9,11 +9,9 @@ const AdminNavbar = () => {
     const toggleMenu = () => setIsOpen(!isOpen);
 
     const navLinks = [
-        { label: 'Dashboard', path: '/admin-dashboard' },
-        { label: 'Manage Posts', path: '/admin-dashboard/manage-posts' },
+        { label: 'Manage Users', path: '/admin-dashboard/users' },
         { label: 'Reports', path: '/admin-dashboard/reports' },
-        { label: 'History', path: '/admin-dashboard/history' },
-        { label: 'Helpdesk', path: '/admin-dashboard/helpdesk' },
+        { label: 'Profile', path: '/admin-dashboard/profile' },
         { label: 'Logout', path: '/' }
     ];
 
