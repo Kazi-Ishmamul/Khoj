@@ -205,7 +205,7 @@ const Registration = () => {
                 <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col-reverse md:flex-row border border-slate-700/50 min-h-[650px]">
                     
                     {/* Left Side - Registration Form */}
-                    <div className="w-full md:w-[55%] p-8 lg:p-12 flex flex-col justify-center relative z-10 overflow-y-auto max-h-[90vh] md:max-h-none">
+                    <div className="w-full md:w-[55%] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 lg:p-12 flex flex-col justify-center relative z-10 overflow-y-auto max-h-[90vh] md:max-h-none">
                         <div className="max-w-lg mx-auto w-full">
                             <h2 className="text-3xl md:text-4xl font-bold mb-2 text-white">Create Account</h2>
                             <p className="text-slate-400 text-sm mb-8 font-medium leading-relaxed">
