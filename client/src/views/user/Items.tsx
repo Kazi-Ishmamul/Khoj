@@ -1,6 +1,7 @@
 // Items.tsx
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 interface UserInfo {
     bio?: string | null;
@@ -99,7 +100,7 @@ export default function Items() {
     const toggleClaim = (id: number) => {
         const token = localStorage.getItem('token');
         if (!token) {
-            alert('Please login to claim items');
+            toast.error('Please login to claim items');
             return;
         }
 
@@ -125,11 +126,11 @@ export default function Items() {
             }
         }).then(response => {
             console.log('Claim response:', response.data);
-            alert(response.data.message || 'Claim updated successfully');
+            toast.success(response.data.message || 'Claim updated successfully');
         }).catch(err => {
             console.error('Error toggling claim:', err);
             const errorMsg = err.response?.data?.message || 'Failed to update claim status';
-            alert(errorMsg);
+            toast.error(errorMsg);
             // Revert UI change on error
             setItemActions(prev => {
                 const current = prev[id] || {};
@@ -197,7 +198,7 @@ export default function Items() {
         const token = localStorage.getItem('token');
 
         if (!token) {
-            alert('Please login to report items');
+            toast.error('Please login to report items');
             return;
         }
 
@@ -208,13 +209,13 @@ export default function Items() {
             if (itemImage) {
                 const uploadData = new FormData();
                 uploadData.append('file', itemImage);
-                uploadData.append('upload_preset', 'khoj-profile');
+                uploadData.append('upload_preset', 'khoj-items');
 
                 try {
                     const cloudinaryRes = await axios.post('https://api.cloudinary.com/v1_1/dait0sacc/image/upload', uploadData);
                     imageUrl = cloudinaryRes.data.secure_url;
                 } catch (err) {
-                    alert('Failed to upload image to Cloudinary.');
+                    toast.error('Failed to upload image to Cloudinary.');
                     return;
                 }
             }
@@ -237,7 +238,7 @@ export default function Items() {
                 }
             });
 
-            alert('Report submitted successfully!');
+            toast.success('Report submitted successfully!');
             setFormData({
                 itemName: '',
                 category: '',
@@ -256,7 +257,7 @@ export default function Items() {
             setFetchedItems(itemsResponse.data.items);
         } catch (err) {
             console.error('Error submitting report:', err);
-            alert(err instanceof Error ? err.message : 'Failed to submit report');
+            toast.error(err instanceof Error ? err.message : 'Failed to submit report');
         }
     };
 
