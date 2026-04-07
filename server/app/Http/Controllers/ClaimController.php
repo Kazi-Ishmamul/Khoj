@@ -30,9 +30,19 @@ class ClaimController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Update claim validity to 1 (accepted)
+        if ($claim->validity !== 0) {
+            return response()->json(['message' => 'Only pending claims can be accepted'], 400);
+        }
+
+        // Update selected claim validity to 1 (accepted)
         $claim->validity = 1;
         $claim->save();
+
+        // Decline all other pending claims for this same item.
+        Claim::where('item_id', $item->id)
+            ->where('claim_id', '!=', $claim->claim_id)
+            ->where('validity', 0)
+            ->update(['validity' => -1]);
 
         // Update item resolution_status to resolved
         $item->resolution_status = 'resolved';
@@ -67,18 +77,25 @@ class ClaimController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Update claim validity to -1 (declined)
+        if ($claim->validity !== 0) {
+            return response()->json(['message' => 'Only pending claims can be declined'], 400);
+        }
+
+        // Update selected claim validity to -1 (declined)
         $claim->validity = -1;
         $claim->save();
 
-        // Check if there are any other active claims
-        $activeClaims = Claim::where('item_id', $item->id)
-            ->where('validity', '!=', -1)
+        // Keep item as claimed while at least one pending claim exists.
+        $pendingClaims = Claim::where('item_id', $item->id)
+            ->where('validity', 0)
             ->exists();
 
-        // If no more active claims, set resolution_status back to not_claimed
-        if (!$activeClaims) {
+        // If no pending claims remain, move item back to not_claimed.
+        if (!$pendingClaims) {
             $item->resolution_status = 'not_claimed';
+            $item->save();
+        } else {
+            $item->resolution_status = 'claimed';
             $item->save();
         }
 

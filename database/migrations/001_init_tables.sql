@@ -25,11 +25,7 @@ CREATE TABLE users (
 )
 
 
-CREATE TABLE migrations (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    migration VARCHAR(255) NOT NULL,
-    batch INT NOT NULL
-)
+
 
 
 
@@ -77,16 +73,3 @@ CREATE TABLE claims (
     CONSTRAINT fk_claim_user FOREIGN KEY (claimed_by_id) REFERENCES users(id) ON DELETE CASCADE
 )
 
-
-CREATE TABLE personal_access_tokens (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    tokenable_type VARCHAR(255) NOT NULL,
-    tokenable_id BIGINT UNSIGNED NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    token VARCHAR(64) NOT NULL UNIQUE,
-    abilities TEXT DEFAULT NULL,
-    last_used_at TIMESTAMP NULL DEFAULT NULL,
-    created_at TIMESTAMP NULL DEFAULT NULL,
-    updated_at TIMESTAMP NULL DEFAULT NULL,
-    INDEX tokens_tokenable_index (tokenable_type, tokenable_id)
-)
