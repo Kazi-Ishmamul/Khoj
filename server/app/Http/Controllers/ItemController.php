@@ -12,7 +12,7 @@ class ItemController extends Controller
     public function index()
     {
         $items = Item::where('valid', 1)
-            ->where('resolution_status', 'not_claimed')
+            ->where('resolution_status', '!=', 'resolved')
             ->with(['user', 'user.info'])
             ->get();
         return response()->json(['items' => $items]);
@@ -74,38 +74,52 @@ class ItemController extends Controller
             return response()->json(['message' => 'Cannot claim your own items'], 403);
         }
 
-        // Check if user already has a claim on this item
-        $existingClaim = Claim::where('item_id', $id)
+        if ($item->resolution_status === 'resolved' || (int) $item->valid !== 1) {
+            return response()->json(['message' => 'This item is not claimable'], 400);
+        }
+
+        // Check if user already has a pending claim on this item.
+        $existingPendingClaim = Claim::where('item_id', $id)
             ->where('claimed_by_id', $user->id)
+            ->where('validity', 0)
             ->first();
 
-        if ($existingClaim) {
-            // Remove claim
-            $existingClaim->delete();
+        if ($existingPendingClaim) {
+            // Release claim: mark this claim as declined (-1) instead of deleting row.
+            $existingPendingClaim->validity = -1;
+            $existingPendingClaim->save();
 
-            // Check if there are any other active claims on this item
-            $activeClaims = Claim::where('item_id', $id)
-                ->where('validity', '!=', -1)
+            // Item remains claimed while there is any other pending claim.
+            $hasPendingClaims = Claim::where('item_id', $id)
+                ->where('validity', 0)
                 ->exists();
 
-            // If no more active claims, set resolution_status back to not_claimed
-            if (!$activeClaims) {
-                $item->resolution_status = 'not_claimed';
-                $item->save();
-            }
+            $item->resolution_status = $hasPendingClaims ? 'claimed' : 'not_claimed';
+            $item->save();
 
             return response()->json([
-                'message' => 'Claim removed successfully',
+                'message' => 'Claim released successfully',
                 'claimed' => false,
                 'resolution_status' => $item->resolution_status
             ], 200);
         } else {
-            // Create new claim
-            Claim::create([
-                'item_id' => $id,
-                'claimed_by_id' => $user->id,
-                'validity' => 0 // pending
-            ]);
+            // Re-open previously declined claim if available, otherwise create a new pending claim.
+            $existingDeclinedClaim = Claim::where('item_id', $id)
+                ->where('claimed_by_id', $user->id)
+                ->where('validity', -1)
+                ->orderByDesc('claim_id')
+                ->first();
+
+            if ($existingDeclinedClaim) {
+                $existingDeclinedClaim->validity = 0;
+                $existingDeclinedClaim->save();
+            } else {
+                Claim::create([
+                    'item_id' => $id,
+                    'claimed_by_id' => $user->id,
+                    'validity' => 0 // pending
+                ]);
+            }
 
             // Update item resolution_status to claimed
             $item->resolution_status = 'claimed';
@@ -117,6 +131,76 @@ class ItemController extends Controller
                 'resolution_status' => $item->resolution_status
             ], 201);
         }
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $item = Item::find($id);
+        if (!$item) {
+            return response()->json(['message' => 'Item not found'], 404);
+        }
+
+        if ((int) $item->user_id !== (int) $user->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ($item->resolution_status === 'resolved' || (int) $item->valid !== 1) {
+            return response()->json(['message' => 'Only active unresolved items can be edited'], 400);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'item_name' => 'required|string|max:255',
+            'category' => 'nullable|string|max:100',
+            'description' => 'required|string',
+            'date_time' => 'required|date',
+            'location' => 'required|string|max:255',
+            'contact_info' => 'required|string|max:255',
+            'item_image_url' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation error', 'errors' => $validator->errors()], 400);
+        }
+
+        $item->update($validator->validated());
+
+        return response()->json([
+            'message' => 'Item updated successfully',
+            'item' => $item->fresh(['user', 'user.info'])
+        ], 200);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $item = Item::find($id);
+        if (!$item) {
+            return response()->json(['message' => 'Item not found'], 404);
+        }
+
+        if ((int) $item->user_id !== (int) $user->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ($item->resolution_status === 'resolved') {
+            return response()->json(['message' => 'Only unresolved items can be deleted'], 400);
+        }
+
+        $item->valid = 0;
+        $item->save();
+
+        return response()->json([
+            'message' => 'Item deleted successfully'
+        ], 200);
     }
 }
 

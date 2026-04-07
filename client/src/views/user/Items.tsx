@@ -47,35 +47,63 @@ export default function Items() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [claimedItemIds, setClaimedItemIds] = useState<number[]>([]);
+    const [claimLoadingId, setClaimLoadingId] = useState<number | null>(null);
+    const [reportedItemIds, setReportedItemIds] = useState<number[]>([]);
+
+    const fetchItems = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get('http://localhost:8000/api/items');
+            setFetchedItems(response.data.items);
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred');
+            setFetchedItems([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchClaimedItemIds = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setClaimedItemIds([]);
+            return;
+        }
+
+        try {
+            const response = await axios.get('http://localhost:8000/api/my-activity', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const claimedIds = (response.data?.data?.claim_requests?.items || [])
+                .map((item: Item) => item.id);
+
+            setClaimedItemIds(Array.from(new Set(claimedIds)));
+        } catch {
+            setClaimedItemIds([]);
+        }
+    };
 
     // Fetch items from API on component mount
     useEffect(() => {
-        const fetchItems = async () => {
+        // Get current user ID from localStorage
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
             try {
-                setLoading(true);
-                // Get current user ID from localStorage
-                const userStr = localStorage.getItem('user');
-                if (userStr) {
-                    try {
-                        const user = JSON.parse(userStr);
-                        setCurrentUserId(user.id);
-                    } catch (e) {
-                        console.error('Failed to parse user from localStorage');
-                    }
-                }
-
-                const response = await axios.get('http://localhost:8000/api/items');
-                setFetchedItems(response.data.items);
-                setError(null);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'An error occurred');
-                setFetchedItems([]);
-            } finally {
-                setLoading(false);
+                const user = JSON.parse(userStr);
+                setCurrentUserId(user.id);
+            } catch {
+                console.error('Failed to parse user from localStorage');
             }
-        };
+        }
 
         fetchItems();
+        fetchClaimedItemIds();
     }, []);
 
     // Report form state
@@ -94,74 +122,48 @@ export default function Items() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [showUserModal, setShowUserModal] = useState(false);
 
-    // Toggleable actions per item (local state only — use backend in production)
-    const [itemActions, setItemActions] = useState<Record<number, { claimed?: boolean; reported?: boolean }>>({});
-
-    const toggleClaim = (id: number) => {
+    const toggleClaim = async (id: number) => {
         const token = localStorage.getItem('token');
         if (!token) {
             toast.error('Please login to claim items');
             return;
         }
 
-        // Update local state immediately for UI feedback
-        setItemActions(prev => {
-            const current = prev[id] || {};
-            const willBeClaimed = !current.claimed;
-            return {
-                ...prev,
-                [id]: {
-                    claimed: willBeClaimed,
-                    reported: false,
-                },
-            };
-        });
-
-        // Send to backend
-        axios.put(`http://localhost:8000/api/items/${id}/claim`, {}, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        }).then(response => {
+        try {
+            setClaimLoadingId(id);
+            const response = await axios.put(`http://localhost:8000/api/items/${id}/claim`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
             console.log('Claim response:', response.data);
             toast.success(response.data.message || 'Claim updated successfully');
-        }).catch(err => {
+            await fetchItems();
+            await fetchClaimedItemIds();
+        } catch (err: any) {
             console.error('Error toggling claim:', err);
             const errorMsg = err.response?.data?.message || 'Failed to update claim status';
             toast.error(errorMsg);
-            // Revert UI change on error
-            setItemActions(prev => {
-                const current = prev[id] || {};
-                return {
-                    ...prev,
-                    [id]: {
-                        ...current,
-                        claimed: !current.claimed
-                    }
-                };
-            });
-        });
+        } finally {
+            setClaimLoadingId(null);
+        }
     };
 
     const toggleReport = (id: number) => {
-        setItemActions(prev => {
-            const current = prev[id] || {};
-            const willBeReported = !current.reported;
-            return {
-                ...prev,
-                [id]: {
-                    reported: willBeReported,
-                    claimed: false, // mutually exclusive
-                },
-            };
-        });
+        setReportedItemIds(prev => (
+            prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+        ));
     };
 
 
     // Filter + search logic
     const filteredReports = fetchedItems.filter((report) => {
+        if (report.valid !== 1 || report.resolution_status === 'resolved') {
+            return false;
+        }
+
         // Exclude user's own items
         if (currentUserId && report.user_id === currentUserId) {
             return false;
@@ -253,8 +255,8 @@ export default function Items() {
             setShowReportModal(false);
 
             // Refresh items list
-            const itemsResponse = await axios.get('http://localhost:8000/api/items');
-            setFetchedItems(itemsResponse.data.items);
+            await fetchItems();
+            await fetchClaimedItemIds();
         } catch (err) {
             console.error('Error submitting report:', err);
             toast.error(err instanceof Error ? err.message : 'Failed to submit report');
@@ -327,7 +329,8 @@ export default function Items() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {paginatedReports.map(report => {
-                            const action = itemActions[report.id] || {};
+                            const isClaimed = claimedItemIds.includes(report.id);
+                            const isReported = reportedItemIds.includes(report.id);
                             return (
                                 <div
                                     key={report.id}
@@ -408,24 +411,25 @@ export default function Items() {
                                         <div className="mt-auto flex gap-2">
                                             <button
                                                 onClick={() => toggleClaim(report.id)}
+                                                disabled={claimLoadingId === report.id}
                                                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${
-                                                    action.claimed
-                                                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl'
+                                                    isClaimed
+                                                        ? 'bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg hover:shadow-xl'
                                                         : 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 border border-green-300'
                                                 }`}
                                             >
-                                                {action.claimed ? '✓ Claimed' : '🙋 Claim'}
+                                                {claimLoadingId === report.id ? '⏳ Processing...' : isClaimed ? 'Release' : '🙋 Claim'}
                                             </button>
 
                                             <button
                                                 onClick={() => toggleReport(report.id)}
                                                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${
-                                                    action.reported
+                                                    isReported
                                                         ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg hover:shadow-xl'
                                                         : 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 hover:from-orange-200 hover:to-red-200 border border-orange-300'
                                                 }`}
                                             >
-                                                {action.reported ? '⚠ Reported' : '🚩 Report'}
+                                                {isReported ? '⚠ Reported' : '🚩 Report'}
                                             </button>
                                         </div>
                                     </div>

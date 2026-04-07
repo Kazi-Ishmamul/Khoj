@@ -28,8 +28,16 @@ Route::middleware('jwt.auth')->group(function () {
     Route::post('/logout', [App\Http\Controllers\ApiAuthController::class, 'logout']);
     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'show']);
     Route::post('/profile', [App\Http\Controllers\ProfileController::class, 'update']);
+});
+
+Route::middleware(['jwt.auth', 'role:admin'])->group(function () {
     Route::get('/users', [App\Http\Controllers\UserController::class, 'index']);
+});
+
+Route::middleware(['jwt.auth', 'role:user'])->group(function () {
     Route::post('/items', [App\Http\Controllers\ItemController::class, 'store']);
+    Route::put('/items/{id}', [App\Http\Controllers\ItemController::class, 'update']);
+    Route::delete('/items/{id}', [App\Http\Controllers\ItemController::class, 'destroy']);
     Route::put('/items/{id}/claim', [App\Http\Controllers\ItemController::class, 'toggleClaim']);
     Route::get('/my-activity', [App\Http\Controllers\ActivityController::class, 'myActivity']);
     Route::post('/claims/{claimId}/accept', [App\Http\Controllers\ClaimController::class, 'acceptClaim']);

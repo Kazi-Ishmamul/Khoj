@@ -43,6 +43,7 @@ interface Claim {
     validity: number;
     created_at?: string;
     claimedBy?: User;
+    claimed_by?: User;
 }
 
 interface ActivityData {
@@ -51,6 +52,16 @@ interface ActivityData {
     claim_requests: { count: number; items: Item[] };
     claims_received: { count: number; items: Item[] };
     resolved: { count: number; items: Item[] };
+}
+
+interface EditReportForm {
+    item_name: string;
+    category: string;
+    description: string;
+    date_time: string;
+    location: string;
+    contact_info: string;
+    item_image_url: string;
 }
 
 type TabType = 'lost_items' | 'found_items' | 'claim_requests' | 'claims_received' | 'resolved';
@@ -66,50 +77,63 @@ export default function MyActivity() {
     const [actionLoading, setActionLoading] = useState<number | null>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [showUserModal, setShowUserModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingItem, setEditingItem] = useState<Item | null>(null);
+    const [editSaving, setEditSaving] = useState(false);
+    const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
+    const [editForm, setEditForm] = useState<EditReportForm>({
+        item_name: '',
+        category: '',
+        description: '',
+        date_time: '',
+        location: '',
+        contact_info: '',
+        item_image_url: ''
+    });
+
+    const fetchActivityData = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('Please login to view your activity');
+                setActivityData(null);
+                return;
+            }
+
+            const response = await axios.get('http://localhost:8000/api/my-activity', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+            setActivityData(response.data.data);
+            setError(null);
+        } catch (err) {
+            console.error('Activity fetch error:', err);
+            let errorMsg = 'Failed to load activity';
+
+            if (axios.isAxiosError(err)) {
+                if (err.response?.status === 401) {
+                    errorMsg = 'Unauthorized - Please login again';
+                    localStorage.removeItem('token');
+                } else {
+                    errorMsg = err.response?.data?.message || err.message || 'Failed to load activity';
+                }
+            } else if (err instanceof Error) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setActivityData(null);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Fetch activity data on component mount
     useEffect(() => {
-        const fetchActivity = async () => {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    setError('Please login to view your activity');
-                    setLoading(false);
-                    return;
-                }
-
-                const response = await axios.get('http://localhost:8000/api/my-activity', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
-                });
-                setActivityData(response.data.data);
-                setError(null);
-            } catch (err) {
-                console.error('Activity fetch error:', err);
-                let errorMsg = 'Failed to load activity';
-
-                if (axios.isAxiosError(err)) {
-                    if (err.response?.status === 401) {
-                        errorMsg = 'Unauthorized - Please login again';
-                        localStorage.removeItem('token');
-                    } else {
-                        errorMsg = err.response?.data?.message || err.message || 'Failed to load activity';
-                    }
-                } else if (err instanceof Error) {
-                    errorMsg = err.message;
-                }
-
-                setError(errorMsg);
-                setActivityData(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchActivity();
+        fetchActivityData();
     }, []);
 
     const handleAcceptClaim = async (claimId: number) => {
@@ -124,14 +148,7 @@ export default function MyActivity() {
                 }
             });
 
-            // Refresh activity data
-            const response = await axios.get('http://localhost:8000/api/my-activity', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            });
-            setActivityData(response.data.data);
+            await fetchActivityData();
         } catch (err) {
             console.error('Error accepting claim:', err);
             alert('Failed to accept claim');
@@ -152,19 +169,99 @@ export default function MyActivity() {
                 }
             });
 
-            // Refresh activity data
-            const response = await axios.get('http://localhost:8000/api/my-activity', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            });
-            setActivityData(response.data.data);
+            await fetchActivityData();
         } catch (err) {
             console.error('Error declining claim:', err);
             alert('Failed to decline claim');
         } finally {
             setActionLoading(null);
+        }
+    };
+
+    const openEditModal = (item: Item) => {
+        setEditingItem(item);
+        setEditForm({
+            item_name: item.item_name || '',
+            category: item.category || '',
+            description: item.description || '',
+            date_time: item.date_time ? item.date_time.slice(0, 16) : '',
+            location: item.location || '',
+            contact_info: item.contact_info || '',
+            item_image_url: item.item_image_url || ''
+        });
+        setShowEditModal(true);
+    };
+
+    const closeEditModal = () => {
+        setShowEditModal(false);
+        setEditingItem(null);
+        setEditSaving(false);
+    };
+
+    const handleEditInputChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value } = e.target;
+        setEditForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleUpdateItem = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!editingItem) return;
+
+        try {
+            setEditSaving(true);
+            const token = localStorage.getItem('token');
+
+            await axios.put(
+                `http://localhost:8000/api/items/${editingItem.id}`,
+                editForm,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                }
+            );
+
+            await fetchActivityData();
+            closeEditModal();
+        } catch (err) {
+            console.error('Error updating item:', err);
+            const msg = axios.isAxiosError(err)
+                ? err.response?.data?.message || 'Failed to update report'
+                : 'Failed to update report';
+            alert(msg);
+        } finally {
+            setEditSaving(false);
+        }
+    };
+
+    const handleDeleteItem = async (itemId: number) => {
+        const confirmed = window.confirm('Are you sure you want to delete this report?');
+        if (!confirmed) return;
+
+        try {
+            setDeletingItemId(itemId);
+            const token = localStorage.getItem('token');
+
+            await axios.delete(`http://localhost:8000/api/items/${itemId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            await fetchActivityData();
+        } catch (err) {
+            console.error('Error deleting item:', err);
+            const msg = axios.isAxiosError(err)
+                ? err.response?.data?.message || 'Failed to delete report'
+                : 'Failed to delete report';
+            alert(msg);
+        } finally {
+            setDeletingItemId(null);
         }
     };
 
@@ -200,18 +297,31 @@ export default function MyActivity() {
     }
 
     // Get current tab items and filter by search
+    const claimsReceivedCards: Item[] = activityData.claims_received.items.flatMap((item) => {
+        const pendingClaims = (item.claims || []).filter((claim) => claim.validity === 0);
+
+        return pendingClaims.map((claim) => {
+            const claimer = claim.claimedBy || claim.claimed_by;
+            return {
+                ...item,
+                claims: [claim],
+                claimedByUser: claimer
+            };
+        });
+    });
+
     const tabsConfig: Record<TabType, { label: string; icon: string; color: string; data: Item[] }> = {
         lost_items: {
             label: 'Lost Items',
             icon: '🔴',
             color: 'red',
-            data: activityData.lost_items.items
+            data: activityData.lost_items.items.filter(item => item.valid === 1 && item.resolution_status !== 'resolved')
         },
         found_items: {
             label: 'Found Items',
             icon: '🟢',
             color: 'green',
-            data: activityData.found_items.items
+            data: activityData.found_items.items.filter(item => item.valid === 1 && item.resolution_status !== 'resolved')
         },
         claim_requests: {
             label: 'Claim Requests',
@@ -223,7 +333,7 @@ export default function MyActivity() {
             label: 'Claims Received',
             icon: '🟡',
             color: 'yellow',
-            data: activityData.claims_received.items
+            data: claimsReceivedCards
         },
         resolved: {
             label: 'Resolved',
@@ -240,10 +350,6 @@ export default function MyActivity() {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const paginatedItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-    const getStatusBg = (status: string) => {
-        return status === 'lost' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-    };
-
     return (
         <div className="min-h-screen bg-gray-50 py-10">
             <div className="container mx-auto px-4 max-w-7xl">
@@ -257,7 +363,7 @@ export default function MyActivity() {
                 <div className="bg-white rounded-lg shadow-sm border mb-8 overflow-x-auto">
                     <div className="flex">
                         {(Object.entries(tabsConfig) as Array<[TabType, typeof tabsConfig[TabType]]>).map(([tabKey, tab]) => {
-                            const count = activityData[tabKey].count;
+                            const count = tabKey === 'claims_received' ? tab.data.length : activityData[tabKey].count;
                             return (
                                 <button
                                     key={tabKey}
@@ -289,9 +395,14 @@ export default function MyActivity() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {paginatedItems.map(item => (
+                        {paginatedItems.map(item => {
+                            const claimCardId = activeTab === 'claims_received' && item.claims && item.claims.length > 0
+                                ? `${item.id}-${item.claims[0].claim_id}`
+                                : `${item.id}`;
+
+                            return (
                             <div
-                                key={item.id}
+                                key={claimCardId}
                                 className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col group"
                             >
                                 {/* Image Container with Status Badge */}
@@ -369,7 +480,7 @@ export default function MyActivity() {
                                     </div>
 
                                     {/* Claimer Info */}
-                                    {item.claimedByUser && (activeTab === 'claim_requests' || activeTab === 'claims_received' || activeTab === 'resolved') && (
+                                    {item.claimedByUser && (activeTab === 'claim_requests' || activeTab === 'resolved') && (
                                         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-4 border border-purple-200">
                                             <div
                                                 className="flex items-center gap-3 cursor-pointer"
@@ -385,7 +496,7 @@ export default function MyActivity() {
                                                 />
                                                 <div>
                                                     <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
-                                                        {activeTab === 'claim_requests' ? '🙋 Your Claim' : activeTab === 'claims_received' ? '👤 Claimed by' : '✓ Resolved with'}
+                                                        {activeTab === 'claim_requests' ? '🙋 Your Claim' : '✓ Resolved with'}
                                                     </p>
                                                     <p className="text-sm font-bold text-gray-900 hover:text-purple-600 transition-colors">{item.claimedByUser.name}</p>
                                                 </div>
@@ -393,8 +504,60 @@ export default function MyActivity() {
                                         </div>
                                     )}
 
+                                    {activeTab === 'claims_received' && item.claims && item.claims.length > 0 && (
+                                        <div className="space-y-2 mb-4">
+                                            {item.claims.map((claim) => (
+                                                (() => {
+                                                    const claimer = claim.claimedBy || claim.claimed_by;
+                                                    return (
+                                                <div key={claim.claim_id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200">
+                                                    <div
+                                                        className="flex items-center gap-3 cursor-pointer"
+                                                        onClick={() => {
+                                                            if (!claimer) return;
+                                                            setSelectedUser(claimer);
+                                                            setShowUserModal(true);
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src={claimer?.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(claimer?.name || 'User') + '&background=random'}
+                                                            alt={claimer?.name || 'User'}
+                                                            className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-purple-500 transition-all"
+                                                        />
+                                                        <div>
+                                                            <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">👤 Claimed by</p>
+                                                            <p className="text-sm font-bold text-gray-900 hover:text-purple-600 transition-colors">{claimer?.name || 'Unknown User'}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                    );
+                                                })()
+                                            ))}
+                                        </div>
+                                    )}
+
                                     {/* Resolution Status */}
                                     <div className="mt-auto">
+                                        {(activeTab === 'lost_items' || activeTab === 'found_items') && (
+                                            <div className="mb-4 flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEditModal(item)}
+                                                    className="flex-1 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 font-semibold text-sm transition"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteItem(item.id)}
+                                                    disabled={deletingItemId === item.id}
+                                                    className="flex-1 px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 font-semibold text-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
+                                                >
+                                                    {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
+                                                </button>
+                                            </div>
+                                        )}
+
                                         {activeTab !== 'claims_received' && (
                                             <span
                                                 className={`inline-block px-4 py-2 rounded-full text-xs font-bold mb-3 ${
@@ -415,27 +578,32 @@ export default function MyActivity() {
 
                                         {/* Accept/Decline buttons for Claims Received */}
                                         {activeTab === 'claims_received' && item.claims && item.claims.length > 0 && (
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleAcceptClaim(item.claims![0].claim_id)}
-                                                    disabled={actionLoading === item.claims![0].claim_id}
-                                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-100 shadow-md hover:shadow-lg"
-                                                >
-                                                    {actionLoading === item.claims![0].claim_id ? '⏳ Processing...' : '✓ Accept'}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeclineClaim(item.claims![0].claim_id)}
-                                                    disabled={actionLoading === item.claims![0].claim_id}
-                                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-100 shadow-md hover:shadow-lg"
-                                                >
-                                                    {actionLoading === item.claims![0].claim_id ? '⏳ Processing...' : '✕ Decline'}
-                                                </button>
+                                            <div className="space-y-2">
+                                                {item.claims.map((claim) => (
+                                                    <div key={claim.claim_id} className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleAcceptClaim(claim.claim_id)}
+                                                            disabled={actionLoading === claim.claim_id}
+                                                            className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-100 shadow-md hover:shadow-lg"
+                                                        >
+                                                            {actionLoading === claim.claim_id ? '⏳ Processing...' : '✓ Accept'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeclineClaim(claim.claim_id)}
+                                                            disabled={actionLoading === claim.claim_id}
+                                                            className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-100 shadow-md hover:shadow-lg"
+                                                        >
+                                                            {actionLoading === claim.claim_id ? '⏳ Processing...' : '✕ Decline'}
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
@@ -608,6 +776,131 @@ export default function MyActivity() {
                                     ) : null;
                                 })()}
                             </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Edit Report Modal */}
+            {showEditModal && editingItem && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+                        onClick={closeEditModal}
+                    />
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                        <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
+                            <div className="px-6 py-4 border-b bg-gray-50 flex items-center justify-between">
+                                <h2 className="text-xl font-bold text-gray-800">Edit Report</h2>
+                                <button
+                                    type="button"
+                                    onClick={closeEditModal}
+                                    className="text-gray-500 hover:text-gray-700"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleUpdateItem} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
+                                    <input
+                                        type="text"
+                                        name="item_name"
+                                        value={editForm.item_name}
+                                        onChange={handleEditInputChange}
+                                        required
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                    <input
+                                        type="text"
+                                        name="category"
+                                        value={editForm.category}
+                                        onChange={handleEditInputChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                                    <textarea
+                                        name="description"
+                                        value={editForm.description}
+                                        onChange={handleEditInputChange}
+                                        required
+                                        rows={4}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+                                    <input
+                                        type="datetime-local"
+                                        name="date_time"
+                                        value={editForm.date_time}
+                                        onChange={handleEditInputChange}
+                                        required
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+                                    <input
+                                        type="text"
+                                        name="location"
+                                        value={editForm.location}
+                                        onChange={handleEditInputChange}
+                                        required
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Info *</label>
+                                    <input
+                                        type="text"
+                                        name="contact_info"
+                                        value={editForm.contact_info}
+                                        onChange={handleEditInputChange}
+                                        required
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                                    <input
+                                        type="url"
+                                        name="item_image_url"
+                                        value={editForm.item_image_url}
+                                        onChange={handleEditInputChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-2 flex justify-end gap-3 mt-2">
+                                    <button
+                                        type="button"
+                                        onClick={closeEditModal}
+                                        className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={editSaving}
+                                        className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                        {editSaving ? 'Saving...' : 'Save Changes'}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </>
