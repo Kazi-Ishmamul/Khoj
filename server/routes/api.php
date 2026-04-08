@@ -28,6 +28,7 @@ Route::middleware('jwt.auth')->group(function () {
     Route::post('/logout', [App\Http\Controllers\ApiAuthController::class, 'logout']);
     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'show']);
     Route::post('/profile', [App\Http\Controllers\ProfileController::class, 'update']);
+    Route::post('/profile/password', [App\Http\Controllers\ProfileController::class, 'updatePassword']);
 });
 
 Route::middleware(['jwt.auth', 'role:admin'])->group(function () {

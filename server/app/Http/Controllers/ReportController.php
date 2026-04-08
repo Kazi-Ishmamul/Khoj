@@ -221,7 +221,7 @@ class ReportController extends Controller
             $stats = [
                 'total_reports' => Report::count(),
                 'pending_reports' => Report::pending()->count(),
-                'struck_reports' => Report::struck()->count(),
+                'struck_reports' => Report::struck()->distinct('item_id')->count('item_id'),
                 'dismissed_reports' => Report::dismissed()->count(),
             ];
 
