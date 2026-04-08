@@ -1,0 +1,1 @@
+src/views/user/MyActivity.tsx(915,1): error TS1005: '}' expected.
