@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaUser, FaEnvelope, FaPhoneAlt, FaMapMarkerAlt, FaSearch } from 'react-icons/fa';
+import { FaEnvelope, FaPhoneAlt, FaMapMarkerAlt, FaSearch } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface UserData {

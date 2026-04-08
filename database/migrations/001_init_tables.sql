@@ -73,3 +73,17 @@ CREATE TABLE claims (
     CONSTRAINT fk_claim_user FOREIGN KEY (claimed_by_id) REFERENCES users(id) ON DELETE CASCADE
 )
 
+
+
+
+CREATE TABLE reports (
+    report_id INT AUTO_INCREMENT PRIMARY KEY,
+    item_id BIGINT UNSIGNED NOT NULL,
+    r_user_id INT NOT NULL,                 -- The user reporting the post
+    reason VARCHAR(500) NOT NULL DEFAULT 'No specific reason provided',
+    status TINYINT DEFAULT 0,               -- 0: pending, -1: striked (fake), 1: dismissed (valid)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_report_item FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+    CONSTRAINT fk_report_user FOREIGN KEY (r_user_id) REFERENCES users(id) ON DELETE CASCADE
+)

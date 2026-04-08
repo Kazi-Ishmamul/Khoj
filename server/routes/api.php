@@ -32,6 +32,12 @@ Route::middleware('jwt.auth')->group(function () {
 
 Route::middleware(['jwt.auth', 'role:admin'])->group(function () {
     Route::get('/users', [App\Http\Controllers\UserController::class, 'index']);
+
+    // Admin report management
+    Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index']);
+    Route::get('/reports/stats', [App\Http\Controllers\ReportController::class, 'getStats']);
+    Route::post('/reports/{reportId}/strike', [App\Http\Controllers\ReportController::class, 'strike']);
+    Route::post('/reports/{reportId}/dismiss', [App\Http\Controllers\ReportController::class, 'dismiss']);
 });
 
 Route::middleware(['jwt.auth', 'role:user'])->group(function () {
@@ -42,4 +48,9 @@ Route::middleware(['jwt.auth', 'role:user'])->group(function () {
     Route::get('/my-activity', [App\Http\Controllers\ActivityController::class, 'myActivity']);
     Route::post('/claims/{claimId}/accept', [App\Http\Controllers\ClaimController::class, 'acceptClaim']);
     Route::post('/claims/{claimId}/decline', [App\Http\Controllers\ClaimController::class, 'declineClaim']);
+
+    // User can report items
+    Route::post('/reports', [App\Http\Controllers\ReportController::class, 'store']);
+    Route::get('/items/{itemId}/reports', [App\Http\Controllers\ReportController::class, 'getItemReports']);
+    Route::get('/my-reports', [App\Http\Controllers\ReportController::class, 'myReports']);
 });

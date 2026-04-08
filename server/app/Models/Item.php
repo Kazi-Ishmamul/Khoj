@@ -32,4 +32,9 @@ class Item extends Model
     {
         return $this->hasMany(Claim::class, 'item_id', 'id');
     }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class, 'item_id', 'id');
+    }
 }

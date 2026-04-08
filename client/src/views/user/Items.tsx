@@ -89,6 +89,27 @@ export default function Items() {
         }
     };
 
+    const fetchReportedItemIds = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setReportedItemIds([]);
+            return;
+        }
+        try {
+            const response = await axios.get('http://localhost:8000/api/my-reports', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+            if (response.data?.success) {
+                setReportedItemIds(response.data.data.reported_item_ids || []);
+            }
+        } catch {
+            setReportedItemIds([]);
+        }
+    };
+
     // Fetch items from API on component mount
     useEffect(() => {
         // Get current user ID from localStorage
@@ -104,9 +125,10 @@ export default function Items() {
 
         fetchItems();
         fetchClaimedItemIds();
+        fetchReportedItemIds();
     }, []);
 
-    // Report form state
+    // Report item form state (for submitting lost/found)
     const [formData, setFormData] = useState({
         itemName: '',
         category: '',
@@ -121,6 +143,12 @@ export default function Items() {
     const [itemImagePreview, setItemImagePreview] = useState<string | null>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [showUserModal, setShowUserModal] = useState(false);
+
+    // Report violation form state (for reporting items as fake/suspicious)
+    const [showViolationModal, setShowViolationModal] = useState(false);
+    const [selectedItemForReport, setSelectedItemForReport] = useState<Item | null>(null);
+    const [violationReason, setViolationReason] = useState('');
+    const [reportingId, setReportingId] = useState<number | null>(null);
 
     const toggleClaim = async (id: number) => {
         const token = localStorage.getItem('token');
@@ -151,10 +179,56 @@ export default function Items() {
         }
     };
 
-    const toggleReport = (id: number) => {
-        setReportedItemIds(prev => (
-            prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
-        ));
+    const toggleReport = (item: Item) => {
+        setSelectedItemForReport(item);
+        setViolationReason('');
+        setShowViolationModal(true);
+    };
+
+    const submitViolationReport = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            toast.error('Please login to report items');
+            return;
+        }
+
+        if (!selectedItemForReport || !violationReason.trim()) {
+            toast.error('Please provide a reason for the report');
+            return;
+        }
+
+        try {
+            setReportingId(selectedItemForReport.id);
+            await axios.post(
+                'http://localhost:8000/api/reports',
+                {
+                    item_id: selectedItemForReport.id,
+                    reason: violationReason
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            toast.success('Report submitted successfully. Admins will review it.');
+            setShowViolationModal(false);
+            setSelectedItemForReport(null);
+            setViolationReason('');
+            setReportedItemIds(prev => [...prev, selectedItemForReport.id]);
+            // Refresh from server to keep state in sync
+            fetchReportedItemIds();
+        } catch (err: any) {
+            console.error('Error submitting report:', err);
+            const errorMsg = err.response?.data?.message || 'Failed to submit report';
+            toast.error(errorMsg);
+        } finally {
+            setReportingId(null);
+        }
     };
 
 
@@ -422,14 +496,15 @@ export default function Items() {
                                             </button>
 
                                             <button
-                                                onClick={() => toggleReport(report.id)}
-                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${
+                                                onClick={() => !isReported && toggleReport(report)}
+                                                disabled={isReported || reportingId === report.id}
+                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 ${
                                                     isReported
-                                                        ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg hover:shadow-xl'
-                                                        : 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 hover:from-orange-200 hover:to-red-200 border border-orange-300'
+                                                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300'
+                                                        : 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 hover:from-orange-200 hover:to-red-200 border border-orange-300 transform hover:scale-105 active:scale-100'
                                                 }`}
                                             >
-                                                {isReported ? '⚠ Reported' : '🚩 Report'}
+                                                {reportingId === report.id ? '⏳ Reporting...' : isReported ? '⚠ Reported' : '🚩 Report'}
                                             </button>
                                         </div>
                                     </div>
@@ -758,6 +833,82 @@ export default function Items() {
                                 )}
 
 
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+            {/* Violation Report Modal */}
+            {showViolationModal && selectedItemForReport && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]"
+                        onClick={() => !reportingId && setShowViolationModal(false)}
+                    />
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all relative">
+                            {/* Accent line */}
+                            <div className="h-1.5 w-full bg-gradient-to-r from-red-500 to-rose-500" />
+                            
+                            <button
+                                onClick={() => setShowViolationModal(false)}
+                                disabled={reportingId !== null}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl disabled:opacity-50"
+                            >
+                                ✕
+                            </button>
+
+                            <div className="p-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-red-500 text-2xl">
+                                        🚨
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900">Report Item</h3>
+                                        <p className="text-sm text-gray-500">Flag this item for admin review</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 rounded-xl p-3 mb-5 border border-gray-100">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Reporting:</p>
+                                    <p className="font-bold text-gray-900 line-clamp-1">{selectedItemForReport.item_name}</p>
+                                </div>
+
+                                <form onSubmit={submitViolationReport}>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Reason for reporting <span className="text-red-500">*</span>
+                                    </label>
+                                    <textarea
+                                        value={violationReason}
+                                        onChange={(e) => setViolationReason(e.target.value)}
+                                        placeholder="e.g., Fake item, inappropriate content, spam..."
+                                        rows={4}
+                                        required
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none text-sm"
+                                        disabled={reportingId !== null}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-2 mb-6">
+                                        False reports may result in account suspension.
+                                    </p>
+
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowViolationModal(false)}
+                                            disabled={reportingId !== null}
+                                            className="flex-1 px-4 py-3 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={reportingId !== null || !violationReason.trim()}
+                                            className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-sm shadow-md transition-all disabled:opacity-50"
+                                        >
+                                            {reportingId !== null ? 'Submitting...' : 'Submit Report'}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>

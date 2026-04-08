@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 interface UserInfo {
     bio?: string | null;
@@ -81,6 +82,7 @@ export default function MyActivity() {
     const [editingItem, setEditingItem] = useState<Item | null>(null);
     const [editSaving, setEditSaving] = useState(false);
     const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
+
     const [editForm, setEditForm] = useState<EditReportForm>({
         item_name: '',
         category: '',
@@ -130,7 +132,6 @@ export default function MyActivity() {
             setLoading(false);
         }
     };
-
     // Fetch activity data on component mount
     useEffect(() => {
         fetchActivityData();
@@ -151,7 +152,7 @@ export default function MyActivity() {
             await fetchActivityData();
         } catch (err) {
             console.error('Error accepting claim:', err);
-            alert('Failed to accept claim');
+            toast.error('Failed to accept claim');
         } finally {
             setActionLoading(null);
         }
@@ -172,7 +173,7 @@ export default function MyActivity() {
             await fetchActivityData();
         } catch (err) {
             console.error('Error declining claim:', err);
-            alert('Failed to decline claim');
+            toast.error('Failed to decline claim');
         } finally {
             setActionLoading(null);
         }
@@ -232,7 +233,7 @@ export default function MyActivity() {
             const msg = axios.isAxiosError(err)
                 ? err.response?.data?.message || 'Failed to update report'
                 : 'Failed to update report';
-            alert(msg);
+            toast.error(msg);
         } finally {
             setEditSaving(false);
         }
@@ -253,13 +254,14 @@ export default function MyActivity() {
                 }
             });
 
+            toast.success('Item deleted successfully');
             await fetchActivityData();
         } catch (err) {
             console.error('Error deleting item:', err);
             const msg = axios.isAxiosError(err)
                 ? err.response?.data?.message || 'Failed to delete report'
                 : 'Failed to delete report';
-            alert(msg);
+            toast.error(msg);
         } finally {
             setDeletingItemId(null);
         }
@@ -363,7 +365,10 @@ export default function MyActivity() {
                 <div className="bg-white rounded-lg shadow-sm border mb-8 overflow-x-auto">
                     <div className="flex">
                         {(Object.entries(tabsConfig) as Array<[TabType, typeof tabsConfig[TabType]]>).map(([tabKey, tab]) => {
-                            const count = tabKey === 'claims_received' ? tab.data.length : activityData[tabKey].count;
+                    const count =
+                            tabKey === 'claims_received'
+                                ? tab.data.length
+                                : activityData[tabKey]?.count ?? tab.data.length;
                             return (
                                 <button
                                     key={tabKey}
