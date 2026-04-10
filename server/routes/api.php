@@ -46,6 +46,7 @@ Route::middleware(['jwt.auth', 'role:user'])->group(function () {
     Route::post('/items', [App\Http\Controllers\ItemController::class, 'store']);
     Route::put('/items/{id}', [App\Http\Controllers\ItemController::class, 'update']);
     Route::delete('/items/{id}', [App\Http\Controllers\ItemController::class, 'destroy']);
+    Route::get('/items/suggestions/match', [App\Http\Controllers\ItemController::class, 'geminiSuggestions']);
     Route::put('/items/{id}/claim', [App\Http\Controllers\ItemController::class, 'toggleClaim']);
     Route::get('/my-activity', [App\Http\Controllers\ActivityController::class, 'myActivity']);
     Route::post('/claims/{claimId}/accept', [App\Http\Controllers\ClaimController::class, 'acceptClaim']);
