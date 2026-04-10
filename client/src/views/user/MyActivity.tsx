@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -82,6 +82,9 @@ export default function MyActivity() {
     const [editingItem, setEditingItem] = useState<Item | null>(null);
     const [editSaving, setEditSaving] = useState(false);
     const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
     const [editForm, setEditForm] = useState<EditReportForm>({
         item_name: '',
@@ -190,6 +193,8 @@ export default function MyActivity() {
             contact_info: item.contact_info || '',
             item_image_url: item.item_image_url || ''
         });
+        setImageFile(null);
+        setImagePreview(null);
         setShowEditModal(true);
     };
 
@@ -197,6 +202,15 @@ export default function MyActivity() {
         setShowEditModal(false);
         setEditingItem(null);
         setEditSaving(false);
+        setImageFile(null);
+        setImagePreview(null);
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
     };
 
     const handleEditInputChange = (
@@ -213,11 +227,33 @@ export default function MyActivity() {
 
         try {
             setEditSaving(true);
+            let finalImageUrl = editForm.item_image_url;
+
+            // Upload image to Cloudinary if a new file is selected
+            if (imageFile) {
+                const uploadData = new FormData();
+                uploadData.append('file', imageFile);
+                uploadData.append('upload_preset', 'khoj-items');
+
+                try {
+                    const cloudinaryRes = await axios.post('https://api.cloudinary.com/v1_1/dait0sacc/image/upload', uploadData);
+                    finalImageUrl = cloudinaryRes.data.secure_url;
+                } catch (uploadErr) {
+                    console.error('Cloudinary upload error:', uploadErr);
+                    toast.error('Failed to upload image');
+                    setEditSaving(false);
+                    return;
+                }
+            }
+
             const token = localStorage.getItem('token');
 
             await axios.put(
                 `http://localhost:8000/api/items/${editingItem.id}`,
-                editForm,
+                {
+                    ...editForm,
+                    item_image_url: finalImageUrl
+                },
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -228,6 +264,7 @@ export default function MyActivity() {
 
             await fetchActivityData();
             closeEditModal();
+            toast.success('Item updated successfully');
         } catch (err) {
             console.error('Error updating item:', err);
             const msg = axios.isAxiosError(err)
@@ -786,6 +823,7 @@ export default function MyActivity() {
                 </>
             )}
 
+
             {/* Edit Report Modal */}
             {showEditModal && editingItem && (
                 <>
@@ -793,119 +831,130 @@ export default function MyActivity() {
                         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
                         onClick={closeEditModal}
                     />
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
-                            <div className="px-6 py-4 border-b bg-gray-50 flex items-center justify-between">
-                                <h2 className="text-xl font-bold text-gray-800">Edit Report</h2>
-                                <button
-                                    type="button"
-                                    onClick={closeEditModal}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleUpdateItem} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
-                                    <input
-                                        type="text"
-                                        name="item_name"
-                                        value={editForm.item_name}
-                                        onChange={handleEditInputChange}
-                                        required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                    <input
-                                        type="text"
-                                        name="category"
-                                        value={editForm.category}
-                                        onChange={handleEditInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
-
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                                    <textarea
-                                        name="description"
-                                        value={editForm.description}
-                                        onChange={handleEditInputChange}
-                                        required
-                                        rows={4}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
-                                    <input
-                                        type="datetime-local"
-                                        name="date_time"
-                                        value={editForm.date_time}
-                                        onChange={handleEditInputChange}
-                                        required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
-                                    <input
-                                        type="text"
-                                        name="location"
-                                        value={editForm.location}
-                                        onChange={handleEditInputChange}
-                                        required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Info *</label>
-                                    <input
-                                        type="text"
-                                        name="contact_info"
-                                        value={editForm.contact_info}
-                                        onChange={handleEditInputChange}
-                                        required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                                    <input
-                                        type="url"
-                                        name="item_image_url"
-                                        value={editForm.item_image_url}
-                                        onChange={handleEditInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                </div>
-
-                                <div className="md:col-span-2 flex justify-end gap-3 mt-2">
+                    <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto pt-20 md:pt-24">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 my-8 max-h-[calc(100vh-10rem)] overflow-y-auto">
+                            <div className="p-6 md:p-8">
+                                <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2 border-b">
+                                    <h2 className="text-2xl font-bold text-gray-800">Edit Report</h2>
                                     <button
                                         type="button"
                                         onClick={closeEditModal}
-                                        className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                        className="text-gray-600 hover:text-gray-900 text-3xl font-bold leading-none"
                                     >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={editSaving}
-                                        className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                                    >
-                                        {editSaving ? 'Saving...' : 'Save Changes'}
+                                        ×
                                     </button>
                                 </div>
-                            </form>
+
+                                <form onSubmit={handleUpdateItem} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
+                                        <input
+                                            type="text"
+                                            name="item_name"
+                                            value={editForm.item_name}
+                                            onChange={handleEditInputChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                        <input
+                                            type="text"
+                                            name="category"
+                                            value={editForm.category}
+                                            onChange={handleEditInputChange}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                                        <textarea
+                                            name="description"
+                                            value={editForm.description}
+                                            onChange={handleEditInputChange}
+                                            required
+                                            rows={3}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+                                        <input
+                                            type="datetime-local"
+                                            name="date_time"
+                                            value={editForm.date_time}
+                                            onChange={handleEditInputChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+                                        <input
+                                            type="text"
+                                            name="location"
+                                            value={editForm.location}
+                                            onChange={handleEditInputChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contact Info *</label>
+                                        <input
+                                            type="text"
+                                            name="contact_info"
+                                            value={editForm.contact_info}
+                                            onChange={handleEditInputChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-3">Item Image (optional)</label>
+                                        <div className="flex items-center gap-4">
+                                            {(imagePreview || editForm.item_image_url) && (
+                                                <img
+                                                    src={imagePreview || editForm.item_image_url}
+                                                    alt="Preview"
+                                                    className="w-20 h-20 rounded-lg object-cover border-2 border-blue-300"
+                                                />
+                                            )}
+                                            <input
+                                                ref={imageInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageChange}
+                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="md:col-span-2 flex justify-end gap-4 mt-6">
+                                        <button
+                                            type="button"
+                                            onClick={closeEditModal}
+                                            className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={editSaving}
+                                            className="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
+                                            {editSaving ? 'Saving...' : 'Save Changes'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </>
