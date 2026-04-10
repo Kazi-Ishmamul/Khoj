@@ -1,5 +1,5 @@
 // Items.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -50,10 +50,13 @@ export default function Items() {
     const [claimedItemIds, setClaimedItemIds] = useState<number[]>([]);
     const [claimLoadingId, setClaimLoadingId] = useState<number | null>(null);
     const [reportedItemIds, setReportedItemIds] = useState<number[]>([]);
+    const [isSearchMode, setIsSearchMode] = useState(false);
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const fetchItems = async () => {
         try {
             setLoading(true);
+            setIsSearchMode(false);
             const response = await axios.get('http://localhost:8000/api/items');
             setFetchedItems(response.data.items);
             setError(null);
@@ -62,6 +65,41 @@ export default function Items() {
             setFetchedItems([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const performGeminiSearch = async (query: string, filterStatus: 'all' | 'lost' | 'found') => {
+        try {
+            setLoading(true);
+            setIsSearchMode(true);
+            const params = {
+                q: query,
+                filter: filterStatus
+            };
+            const response = await axios.get('http://localhost:8000/api/items/search', { params });
+            setFetchedItems(response.data.items || []);
+            setError(null);
+        } catch (err) {
+            console.error('Search error:', err);
+            setError(err instanceof Error ? err.message : 'Search failed');
+            setFetchedItems([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const triggerSearch = () => {
+        setCurrentPage(1);
+        if (!searchTerm.trim()) {
+            fetchItems();
+        } else {
+            performGeminiSearch(searchTerm, filter);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            triggerSearch();
         }
     };
 
@@ -126,6 +164,13 @@ export default function Items() {
         fetchItems();
         fetchClaimedItemIds();
         fetchReportedItemIds();
+
+        // Cleanup timeout on component unmount
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
     }, []);
 
     // Report item form state (for submitting lost/found)
@@ -242,13 +287,16 @@ export default function Items() {
         if (currentUserId && report.user_id === currentUserId) {
             return false;
         }
-        const matchesFilter = filter === 'all' || report.status === filter;
-        const matchesSearch =
-            searchTerm === '' ||
-            report.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            report.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            report.location.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesFilter && matchesSearch;
+
+        // When in Gemini search mode, skip the status-tab filter because
+        // Gemini already applies the correct status logic (e.g. user says
+        // "I lost a calculator" → Gemini returns found items).
+        if (!isSearchMode) {
+            const matchesFilter = filter === 'all' || report.status === filter;
+            if (!matchesFilter) return false;
+        }
+
+        return true;
     });
 
     const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE);
@@ -356,21 +404,45 @@ export default function Items() {
                 <div className="flex flex-col sm:flex-row gap-4 mb-8 items-center justify-between bg-white p-4 rounded-lg shadow-sm border">
                     <div className="flex gap-3">
                         <button
-                            onClick={() => { setFilter('all'); setCurrentPage(1); }}
+                            onClick={() => {
+                                setFilter('all');
+                                setCurrentPage(1);
+                                if (searchTerm.trim()) {
+                                    performGeminiSearch(searchTerm, 'all');
+                                } else {
+                                    fetchItems();
+                                }
+                            }}
                             className={`px-5 py-2 rounded-full font-medium transition-colors ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             All
                         </button>
                         <button
-                            onClick={() => { setFilter('lost'); setCurrentPage(1); }}
+                            onClick={() => {
+                                setFilter('lost');
+                                setCurrentPage(1);
+                                if (searchTerm.trim()) {
+                                    performGeminiSearch(searchTerm, 'lost');
+                                } else {
+                                    fetchItems();
+                                }
+                            }}
                             className={`px-5 py-2 rounded-full font-medium transition-colors ${filter === 'lost' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             Lost
                         </button>
                         <button
-                            onClick={() => { setFilter('found'); setCurrentPage(1); }}
+                            onClick={() => {
+                                setFilter('found');
+                                setCurrentPage(1);
+                                if (searchTerm.trim()) {
+                                    performGeminiSearch(searchTerm, 'found');
+                                } else {
+                                    fetchItems();
+                                }
+                            }}
                             className={`px-5 py-2 rounded-full font-medium transition-colors ${filter === 'found' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
@@ -378,13 +450,25 @@ export default function Items() {
                         </button>
                     </div>
 
-                    <input
-                        type="text"
-                        placeholder="Search items, locations..."
-                        value={searchTerm}
-                        onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                        className="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                    <div className="relative w-full sm:w-80">
+                        <input
+                            type="text"
+                            placeholder="Search items, locations..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <button
+                            onClick={triggerSearch}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors p-1"
+                            title="Search"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Items Grid */}
