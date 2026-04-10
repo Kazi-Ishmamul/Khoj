@@ -258,6 +258,10 @@ class ItemController extends Controller
         // Call Gemini API for semantic search
         $matchedIds = $this->callGeminiSearch($itemsJson, $query);
 
+        if ($matchedIds === null) {
+            return response()->json(['message' => 'AI Service is currently experiencing high demand. Please try again in a few moments.'], 503);
+        }
+
         if (empty($matchedIds)) {
             return response()->json(['items' => []]);
         }
@@ -301,6 +305,15 @@ class ItemController extends Controller
         ### FILTERING GUIDELINES
         - **Strict Relevance:** If a user asks for a 'calculator', DO NOT return 'laptops' or 'chargers' just because they are in 'Electronics'.
         - **Contextual Weighting:** An item found at 'AUST' is a much stronger match for a user at 'AUST' than a similar item found in 'Banani'.
+
+        ### MULTILINGUAL & PHONETIC RULES
+        1. **Language Agnostic:** Treat English and Bengali (বাংলা) as interchangeable. If a user searches for 'ছাতা', it is a perfect match for 'Umbrella' or 'Chata'.
+        2. **Banglish Phonetics:** Recognize Bengali words written in English letters. 
+           - 'Chata' or 'Sata' = Umbrella
+           - 'Manibag' = Wallet/Money bag
+           - 'Ghori' = Watch
+           - 'Choshma' = Glasses/Spectacles
+        3. **Intent Extraction:** If the user types a full sentence like 'Amar chata khuje pacchi na' (I can't find my umbrella), ignore the filler words and focus only on the item 'Umbrella/Chata'.
 
         ### OUTPUT REQUIREMENTS
         - Return ONLY a raw JSON array of integers representing the matching 'id's.
@@ -350,7 +363,7 @@ class ItemController extends Controller
 
             if (!$response || !$response->successful()) {
                 \Log::error('Gemini API Non-200 Response: ' . ($response ? $response->body() : 'null'));
-                return [];
+                return null;
             }
 
             $responseData = $response->json();
@@ -374,7 +387,7 @@ class ItemController extends Controller
 
             if (!is_array($matchedIds)) {
                 \Log::error('Gemini API Error: Invalid JSON returned. Text was: ' . $text);
-                return [];
+                return null;
             }
 
             // Ensure all IDs are integers
@@ -383,7 +396,7 @@ class ItemController extends Controller
             }, $matchedIds);
         } catch (\Exception $e) {
             \Log::error('Gemini API Error: ' . $e->getMessage());
-            return [];
+            return null;
         }
     }
 
@@ -438,6 +451,10 @@ class ItemController extends Controller
 
         $matchedIds = $this->callGeminiSuggestions($userItemsJson, $otherItemsJson);
 
+        if ($matchedIds === null) {
+            return response()->json(['message' => 'AI Service is currently experiencing high demand. Please try again in a few moments.'], 503);
+        }
+
         if (empty($matchedIds)) {
             return response()->json(['items' => []]);
         }
@@ -473,6 +490,15 @@ class ItemController extends Controller
         - For any 'lost' item in USER ITEMS, find highly similar 'found' items in OTHER ITEMS.
         - For any 'found' item in USER ITEMS, find highly similar 'lost' items in OTHER ITEMS.
         - Consider location similarity, brand logic (e.g. Casio is a Calculator), and descriptions.
+
+        ### MULTILINGUAL & PHONETIC RULES
+        1. **Language Agnostic:** Treat English and Bengali (বাংলা) as interchangeable. Match 'ছাতা' to 'Umbrella' or 'Chata'.
+        2. **Banglish Phonetics:** Recognize Bengali words written in English letters. 
+           - 'Chata' or 'Sata' = Umbrella
+           - 'Manibag' = Wallet/Money bag
+           - 'Ghori' = Watch
+           - 'Choshma' = Glasses/Spectacles
+        3. **Intent Extraction:** If the user types a full sentence like 'Amar chata khuje pacchi na', ignore the filler words and focus only on the item itself.
         
         ### OUTPUT
         - Return ONLY a JSON array of integers representing the matching 'id's from 'OTHER ITEMS'.
@@ -516,7 +542,7 @@ class ItemController extends Controller
 
             if (!$response || !$response->successful()) {
                 \Log::error('Gemini Suggestions API Non-200 Response: ' . ($response ? $response->body() : 'null'));
-                return [];
+                return null;
             }
 
             $responseData = $response->json();
@@ -535,17 +561,14 @@ class ItemController extends Controller
             $matchedIds = json_decode($text, true);
             if (!is_array($matchedIds)) {
                 \Log::error('Gemini Suggestions API Error: Invalid JSON returned. Text was: ' . $text);
-                return [];
-            }
-            if (!is_array($matchedIds)) {
-                return [];
+                return null;
             }
 
             return array_map(function ($id) {
                 return (int) $id;
             }, $matchedIds);
         } catch (\Exception $e) {
-            return [];
+            return null;
         }
     }
 }
