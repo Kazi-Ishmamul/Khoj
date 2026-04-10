@@ -23,11 +23,13 @@ Route::post('/register', [App\Http\Controllers\ApiAuthController::class, 'regist
 Route::post('/login', [App\Http\Controllers\ApiAuthController::class, 'login']);
 
 Route::get('/items', [App\Http\Controllers\ItemController::class, 'index']);
+Route::get('/items/search', [App\Http\Controllers\ItemController::class, 'geminiSearch']);
 
 Route::middleware('jwt.auth')->group(function () {
     Route::post('/logout', [App\Http\Controllers\ApiAuthController::class, 'logout']);
     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'show']);
     Route::post('/profile', [App\Http\Controllers\ProfileController::class, 'update']);
+    Route::post('/profile/password', [App\Http\Controllers\ProfileController::class, 'updatePassword']);
 });
 
 Route::middleware(['jwt.auth', 'role:admin'])->group(function () {

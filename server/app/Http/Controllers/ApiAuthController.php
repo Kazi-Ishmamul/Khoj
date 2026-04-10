@@ -31,22 +31,21 @@ class ApiAuthController extends Controller
 
         try {
 
-        $pic_url = $request->pic_url;
-        if (empty($pic_url)) {
-            // Generate a UI Avatar fallback using the provided name
-            $encodedName = urlencode($request->name);
-            $pic_url = "https://ui-avatars.com/api/?name={$encodedName}&background=random";
-        }
-
-        $user = User::create([
+        $userData = [
             'name' => $request->name,
             'phone' => $request->phone,
             'email' => $request->email,
             'address' => $request->address,
-            'pic_url' => $pic_url,
             'password' => Hash::make($request->password),
             'role' => 'user',
-        ]);
+        ];
+
+        // If profile pic URL is omitted, let the DB default value be used.
+        if (!empty($request->pic_url)) {
+            $userData['pic_url'] = $request->pic_url;
+        }
+
+        $user = User::create($userData);
 
         \App\Models\UserInfo::create([
             'user_id' => $user->id,

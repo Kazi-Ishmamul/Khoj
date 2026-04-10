@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\Claim;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
 
 class ItemController extends Controller
 {
@@ -201,6 +202,170 @@ class ItemController extends Controller
         return response()->json([
             'message' => 'Item deleted successfully'
         ], 200);
+    }
+
+    public function geminiSearch(Request $request)
+    {
+        $query = $request->query('q');
+        $filter = $request->query('filter', 'all'); // 'all', 'lost', 'found'
+
+        if (!$query || empty(trim($query))) {
+            return response()->json(['items' => []]);
+        }
+
+        // Get authenticated user to exclude their own items
+        $user = auth()->user();
+        $currentUserId = $user ? $user->id : null;
+
+        // Fetch all active items
+        $itemsQuery = Item::where('valid', 1)
+            ->where('resolution_status', '!=', 'resolved');
+
+        if ($currentUserId) {
+            $itemsQuery->where('user_id', '!=', $currentUserId);
+        }
+
+        $items = $itemsQuery->with(['user', 'user.info'])->get();
+
+        if ($items->isEmpty()) {
+            return response()->json(['items' => []]);
+        }
+
+        // Prepare items JSON for Gemini
+        $itemsJson = json_encode($items->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'item_name' => $item->item_name,
+                'category' => $item->category,
+                'description' => $item->description,
+                'location' => $item->location,
+                'status' => $item->status,
+                'date_time' => $item->date_time
+            ];
+        })->toArray());
+
+        // Call Gemini API for semantic search
+        $matchedIds = $this->callGeminiSearch($itemsJson, $query);
+
+        if (empty($matchedIds)) {
+            return response()->json(['items' => []]);
+        }
+
+        // Filter by matched IDs and apply status filter
+        $filteredItems = $items->filter(function ($item) use ($matchedIds, $filter) {
+            if (!in_array($item->id, $matchedIds)) {
+                return false;
+            }
+            if ($filter !== 'all' && $item->status !== $filter) {
+                return false;
+            }
+            return true;
+        })->values();
+
+        return response()->json(['items' => $filteredItems]);
+    }
+
+    private function callGeminiSearch($itemsJson, $userQuery)
+    {
+        $apiKey = env('GEMINI_API_KEY');
+        if (!$apiKey) {
+            \Log::error('Gemini API Error: GEMINI_API_KEY is not set in .env');
+            return [];
+        }
+
+        $systemPrompt = "
+        ### ROLE
+        You are the Intelligent Discovery Engine for 'Khoj', a specialized Lost and Found platform. Your goal is to connect users with items that likely belong to them.
+
+        ### DATA SOURCE
+        - You will receive a JSON array of items from our database.
+        - Each item has: id, item_name, category, description, location, and status (lost/found).
+
+        ### SEARCH INTELLIGENCE & SEMANTICS
+        1. **Cross-Status Matching:** If a user says 'I lost...', your primary goal is to find items where status is 'found'. However, if no 'found' items match, still return 'lost' items that are highly similar in case of duplicate reporting.
+        2. **Entity Recognition:** Understand that brands represent categories. 'Casio' or 'Scientific' = Calculator; 'iPhone' or 'Samsung' = Mobile/Phone.
+        3. **Spatial Intelligence:** Treat 'AUST', 'Aust Campus', 'Ahsanullah University', and 'Tejgaon' (if applicable) as related locations.
+        4. **Fuzzy Logic:** Be lenient with spelling (e.g., 'calculattor' matches 'calculator').
+
+        ### FILTERING GUIDELINES
+        - **Strict Relevance:** If a user asks for a 'calculator', DO NOT return 'laptops' or 'chargers' just because they are in 'Electronics'.
+        - **Contextual Weighting:** An item found at 'AUST' is a much stronger match for a user at 'AUST' than a similar item found in 'Banani'.
+
+        ### OUTPUT REQUIREMENTS
+        - Return ONLY a raw JSON array of integers representing the matching 'id's.
+        - Order the IDs by relevance (Highest probability of being the user's item first).
+        - If no logical match is found, return an empty array [].
+        - DO NOT include markdown blocks, text, or explanations.
+        ";
+
+
+        $userPrompt = "### DATABASE ITEMS (JSON)\n$itemsJson\n\n### USER QUERY\n'$userQuery'";
+        $userPrompt .= "";
+        \Log::info("=== SENDING TO GEMINI ===");
+        \Log::info($userPrompt);
+
+        try {
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $apiKey;
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post($url, [
+                        'systemInstruction' => [
+                            'parts' => [
+                                [
+                                    'text' => $systemPrompt
+                                ]
+                            ]
+                        ],
+                        'contents' => [
+                            [
+                                'parts' => [
+                                    [
+                                        'text' => $userPrompt
+                                    ]
+                                ]
+                            ]
+                        ],
+                        'generationConfig' => [
+                            'temperature' => 0.2,
+                            'topK' => 40,
+                            'topP' => 0.95,
+                            'maxOutputTokens' => 200,
+                        ]
+                    ]);
+
+            if (!$response->successful()) {
+                \Log::error('Gemini API Non-200 Response: ' . $response->body());
+                return [];
+            }
+
+            $responseData = $response->json();
+
+            // Extract text from Gemini response
+            $text = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '[]';
+
+            \Log::info("=== GEMINI RESPONSE ===");
+            \Log::info($text);
+
+            // Clean markdown json format block if present
+            $text = preg_replace('/```(?:json)?\s*(.*?)\s*```/is', '$1', $text);
+            $text = trim($text);
+
+            // Parse JSON response
+            $matchedIds = json_decode($text, true);
+
+            if (!is_array($matchedIds)) {
+                \Log::error('Gemini API Error: Invalid JSON returned. Text was: ' . $text);
+                return [];
+            }
+
+            // Ensure all IDs are integers
+            return array_map(function ($id) {
+                return (int) $id;
+            }, $matchedIds);
+        } catch (\Exception $e) {
+            \Log::error('Gemini API Error: ' . $e->getMessage());
+            return [];
+        }
     }
 }
 

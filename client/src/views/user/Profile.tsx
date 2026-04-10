@@ -38,6 +38,9 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [passSaving, setPassSaving] = useState(false);
+    const [passwordData, setPasswordData] = useState({ current_password: '', new_password: '', new_password_confirmation: '' });
     const fileRef = useRef<HTMLInputElement>(null);
     const editRef = useRef<HTMLDivElement>(null);
 
@@ -151,6 +154,50 @@ const Profile = () => {
             toast.error('Failed to save.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+        setPasswordData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+    const openPasswordModal = () => {
+        setPasswordData({ current_password: '', new_password: '', new_password_confirmation: '' });
+        setIsChangingPassword(true);
+    };
+
+    const closePasswordModal = () => {
+        setIsChangingPassword(false);
+        setPasswordData({ current_password: '', new_password: '', new_password_confirmation: '' });
+    };
+
+    const handlePasswordSave = async () => {
+        if (passwordData.new_password !== passwordData.new_password_confirmation) {
+            toast.error("New passwords don't match");
+            return;
+        }
+        if (passwordData.new_password.length < 6) {
+            toast.error("New password must be at least 6 characters");
+            return;
+        }
+        
+        setPassSaving(true);
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post('http://localhost:8000/api/profile/password', passwordData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success('Password updated successfully!');
+            closePasswordModal();
+        } catch (error: any) {
+            if (error.response?.data?.errors?.current_password) {
+                toast.error(error.response.data.errors.current_password[0]);
+            } else if (error.response?.data?.errors?.new_password) {
+                toast.error(error.response.data.errors.new_password[0]);
+            } else {
+                toast.error('Failed to update password');
+            }
+        } finally {
+            setPassSaving(false);
         }
     };
 
@@ -312,6 +359,52 @@ const Profile = () => {
                     )}
                 </AnimatePresence>
 
+                {/* ── CHANGE PASSWORD MODAL ── */}
+                <AnimatePresence>
+                    {isChangingPassword && (
+                        <>
+                            <motion.div
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                onClick={closePasswordModal}
+                                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: -20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                                className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4"
+                            >
+                                <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col">
+                                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50">
+                                        <h3 className="text-lg font-extrabold text-slate-800">Change Password</h3>
+                                        <button onClick={closePasswordModal} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                                            <FaTimes />
+                                        </button>
+                                    </div>
+                                    <div className="px-6 py-6 space-y-4">
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Current Password</label>
+                                            <input type="password" name="current_password" value={passwordData.current_password} onChange={handlePasswordChange} className={iCls} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">New Password</label>
+                                            <input type="password" name="new_password" value={passwordData.new_password} onChange={handlePasswordChange} className={iCls} />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Confirm New Password</label>
+                                            <input type="password" name="new_password_confirmation" value={passwordData.new_password_confirmation} onChange={handlePasswordChange} className={iCls} />
+                                        </div>
+                                        <button onClick={handlePasswordSave} disabled={passSaving}
+                                            className="w-full mt-2 px-5 py-3 rounded-xl font-bold bg-indigo-600 text-white shadow hover:bg-indigo-700 transition-all disabled:opacity-60">
+                                            {passSaving ? 'Updating...' : 'Update Password'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+
                 {/* ── PROFILE CARD (always visible, never moves) ── */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -333,12 +426,18 @@ const Profile = () => {
                                 {userData.role}
                             </span>
                         </div>
-                        {!isEditing && (
-                            <button onClick={openEdit}
-                                className="flex-shrink-0 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                                <FaEdit /> Edit Profile
+                        <div className="flex gap-2 shrink-0">
+                            {!isEditing && (
+                                <button onClick={openEdit}
+                                    className="flex-shrink-0 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                                    <FaEdit /> Edit Profile
+                                </button>
+                            )}
+                            <button onClick={openPasswordModal}
+                                className="flex-shrink-0 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm hover:shadow hover:-translate-y-0.5 transition-all">
+                                🔐 Change Password
                             </button>
-                        )}
+                        </div>
                     </div>
 
                     <div className="p-8 space-y-8">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
@@ -89,6 +90,41 @@ class ProfileController extends Controller
         }
         catch (\Exception $e) {
             Log::error('Profile update failed: ' . $e->getMessage());
+            return response()->json(['message' => 'Server Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update the user's password securely.
+     */
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'errors' => ['current_password' => ['The provided password does not match your current password.']]
+            ], 422);
+        }
+
+        try {
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            return response()->json([
+                'message' => 'Password updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Password update failed: ' . $e->getMessage());
             return response()->json(['message' => 'Server Error: ' . $e->getMessage()], 500);
         }
     }
