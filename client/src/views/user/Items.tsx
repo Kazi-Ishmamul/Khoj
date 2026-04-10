@@ -39,45 +39,71 @@ interface Item {
 const ITEMS_PER_PAGE = 15;
 
 export default function Items() {
-    const [filter, setFilter] = useState<'all' | 'lost' | 'found' | 'suggestions'>('all');
+    const [filter, setFilter] = useState<'all' | 'lost' | 'found'>('all');
+    const [activeView, setActiveView] = useState<'database' | 'search' | 'suggestions'>('database');
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [showReportModal, setShowReportModal] = useState(false);
-    const [fetchedItems, setFetchedItems] = useState<Item[]>([]);
+
+    // Separated State Models
+    const [dbItems, setDbItems] = useState<Item[]>([]);
+    const [searchItems, setSearchItems] = useState<Item[]>([]);
+    const [suggestionItems, setSuggestionItems] = useState<Item[]>([]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [claimedItemIds, setClaimedItemIds] = useState<number[]>([]);
     const [claimLoadingId, setClaimLoadingId] = useState<number | null>(null);
     const [reportedItemIds, setReportedItemIds] = useState<number[]>([]);
-    const [isSearchMode, setIsSearchMode] = useState(false);
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const fetchItems = async () => {
         try {
             setLoading(true);
-            setIsSearchMode(false);
             const token = localStorage.getItem('token');
             const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
             const response = await axios.get('http://localhost:8000/api/items', config);
-            setFetchedItems(response.data.items);
+            setDbItems(response.data.items);
             setError(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
-            setFetchedItems([]);
+            setDbItems([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchSuggestions = async () => {
+    const handleViewSuggestions = () => {
+        setActiveView('suggestions');
+
+        // If we already have items in state, no need to fetch
+        if (suggestionItems.length > 0) return;
+
+        // Try to load from localStorage cache
+        const cached = localStorage.getItem('khoj_suggestions_cache');
+        if (cached) {
+            try {
+                setSuggestionItems(JSON.parse(cached));
+                return;
+            } catch (e) {
+                console.error("Failed to parse cached suggestions", e);
+            }
+        }
+
+        // Only explicitly hit Gemini if we have nothing at all
+        fetchSuggestions(false);
+    };
+
+    const fetchSuggestions = async (forceRefresh = false) => {
         try {
             setLoading(true);
-            setIsSearchMode(true);
+            setActiveView('suggestions');
+            setCurrentPage(1);
             const token = localStorage.getItem('token');
             if (!token) {
                 toast.error('Please login to get suggestions');
-                setFetchedItems([]);
+                setSuggestionItems([]);
                 return;
             }
             const response = await axios.get('http://localhost:8000/api/items/suggestions/match', {
@@ -85,45 +111,67 @@ export default function Items() {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            setFetchedItems(response.data.items || []);
+            const items = response.data.items || [];
+            setSuggestionItems(items);
+            localStorage.setItem('khoj_suggestions_cache', JSON.stringify(items));
             setError(null);
+
+            if (forceRefresh) {
+                toast.success('Suggestions refreshed successfully!');
+            }
         } catch (err) {
             console.error('Suggestions error:', err);
             setError(err instanceof Error ? err.message : 'Suggestions failed to load');
-            setFetchedItems([]);
+            setSuggestionItems([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const performGeminiSearch = async (query: string, filterStatus: 'all' | 'lost' | 'found' | 'suggestions') => {
+    const performGeminiSearch = async (query: string) => {
+        const normalizedQuery = query.trim().toLowerCase();
+        if (!normalizedQuery) return;
+        
+        // Try to load exact query match from localStorage cache
+        const cacheKey = `khoj_search_cache_${normalizedQuery}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            try {
+                setSearchItems(JSON.parse(cached));
+                setActiveView('search');
+                setCurrentPage(1);
+                return;
+            } catch (e) {
+                console.error("Failed to parse cached search logic", e);
+            }
+        }
+
         try {
             setLoading(true);
-            setIsSearchMode(true);
-            const params = {
-                q: query,
-                filter: filterStatus
-            };
+            setActiveView('search');
+            setCurrentPage(1);
+            const params = { q: query, filter: 'all' }; // Search across all initially
             const response = await axios.get('http://localhost:8000/api/items/search', { params });
-            setFetchedItems(response.data.items || []);
+            const items = response.data.items || [];
+            
+            setSearchItems(items);
+            localStorage.setItem(cacheKey, JSON.stringify(items));
             setError(null);
         } catch (err) {
             console.error('Search error:', err);
             setError(err instanceof Error ? err.message : 'Search failed');
-            setFetchedItems([]);
+            setSearchItems([]);
         } finally {
             setLoading(false);
         }
     };
 
     const triggerSearch = () => {
-        setCurrentPage(1);
-        if (filter === 'suggestions') {
-            fetchSuggestions();
-        } else if (!searchTerm.trim()) {
-            fetchItems();
+        if (!searchTerm.trim()) {
+            setActiveView('database');
+            setCurrentPage(1);
         } else {
-            performGeminiSearch(searchTerm, filter);
+            performGeminiSearch(searchTerm);
         }
     };
 
@@ -307,8 +355,17 @@ export default function Items() {
     };
 
 
-    // Filter + search logic
-    const filteredReports = fetchedItems.filter((report) => {
+    // Select correct array based on activeView
+    let sourceItems: Item[] = [];
+    if (activeView === 'database') {
+        sourceItems = dbItems.filter(item => filter === 'all' || item.status === filter);
+    } else if (activeView === 'search') {
+        sourceItems = searchItems;
+    } else if (activeView === 'suggestions') {
+        sourceItems = suggestionItems;
+    }
+
+    const filteredReports = sourceItems.filter((report) => {
         if (report.valid !== 1 || report.resolution_status === 'resolved') {
             return false;
         }
@@ -316,14 +373,6 @@ export default function Items() {
         // Exclude user's own items
         if (currentUserId && report.user_id === currentUserId) {
             return false;
-        }
-
-        // When in Gemini search mode, skip the status-tab filter because
-        // Gemini already applies the correct status logic (e.g. user says
-        // "I lost a calculator" → Gemini returns found items).
-        if (!isSearchMode) {
-            const matchesFilter = filter === 'all' || report.status === filter;
-            if (!matchesFilter) return false;
         }
 
         return true;
@@ -419,94 +468,112 @@ export default function Items() {
         <div className="min-h-screen bg-gray-50 py-10 relative">
             <div className="container mx-auto px-4 max-w-7xl">
 
-                {/* Header + Report Button */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Lost & Found Items</h1>
-                    <button
-                        onClick={() => setShowReportModal(true)}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-medium shadow-md transition-all"
-                    >
-                        + Report Lost / Found Item
-                    </button>
-                </div>
+                {/* Header + Actions */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+                    <div>
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 mb-3 tracking-tight">
+                            Lost & Found
+                        </h1>
+                        <p className="text-gray-500 text-lg max-w-xl">
+                            {activeView === 'database' && "Browse reported physical items across the ecosystem."}
+                            {activeView === 'search' && `AI Search Results for "${searchTerm}"`}
+                            {activeView === 'suggestions' && "AI-powered proactive matching for your registered items."}
+                        </p>
+                    </div>
 
-                {/* Filters + Search */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-8 items-center justify-between bg-white p-4 rounded-lg shadow-sm border">
-                    <div className="flex gap-3">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
                         <button
-                            onClick={() => {
-                                setFilter('all');
-                                setCurrentPage(1);
-                                if (searchTerm.trim()) {
-                                    performGeminiSearch(searchTerm, 'all');
-                                } else {
-                                    fetchItems();
-                                }
-                            }}
-                            className={`px-5 py-2 rounded-full font-medium transition-colors ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            onClick={() => activeView === 'suggestions' ? fetchSuggestions(true) : handleViewSuggestions()}
+                            className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-sm border ${activeView === 'suggestions'
+                                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-purple-500/30 border-transparent'
+                                    : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50 hover:shadow-md'
                                 }`}
                         >
-                            All
+                            <span className="text-xl">✨</span>
+                            {activeView === 'suggestions' ? 'Refresh Suggestions' : 'Smart Suggestions'}
+                        </button>
+
+                        <button
+                            onClick={() => setShowReportModal(true)}
+                            className="flex-1 md:flex-none justify-center bg-gray-900 hover:bg-black text-white px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-gray-900/20"
+                        >
+                            + Report Item
+                        </button>
+                    </div>
+                </div>
+
+                {/* Main Filter & Search Control Panel */}
+                <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-4 mb-10 sticky top-4 z-40">
+                    {/* Segmented Control Tabs */}
+                    <div className="flex p-1 bg-gray-50/80 backdrop-blur-md rounded-xl w-full lg:w-auto flex-1 lg:flex-none relative h-14">
+                        <button
+                            onClick={() => {
+                                setActiveView('database');
+                                setFilter('all');
+                                setCurrentPage(1);
+                                setSearchTerm('');
+                            }}
+                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'all' ? 'bg-white text-gray-900 shadow border border-gray-100' : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                        >
+                            All Posts
                         </button>
                         <button
                             onClick={() => {
+                                setActiveView('database');
                                 setFilter('lost');
                                 setCurrentPage(1);
-                                if (searchTerm.trim()) {
-                                    performGeminiSearch(searchTerm, 'lost');
-                                } else {
-                                    fetchItems();
-                                }
+                                setSearchTerm('');
                             }}
-                            className={`px-5 py-2 rounded-full font-medium transition-colors ${filter === 'lost' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'lost' ? 'bg-rose-50 text-rose-700 shadow border border-rose-100' : 'text-gray-500 hover:text-rose-600'
                                 }`}
                         >
                             Lost
                         </button>
                         <button
                             onClick={() => {
+                                setActiveView('database');
                                 setFilter('found');
                                 setCurrentPage(1);
-                                if (searchTerm.trim()) {
-                                    performGeminiSearch(searchTerm, 'found');
-                                } else {
-                                    fetchItems();
-                                }
+                                setSearchTerm('');
                             }}
-                            className={`px-5 py-2 rounded-full font-medium transition-colors ${filter === 'found' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'found' ? 'bg-emerald-50 text-emerald-700 shadow border border-emerald-100' : 'text-gray-500 hover:text-emerald-600'
                                 }`}
                         >
                             Found
                         </button>
-                        <button
-                            onClick={() => {
-                                setFilter('suggestions');
-                                setCurrentPage(1);
-                                fetchSuggestions();
-                            }}
-                            className={`px-5 py-2 rounded-full font-medium transition-colors flex items-center gap-1 ${filter === 'suggestions' ? 'bg-purple-600 text-white shadow-md' : 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
-                                }`}
-                        >
-                            💡 Suggestions
-                        </button>
                     </div>
 
-                    <div className="relative w-full sm:w-80">
+                    {/* Search Field */}
+                    <div className="relative flex-1 lg:max-w-md h-14">
+                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                            {activeView === 'search' ? (
+                                <span className="flex h-3 w-3 relative">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                                </span>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            )}
+                        </div>
                         <input
                             type="text"
-                            placeholder="Search items, locations..."
+                            placeholder="Ask Gemini to find something..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full h-full pl-12 pr-14 outline-none border transition-all duration-300 rounded-xl text-gray-800 placeholder-gray-400 ${activeView === 'search' ? 'border-blue-400 ring-4 ring-blue-50 bg-blue-50/30' : 'border-gray-200 focus:border-gray-300 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-gray-100'
+                                }`}
                         />
                         <button
                             onClick={triggerSearch}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors p-1"
-                            title="Search"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors shadow-sm"
+                            title="Semantic Search"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                             </svg>
                         </button>
                     </div>
@@ -546,11 +613,10 @@ export default function Items() {
                                         )}
                                         {/* Status Badge - Floating */}
                                         <span
-                                            className={`absolute top-3 right-3 px-4 py-2 rounded-full text-xs font-bold backdrop-blur-md ${
-                                                report.status === 'lost'
+                                            className={`absolute top-3 right-3 px-4 py-2 rounded-full text-xs font-bold backdrop-blur-md ${report.status === 'lost'
                                                     ? 'bg-red-500/90 text-white shadow-lg'
                                                     : 'bg-green-500/90 text-white shadow-lg'
-                                            }`}
+                                                }`}
                                         >
                                             {report.status === 'lost' ? '🔴 LOST' : '🟢 FOUND'}
                                         </span>
@@ -611,11 +677,10 @@ export default function Items() {
                                             <button
                                                 onClick={() => toggleClaim(report.id)}
                                                 disabled={claimLoadingId === report.id}
-                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${
-                                                    isClaimed
+                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${isClaimed
                                                         ? 'bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg hover:shadow-xl'
                                                         : 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 border border-green-300'
-                                                }`}
+                                                    }`}
                                             >
                                                 {claimLoadingId === report.id ? '⏳ Processing...' : isClaimed ? 'Release' : '🙋 Claim'}
                                             </button>
@@ -623,11 +688,10 @@ export default function Items() {
                                             <button
                                                 onClick={() => !isReported && toggleReport(report)}
                                                 disabled={isReported || reportingId === report.id}
-                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 ${
-                                                    isReported
+                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 ${isReported
                                                         ? 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300'
                                                         : 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 hover:from-orange-200 hover:to-red-200 border border-orange-300 transform hover:scale-105 active:scale-100'
-                                                }`}
+                                                    }`}
                                             >
                                                 {reportingId === report.id ? '⏳ Reporting...' : isReported ? '⚠ Reported' : '🚩 Report'}
                                             </button>
@@ -828,8 +892,8 @@ export default function Items() {
                                     className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:shadow-xl transition-all duration-150"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"/>
-                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
                                     </svg>
                                 </button>
                             </div>
@@ -856,8 +920,8 @@ export default function Items() {
                                         <div className="flex items-center gap-3">
                                             <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <rect x="2" y="4" width="20" height="16" rx="2"/>
-                                                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                                                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                                                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                                                 </svg>
                                             </span>
                                             <div>
@@ -870,7 +934,7 @@ export default function Items() {
                                         <div className="flex items-center gap-3">
                                             <span className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.98-2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.09a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.33v-.41z"/>
+                                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.98-2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.09a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.33v-.41z" />
                                                 </svg>
                                             </span>
                                             <div>
@@ -892,7 +956,7 @@ export default function Items() {
                                                 color: 'hover:bg-blue-600',
                                                 icon: (
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                                                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                                                     </svg>
                                                 ),
                                             },
@@ -903,7 +967,7 @@ export default function Items() {
                                                 color: 'hover:bg-black',
                                                 icon: (
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                                                     </svg>
                                                 ),
                                             },
@@ -914,9 +978,9 @@ export default function Items() {
                                                 color: 'hover:bg-gradient-to-br hover:from-purple-600 hover:via-pink-500 hover:to-orange-400',
                                                 icon: (
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                                                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                                                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                                                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                                                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                                                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
                                                     </svg>
                                                 ),
                                             },
@@ -927,9 +991,9 @@ export default function Items() {
                                                 color: 'hover:bg-blue-700',
                                                 icon: (
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
-                                                        <rect x="2" y="9" width="4" height="12"/>
-                                                        <circle cx="4" cy="4" r="2"/>
+                                                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                                                        <rect x="2" y="9" width="4" height="12" />
+                                                        <circle cx="4" cy="4" r="2" />
                                                     </svg>
                                                 ),
                                             },
@@ -974,7 +1038,7 @@ export default function Items() {
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all relative">
                             {/* Accent line */}
                             <div className="h-1.5 w-full bg-gradient-to-r from-red-500 to-rose-500" />
-                            
+
                             <button
                                 onClick={() => setShowViolationModal(false)}
                                 disabled={reportingId !== null}
