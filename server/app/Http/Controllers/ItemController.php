@@ -10,12 +10,23 @@ use Illuminate\Support\Facades\Http;
 
 class ItemController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $items = Item::where('valid', 1)
-            ->where('resolution_status', '!=', 'resolved')
-            ->with(['user', 'user.info'])
-            ->get();
+        $query = Item::where('valid', 1)
+            ->where('resolution_status', '!=', 'resolved');
+
+        try {
+            if ($request->bearerToken()) {
+                $user = auth('api')->user();
+                if ($user) {
+                    $query->where('user_id', '!=', $user->id);
+                }
+            }
+        } catch (\Exception $e) {
+            // Unauthenticated requests just see all valid items
+        }
+
+        $items = $query->with(['user', 'user.info'])->get();
         return response()->json(['items' => $items]);
     }
 
@@ -306,35 +317,39 @@ class ItemController extends Controller
 
         try {
             $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $apiKey;
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post($url, [
-                        'systemInstruction' => [
-                            'parts' => [
-                                [
-                                    'text' => $systemPrompt
-                                ]
-                            ]
-                        ],
-                        'contents' => [
-                            [
-                                'parts' => [
-                                    [
-                                        'text' => $userPrompt
-                                    ]
-                                ]
-                            ]
-                        ],
-                        'generationConfig' => [
-                            'temperature' => 0.2,
-                            'topK' => 40,
-                            'topP' => 0.95,
-                            'maxOutputTokens' => 200,
-                        ]
-                    ]);
+            
+            $maxRetries = 3;
+            $response = null;
 
-            if (!$response->successful()) {
-                \Log::error('Gemini API Non-200 Response: ' . $response->body());
+            for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
+                $response = Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                ])->post($url, [
+                            'systemInstruction' => [
+                                'parts' => [['text' => $systemPrompt]]
+                            ],
+                            'contents' => [
+                                ['parts' => [['text' => $userPrompt]]]
+                            ],
+                            'generationConfig' => [
+                                'temperature' => 0.2,
+                                'topK' => 40,
+                                'topP' => 0.95,
+                                'maxOutputTokens' => 800,
+                            ]
+                        ]);
+
+                if ($response->successful()) {
+                    break;
+                }
+                
+                if ($attempt < $maxRetries - 1) {
+                    sleep(2); // Wait 2 seconds before retrying
+                }
+            }
+
+            if (!$response || !$response->successful()) {
+                \Log::error('Gemini API Non-200 Response: ' . ($response ? $response->body() : 'null'));
                 return [];
             }
 
@@ -346,9 +361,13 @@ class ItemController extends Controller
             \Log::info("=== GEMINI RESPONSE ===");
             \Log::info($text);
 
-            // Clean markdown json format block if present
-            $text = preg_replace('/```(?:json)?\s*(.*?)\s*```/is', '$1', $text);
-            $text = trim($text);
+            // Extract only the array part by finding the first [ and last ]
+            if (preg_match('/\[.*\]/s', $text, $matches)) {
+                $text = $matches[0];
+            } else {
+                // Failsafe if it somehow returns a plain number or weird text
+                $text = '[]';
+            }
 
             // Parse JSON response
             $matchedIds = json_decode($text, true);
@@ -364,6 +383,168 @@ class ItemController extends Controller
             }, $matchedIds);
         } catch (\Exception $e) {
             \Log::error('Gemini API Error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function geminiSuggestions(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['items' => []], 401);
+        }
+        $currentUserId = $user->id;
+
+        // Fetch user active items
+        $userItems = Item::where('user_id', $currentUserId)
+            ->where('valid', 1)
+            ->where('resolution_status', '!=', 'resolved')
+            ->get();
+
+        if ($userItems->isEmpty()) {
+            return response()->json(['items' => []]);
+        }
+
+        // Fetch other users' items
+        $otherItemsQuery = Item::where('user_id', '!=', $currentUserId)
+            ->where('valid', 1)
+            ->where('resolution_status', '!=', 'resolved');
+
+        $otherItems = $otherItemsQuery->with(['user', 'user.info'])->get();
+
+        if ($otherItems->isEmpty()) {
+            return response()->json(['items' => []]);
+        }
+
+        $userItemsJson = json_encode($userItems->map(fn($item) => [
+            'id' => $item->id,
+            'item_name' => $item->item_name,
+            'category' => $item->category,
+            'description' => $item->description,
+            'location' => $item->location,
+            'status' => $item->status,
+            'date_time' => $item->date_time
+        ])->toArray());
+
+        $otherItemsJson = json_encode($otherItems->map(fn($item) => [
+            'id' => $item->id,
+            'item_name' => $item->item_name,
+            'category' => $item->category,
+            'description' => $item->description,
+            'location' => $item->location,
+            'status' => $item->status,
+            'date_time' => $item->date_time
+        ])->toArray());
+
+        $matchedIds = $this->callGeminiSuggestions($userItemsJson, $otherItemsJson);
+
+        if (empty($matchedIds)) {
+            return response()->json(['items' => []]);
+        }
+
+        $filteredItems = $otherItems->filter(function ($item) use ($matchedIds) {
+            return in_array($item->id, $matchedIds);
+        })->values();
+
+        return response()->json(['items' => $filteredItems]);
+    }
+
+
+
+
+
+
+    private function callGeminiSuggestions($userItemsJson, $otherItemsJson)
+    {
+        $apiKey = env('GEMINI_API_KEY');
+        if (!$apiKey) {
+            return [];
+        }
+
+        $systemPrompt = "
+        ### ROLE
+        You are the Suggestions Engine for 'Khoj'. Your goal is to match a user's items with potential items reported by others.
+
+        ### DATA SOURCE
+        - 'USER ITEMS': items reported by the current user.
+        - 'OTHER ITEMS': items reported by other people.
+
+        ### SEARCH LOGIC
+        - For any 'lost' item in USER ITEMS, find highly similar 'found' items in OTHER ITEMS.
+        - For any 'found' item in USER ITEMS, find highly similar 'lost' items in OTHER ITEMS.
+        - Consider location similarity, brand logic (e.g. Casio is a Calculator), and descriptions.
+        
+        ### OUTPUT
+        - Return ONLY a JSON array of integers representing the matching 'id's from 'OTHER ITEMS'.
+        - If no logical match is found, return [].
+        - DO NOT include markdown blocks, text, or explanations.
+        ";
+
+        $userPrompt = "### USER ITEMS\n$userItemsJson\n\n### OTHER ITEMS\n$otherItemsJson";
+
+        \Log::info("=== SENDING TO GEMINI ===");
+        \Log::info($userPrompt);
+
+        try {
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $apiKey;
+            
+            $maxRetries = 3;
+            $response = null;
+
+            for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
+                $response = Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                ])->post($url, [
+                            'systemInstruction' => ['parts' => [['text' => $systemPrompt]]],
+                            'contents' => [['parts' => [['text' => $userPrompt]]]],
+                            'generationConfig' => [
+                                'temperature' => 0.2,
+                                'topK' => 40,
+                                'topP' => 0.95,
+                                'maxOutputTokens' => 800,
+                            ]
+                        ]);
+
+                if ($response->successful()) {
+                    break;
+                }
+                
+                if ($attempt < $maxRetries - 1) {
+                    sleep(2); // Wait 2 seconds before retrying
+                }
+            }
+
+            if (!$response || !$response->successful()) {
+                \Log::error('Gemini Suggestions API Non-200 Response: ' . ($response ? $response->body() : 'null'));
+                return [];
+            }
+
+            $responseData = $response->json();
+            $text = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? '[]';
+
+            \Log::info("=== GEMINI RESPONSE ===");
+            \Log::info($text);
+
+            // Extract only the array part by finding the first [ and last ]
+            if (preg_match('/\[.*\]/s', $text, $matches)) {
+                $text = $matches[0];
+            } else {
+                $text = '[]';
+            }
+
+            $matchedIds = json_decode($text, true);
+            if (!is_array($matchedIds)) {
+                \Log::error('Gemini Suggestions API Error: Invalid JSON returned. Text was: ' . $text);
+                return [];
+            }
+            if (!is_array($matchedIds)) {
+                return [];
+            }
+
+            return array_map(function ($id) {
+                return (int) $id;
+            }, $matchedIds);
+        } catch (\Exception $e) {
             return [];
         }
     }
