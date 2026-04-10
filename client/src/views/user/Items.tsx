@@ -39,7 +39,7 @@ interface Item {
 const ITEMS_PER_PAGE = 15;
 
 export default function Items() {
-    const [filter, setFilter] = useState<'all' | 'lost' | 'found'>('all');
+    const [filter, setFilter] = useState<'all' | 'lost' | 'found' | 'suggestions'>('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [showReportModal, setShowReportModal] = useState(false);
@@ -57,7 +57,9 @@ export default function Items() {
         try {
             setLoading(true);
             setIsSearchMode(false);
-            const response = await axios.get('http://localhost:8000/api/items');
+            const token = localStorage.getItem('token');
+            const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            const response = await axios.get('http://localhost:8000/api/items', config);
             setFetchedItems(response.data.items);
             setError(null);
         } catch (err) {
@@ -68,7 +70,33 @@ export default function Items() {
         }
     };
 
-    const performGeminiSearch = async (query: string, filterStatus: 'all' | 'lost' | 'found') => {
+    const fetchSuggestions = async () => {
+        try {
+            setLoading(true);
+            setIsSearchMode(true);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error('Please login to get suggestions');
+                setFetchedItems([]);
+                return;
+            }
+            const response = await axios.get('http://localhost:8000/api/items/suggestions/match', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            setFetchedItems(response.data.items || []);
+            setError(null);
+        } catch (err) {
+            console.error('Suggestions error:', err);
+            setError(err instanceof Error ? err.message : 'Suggestions failed to load');
+            setFetchedItems([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const performGeminiSearch = async (query: string, filterStatus: 'all' | 'lost' | 'found' | 'suggestions') => {
         try {
             setLoading(true);
             setIsSearchMode(true);
@@ -90,7 +118,9 @@ export default function Items() {
 
     const triggerSearch = () => {
         setCurrentPage(1);
-        if (!searchTerm.trim()) {
+        if (filter === 'suggestions') {
+            fetchSuggestions();
+        } else if (!searchTerm.trim()) {
             fetchItems();
         } else {
             performGeminiSearch(searchTerm, filter);
@@ -447,6 +477,17 @@ export default function Items() {
                                 }`}
                         >
                             Found
+                        </button>
+                        <button
+                            onClick={() => {
+                                setFilter('suggestions');
+                                setCurrentPage(1);
+                                fetchSuggestions();
+                            }}
+                            className={`px-5 py-2 rounded-full font-medium transition-colors flex items-center gap-1 ${filter === 'suggestions' ? 'bg-purple-600 text-white shadow-md' : 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
+                                }`}
+                        >
+                            💡 Suggestions
                         </button>
                     </div>
 
