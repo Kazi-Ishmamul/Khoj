@@ -6,11 +6,13 @@ import { Toaster } from 'react-hot-toast';
 import MainLayout from './layouts/MainLayout';
 import UserLayout from './layouts/UserLayout';
 import AdminLayout from './layouts/AdminLayout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import HomePage from './views/HomePage';
 import Login from './views/Login';
 import Registration from './views/Registration';
 import AboutUs from './views/AboutUs';
+import Forbidden from './views/Forbidden';
 
 
 import Items from './views/user/Items';
@@ -18,11 +20,9 @@ import MyActivity from './views/user/MyActivity';
 import Notifications from './views/user/Notifications';
 import Profile from './views/user/Profile';
 
-import AdminDashboard from './views/admin/AdminDashboard';
-import ManagePosts from './views/admin/ManagePosts';
 import Reports from './views/admin/Reports';
-import History from './views/admin/History';
-import Helpdesk from './views/admin/Helpdesk';
+import AdminProfile from './views/admin/AdminProfile';
+import AllUsers from './views/admin/AllUsers';
 
 
 
@@ -34,30 +34,35 @@ function App() {
   return (
     <>
       <Routes>
-        {/* Main Public Routes Layout */}
+        <Route path="/forbidden" element={<Forbidden />} />
+
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Registration />} />
           <Route path="/about" element={<AboutUs />} />
+
+          <Route element={<ProtectedRoute guestOnly />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Registration />} />
+          </Route>
         </Route>
 
-        {/* User Routes Layout */}
-        <Route path="/user-dashboard" element={<UserLayout />}>
-          <Route index element={<Navigate to="items" replace />} />
-          <Route path="items" element={<Items />} />
-          <Route path="activity" element={<MyActivity />} />
-          <Route path="notifications" element={<Notifications />} />
-          <Route path="profile" element={<Profile />} />
+        <Route element={<ProtectedRoute allowedRoles={['user']} />}>
+          <Route path="/user-dashboard" element={<UserLayout />}>
+            <Route index element={<Navigate to="items" replace />} />
+            <Route path="items" element={<Items />} />
+            <Route path="activity" element={<MyActivity />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
         </Route>
 
-        {/* Admin Routes Layout */}
-        <Route path="/admin-dashboard" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="manage-posts" element={<ManagePosts />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="history" element={<History />} />
-          <Route path="helpdesk" element={<Helpdesk />} />
+        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route path="/admin-dashboard" element={<AdminLayout />}>
+            <Route index element={<Navigate to="users" replace />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="users" element={<AllUsers />} />
+          </Route>
         </Route>
       </Routes>
       <Toaster

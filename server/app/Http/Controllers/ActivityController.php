@@ -15,18 +15,20 @@ class ActivityController extends Controller
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        // 1. Lost Items - Reported by me with status 'lost' and NOT claimed
+        // 1. Lost Items - Reported by me with status 'lost' and not resolved
         $lostItems = Item::where('user_id', $user->id)
+            ->where('valid', 1)
             ->where('status', 'lost')
-            ->where('resolution_status', 'not_claimed')
-            ->with('user')
+            ->where('resolution_status', '!=', 'resolved')
+            ->with(['user', 'user.info'])
             ->get();
 
-        // 2. Found Items - Reported by me with status 'found' and NOT claimed
+        // 2. Found Items - Reported by me with status 'found' and not resolved
         $foundItems = Item::where('user_id', $user->id)
+            ->where('valid', 1)
             ->where('status', 'found')
-            ->where('resolution_status', 'not_claimed')
-            ->with('user')
+            ->where('resolution_status', '!=', 'resolved')
+            ->with(['user', 'user.info'])
             ->get();
 
         // 3. Claim Requests - Items others reported that I've claimed (pending claims only - validity = 0)
@@ -34,11 +36,12 @@ class ActivityController extends Controller
             $query->where('claimed_by_id', $user->id)
                   ->where('validity', 0); // Only pending claims
         })
+        ->where('valid', 1)
         ->where('user_id', '!=', $user->id) // Not my items
-        ->with(['user', 'claims' => function ($query) use ($user) {
+        ->with(['user', 'user.info', 'claims' => function ($query) use ($user) {
             $query->where('claimed_by_id', $user->id)
                   ->where('validity', 0)
-                  ->with('claimedBy'); // Load the claimer user info
+                  ->with(['claimedBy', 'claimedBy.info']); // Load the claimer user info
         }])
         ->get();
 
@@ -52,12 +55,13 @@ class ActivityController extends Controller
 
         // 4. Claims Received - Items I reported that others have claimed (pending claims only - validity = 0)
         $claimsReceived = Item::where('user_id', $user->id)
+            ->where('valid', 1)
             ->whereHas('claims', function ($query) {
                 $query->where('validity', 0); // Only pending claims
             })
-            ->with(['user', 'claims' => function ($query) {
+            ->with(['user', 'user.info', 'claims' => function ($query) {
                 $query->where('validity', 0)
-                      ->with('claimedBy'); // Load the claimer user info
+                      ->with(['claimedBy', 'claimedBy.info']); // Load the claimer user info
             }])
             ->get();
 
@@ -71,10 +75,11 @@ class ActivityController extends Controller
 
         // 5. Resolved - Items reported by me that are resolved AND items I claimed that were accepted
         $myResolvedItems = Item::where('user_id', $user->id)
+            ->where('valid', 1)
             ->where('resolution_status', 'resolved')
-            ->with(['user', 'claims' => function ($query) {
+            ->with(['user', 'user.info', 'claims' => function ($query) {
                 $query->where('validity', '!=', -1)
-                      ->with('claimedBy'); // Load the claimer user info
+                      ->with(['claimedBy', 'claimedBy.info']); // Load the claimer user info
             }])
             ->get();
 
@@ -91,11 +96,12 @@ class ActivityController extends Controller
             $query->where('claimed_by_id', $user->id)
                   ->where('validity', 1); // Accepted claims
         })
+        ->where('valid', 1)
         ->where('user_id', '!=', $user->id) // Not my items
-        ->with(['user', 'claims' => function ($query) use ($user) {
+        ->with(['user', 'user.info', 'claims' => function ($query) use ($user) {
             $query->where('claimed_by_id', $user->id)
                   ->where('validity', 1)
-                  ->with('claimedBy'); // Load the claimer user info
+                  ->with(['claimedBy', 'claimedBy.info']); // Load the claimer user info
         }])
         ->get();
 

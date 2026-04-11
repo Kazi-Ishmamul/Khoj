@@ -1,10 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
+
+interface UserInfo {
+    bio?: string | null;
+    fb_url?: string | null;
+    x_url?: string | null;
+    insta_url?: string | null;
+    linkedin_url?: string | null;
+}
 
 interface User {
     id: number;
     name: string;
+    email?: string;
+    phone?: string;
     pic_url?: string;
+    info?: UserInfo | null;
 }
 
 interface Item {
@@ -32,6 +44,7 @@ interface Claim {
     validity: number;
     created_at?: string;
     claimedBy?: User;
+    claimed_by?: User;
 }
 
 interface ActivityData {
@@ -40,6 +53,16 @@ interface ActivityData {
     claim_requests: { count: number; items: Item[] };
     claims_received: { count: number; items: Item[] };
     resolved: { count: number; items: Item[] };
+}
+
+interface EditReportForm {
+    item_name: string;
+    category: string;
+    description: string;
+    date_time: string;
+    location: string;
+    contact_info: string;
+    item_image_url: string;
 }
 
 type TabType = 'lost_items' | 'found_items' | 'claim_requests' | 'claims_received' | 'resolved';
@@ -53,50 +76,68 @@ export default function MyActivity() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<number | null>(null);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [showUserModal, setShowUserModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingItem, setEditingItem] = useState<Item | null>(null);
+    const [editSaving, setEditSaving] = useState(false);
+    const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
+    const [editForm, setEditForm] = useState<EditReportForm>({
+        item_name: '',
+        category: '',
+        description: '',
+        date_time: '',
+        location: '',
+        contact_info: '',
+        item_image_url: ''
+    });
+
+    const fetchActivityData = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('Please login to view your activity');
+                setActivityData(null);
+                return;
+            }
+
+            const response = await axios.get('http://localhost:8000/api/my-activity', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+            setActivityData(response.data.data);
+            setError(null);
+        } catch (err) {
+            console.error('Activity fetch error:', err);
+            let errorMsg = 'Failed to load activity';
+
+            if (axios.isAxiosError(err)) {
+                if (err.response?.status === 401) {
+                    errorMsg = 'Unauthorized - Please login again';
+                    localStorage.removeItem('token');
+                } else {
+                    errorMsg = err.response?.data?.message || err.message || 'Failed to load activity';
+                }
+            } else if (err instanceof Error) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setActivityData(null);
+        } finally {
+            setLoading(false);
+        }
+    };
     // Fetch activity data on component mount
     useEffect(() => {
-        const fetchActivity = async () => {
-            try {
-                setLoading(true);
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    setError('Please login to view your activity');
-                    setLoading(false);
-                    return;
-                }
-
-                const response = await axios.get('http://localhost:8000/api/my-activity', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
-                });
-                setActivityData(response.data.data);
-                setError(null);
-            } catch (err) {
-                console.error('Activity fetch error:', err);
-                let errorMsg = 'Failed to load activity';
-
-                if (axios.isAxiosError(err)) {
-                    if (err.response?.status === 401) {
-                        errorMsg = 'Unauthorized - Please login again';
-                        localStorage.removeItem('token');
-                    } else {
-                        errorMsg = err.response?.data?.message || err.message || 'Failed to load activity';
-                    }
-                } else if (err instanceof Error) {
-                    errorMsg = err.message;
-                }
-
-                setError(errorMsg);
-                setActivityData(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchActivity();
+        fetchActivityData();
     }, []);
 
     const handleAcceptClaim = async (claimId: number) => {
@@ -111,17 +152,10 @@ export default function MyActivity() {
                 }
             });
 
-            // Refresh activity data
-            const response = await axios.get('http://localhost:8000/api/my-activity', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            });
-            setActivityData(response.data.data);
+            await fetchActivityData();
         } catch (err) {
             console.error('Error accepting claim:', err);
-            alert('Failed to accept claim');
+            toast.error('Failed to accept claim');
         } finally {
             setActionLoading(null);
         }
@@ -139,19 +173,134 @@ export default function MyActivity() {
                 }
             });
 
-            // Refresh activity data
-            const response = await axios.get('http://localhost:8000/api/my-activity', {
+            await fetchActivityData();
+        } catch (err) {
+            console.error('Error declining claim:', err);
+            toast.error('Failed to decline claim');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const openEditModal = (item: Item) => {
+        setEditingItem(item);
+        setEditForm({
+            item_name: item.item_name || '',
+            category: item.category || '',
+            description: item.description || '',
+            date_time: item.date_time ? item.date_time.slice(0, 16) : '',
+            location: item.location || '',
+            contact_info: item.contact_info || '',
+            item_image_url: item.item_image_url || ''
+        });
+        setImageFile(null);
+        setImagePreview(null);
+        setShowEditModal(true);
+    };
+
+    const closeEditModal = () => {
+        setShowEditModal(false);
+        setEditingItem(null);
+        setEditSaving(false);
+        setImageFile(null);
+        setImagePreview(null);
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const handleEditInputChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value } = e.target;
+        setEditForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleUpdateItem = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!editingItem) return;
+
+        try {
+            setEditSaving(true);
+            let finalImageUrl = editForm.item_image_url;
+
+            // Upload image to Cloudinary if a new file is selected
+            if (imageFile) {
+                const uploadData = new FormData();
+                uploadData.append('file', imageFile);
+                uploadData.append('upload_preset', 'khoj-items');
+
+                try {
+                    const cloudinaryRes = await axios.post('https://api.cloudinary.com/v1_1/dait0sacc/image/upload', uploadData);
+                    finalImageUrl = cloudinaryRes.data.secure_url;
+                } catch (uploadErr) {
+                    console.error('Cloudinary upload error:', uploadErr);
+                    toast.error('Failed to upload image');
+                    setEditSaving(false);
+                    return;
+                }
+            }
+
+            const token = localStorage.getItem('token');
+
+            await axios.put(
+                `http://localhost:8000/api/items/${editingItem.id}`,
+                {
+                    ...editForm,
+                    item_image_url: finalImageUrl
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                }
+            );
+
+            await fetchActivityData();
+            closeEditModal();
+            toast.success('Item updated successfully');
+        } catch (err) {
+            console.error('Error updating item:', err);
+            const msg = axios.isAxiosError(err)
+                ? err.response?.data?.message || 'Failed to update report'
+                : 'Failed to update report';
+            toast.error(msg);
+        } finally {
+            setEditSaving(false);
+        }
+    };
+
+    const handleDeleteItem = async (itemId: number) => {
+        const confirmed = window.confirm('Are you sure you want to delete this report?');
+        if (!confirmed) return;
+
+        try {
+            setDeletingItemId(itemId);
+            const token = localStorage.getItem('token');
+
+            await axios.delete(`http://localhost:8000/api/items/${itemId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
                 }
             });
-            setActivityData(response.data.data);
+
+            toast.success('Item deleted successfully');
+            await fetchActivityData();
         } catch (err) {
-            console.error('Error declining claim:', err);
-            alert('Failed to decline claim');
+            console.error('Error deleting item:', err);
+            const msg = axios.isAxiosError(err)
+                ? err.response?.data?.message || 'Failed to delete report'
+                : 'Failed to delete report';
+            toast.error(msg);
         } finally {
-            setActionLoading(null);
+            setDeletingItemId(null);
         }
     };
 
@@ -187,18 +336,31 @@ export default function MyActivity() {
     }
 
     // Get current tab items and filter by search
+    const claimsReceivedCards: Item[] = activityData.claims_received.items.flatMap((item) => {
+        const pendingClaims = (item.claims || []).filter((claim) => claim.validity === 0);
+
+        return pendingClaims.map((claim) => {
+            const claimer = claim.claimedBy || claim.claimed_by;
+            return {
+                ...item,
+                claims: [claim],
+                claimedByUser: claimer
+            };
+        });
+    });
+
     const tabsConfig: Record<TabType, { label: string; icon: string; color: string; data: Item[] }> = {
         lost_items: {
             label: 'Lost Items',
             icon: '🔴',
             color: 'red',
-            data: activityData.lost_items.items
+            data: activityData.lost_items.items.filter(item => item.valid === 1 && item.resolution_status !== 'resolved')
         },
         found_items: {
             label: 'Found Items',
             icon: '🟢',
             color: 'green',
-            data: activityData.found_items.items
+            data: activityData.found_items.items.filter(item => item.valid === 1 && item.resolution_status !== 'resolved')
         },
         claim_requests: {
             label: 'Claim Requests',
@@ -210,7 +372,7 @@ export default function MyActivity() {
             label: 'Claims Received',
             icon: '🟡',
             color: 'yellow',
-            data: activityData.claims_received.items
+            data: claimsReceivedCards
         },
         resolved: {
             label: 'Resolved',
@@ -227,10 +389,6 @@ export default function MyActivity() {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const paginatedItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-    const getStatusBg = (status: string) => {
-        return status === 'lost' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-    };
-
     return (
         <div className="min-h-screen bg-gray-50 py-10">
             <div className="container mx-auto px-4 max-w-7xl">
@@ -244,7 +402,10 @@ export default function MyActivity() {
                 <div className="bg-white rounded-lg shadow-sm border mb-8 overflow-x-auto">
                     <div className="flex">
                         {(Object.entries(tabsConfig) as Array<[TabType, typeof tabsConfig[TabType]]>).map(([tabKey, tab]) => {
-                            const count = activityData[tabKey].count;
+                    const count =
+                            tabKey === 'claims_received'
+                                ? tab.data.length
+                                : activityData[tabKey]?.count ?? tab.data.length;
                             return (
                                 <button
                                     key={tabKey}
@@ -276,9 +437,14 @@ export default function MyActivity() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {paginatedItems.map(item => (
+                        {paginatedItems.map(item => {
+                            const claimCardId = activeTab === 'claims_received' && item.claims && item.claims.length > 0
+                                ? `${item.id}-${item.claims[0].claim_id}`
+                                : `${item.id}`;
+
+                            return (
                             <div
-                                key={item.id}
+                                key={claimCardId}
                                 className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col group"
                             >
                                 {/* Image Container with Status Badge */}
@@ -319,15 +485,21 @@ export default function MyActivity() {
                                     {/* Item Poster Info */}
                                     {item.user && (
                                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-4 border border-blue-100">
-                                            <div className="flex items-center gap-3">
+                                            <div
+                                                className="flex items-center gap-3 cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedUser(item.user!);
+                                                    setShowUserModal(true);
+                                                }}
+                                            >
                                                 <img
                                                     src={item.user.pic_url || 'https://ui-avatars.com/api/?name=User&background=random'}
                                                     alt={item.user.name}
-                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-blue-500 transition-all"
                                                 />
                                                 <div>
                                                     <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Posted by</p>
-                                                    <p className="text-sm font-bold text-gray-900">{item.user.name}</p>
+                                                    <p className="text-sm font-bold text-gray-900 hover:text-blue-600 transition-colors">{item.user.name}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -350,26 +522,84 @@ export default function MyActivity() {
                                     </div>
 
                                     {/* Claimer Info */}
-                                    {item.claimedByUser && (activeTab === 'claim_requests' || activeTab === 'claims_received' || activeTab === 'resolved') && (
+                                    {item.claimedByUser && (activeTab === 'claim_requests' || activeTab === 'resolved') && (
                                         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-4 border border-purple-200">
-                                            <div className="flex items-center gap-3">
+                                            <div
+                                                className="flex items-center gap-3 cursor-pointer"
+                                                onClick={() => {
+                                                    setSelectedUser(item.claimedByUser!);
+                                                    setShowUserModal(true);
+                                                }}
+                                            >
                                                 <img
                                                     src={item.claimedByUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.claimedByUser.name) + '&background=random'}
                                                     alt={item.claimedByUser.name}
-                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-purple-500 transition-all"
                                                 />
                                                 <div>
                                                     <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
-                                                        {activeTab === 'claim_requests' ? '🙋 Your Claim' : activeTab === 'claims_received' ? '👤 Claimed by' : '✓ Resolved with'}
+                                                        {activeTab === 'claim_requests' ? '🙋 Your Claim' : '✓ Resolved with'}
                                                     </p>
-                                                    <p className="text-sm font-bold text-gray-900">{item.claimedByUser.name}</p>
+                                                    <p className="text-sm font-bold text-gray-900 hover:text-purple-600 transition-colors">{item.claimedByUser.name}</p>
                                                 </div>
                                             </div>
                                         </div>
                                     )}
 
+                                    {activeTab === 'claims_received' && item.claims && item.claims.length > 0 && (
+                                        <div className="space-y-2 mb-4">
+                                            {item.claims.map((claim) => (
+                                                (() => {
+                                                    const claimer = claim.claimedBy || claim.claimed_by;
+                                                    return (
+                                                <div key={claim.claim_id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200">
+                                                    <div
+                                                        className="flex items-center gap-3 cursor-pointer"
+                                                        onClick={() => {
+                                                            if (!claimer) return;
+                                                            setSelectedUser(claimer);
+                                                            setShowUserModal(true);
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src={claimer?.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(claimer?.name || 'User') + '&background=random'}
+                                                            alt={claimer?.name || 'User'}
+                                                            className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-purple-500 transition-all"
+                                                        />
+                                                        <div>
+                                                            <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">👤 Claimed by</p>
+                                                            <p className="text-sm font-bold text-gray-900 hover:text-purple-600 transition-colors">{claimer?.name || 'Unknown User'}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                    );
+                                                })()
+                                            ))}
+                                        </div>
+                                    )}
+
                                     {/* Resolution Status */}
                                     <div className="mt-auto">
+                                        {(activeTab === 'lost_items' || activeTab === 'found_items') && (
+                                            <div className="mb-4 flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEditModal(item)}
+                                                    className="flex-1 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 font-semibold text-sm transition"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteItem(item.id)}
+                                                    disabled={deletingItemId === item.id}
+                                                    className="flex-1 px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 font-semibold text-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
+                                                >
+                                                    {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
+                                                </button>
+                                            </div>
+                                        )}
+
                                         {activeTab !== 'claims_received' && (
                                             <span
                                                 className={`inline-block px-4 py-2 rounded-full text-xs font-bold mb-3 ${
@@ -390,27 +620,32 @@ export default function MyActivity() {
 
                                         {/* Accept/Decline buttons for Claims Received */}
                                         {activeTab === 'claims_received' && item.claims && item.claims.length > 0 && (
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleAcceptClaim(item.claims![0].claim_id)}
-                                                    disabled={actionLoading === item.claims![0].claim_id}
-                                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-100 shadow-md hover:shadow-lg"
-                                                >
-                                                    {actionLoading === item.claims![0].claim_id ? '⏳ Processing...' : '✓ Accept'}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeclineClaim(item.claims![0].claim_id)}
-                                                    disabled={actionLoading === item.claims![0].claim_id}
-                                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-100 shadow-md hover:shadow-lg"
-                                                >
-                                                    {actionLoading === item.claims![0].claim_id ? '⏳ Processing...' : '✕ Decline'}
-                                                </button>
+                                            <div className="space-y-2">
+                                                {item.claims.map((claim) => (
+                                                    <div key={claim.claim_id} className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleAcceptClaim(claim.claim_id)}
+                                                            disabled={actionLoading === claim.claim_id}
+                                                            className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-100 shadow-md hover:shadow-lg"
+                                                        >
+                                                            {actionLoading === claim.claim_id ? '⏳ Processing...' : '✓ Accept'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeclineClaim(claim.claim_id)}
+                                                            disabled={actionLoading === claim.claim_id}
+                                                            className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-xl font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-100 shadow-md hover:shadow-lg"
+                                                        >
+                                                            {actionLoading === claim.claim_id ? '⏳ Processing...' : '✕ Decline'}
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
@@ -437,6 +672,293 @@ export default function MyActivity() {
                     </div>
                 )}
             </div>
+
+            {/* User Profile Modal */}
+            {showUserModal && selectedUser && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+                        onClick={() => setShowUserModal(false)}
+                    />
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+
+                            {/* Modal Header Banner */}
+                            <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 h-28 flex-shrink-0">
+                                <button
+                                    onClick={() => setShowUserModal(false)}
+                                    aria-label="Close"
+                                    className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:shadow-xl transition-all duration-150"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div className="px-7 pb-7">
+                                {/* Profile Picture - overlapping banner */}
+                                <div className="flex flex-col items-center -mt-12 mb-4 relative z-10">
+                                    <img
+                                        src={selectedUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedUser.name) + '&background=4F46E5&color=fff&size=150'}
+                                        alt={selectedUser.name}
+                                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl bg-white"
+                                    />
+                                    <h2 className="text-xl font-bold text-gray-900 text-center mt-3">{selectedUser.name}</h2>
+                                    {selectedUser.info?.bio && (
+                                        <div className="mt-3 px-2 text-center">
+                                            <p className="text-sm text-gray-600 italic leading-relaxed">"{selectedUser.info.bio}"</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Contact Info */}
+                                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-4 mb-4 border border-blue-100 space-y-3">
+                                    {selectedUser.email && (
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                                                </svg>
+                                            </span>
+                                            <div>
+                                                <p className="text-xs text-gray-400 font-medium">Email</p>
+                                                <p className="text-sm font-semibold text-gray-800">{selectedUser.email}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {selectedUser.phone && (
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.98-2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.09a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.33v-.41z"/>
+                                                </svg>
+                                            </span>
+                                            <div>
+                                                <p className="text-xs text-gray-400 font-medium">Phone</p>
+                                                <p className="text-sm font-semibold text-gray-800">{selectedUser.phone}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Social Media Icons */}
+                                {selectedUser.info && (() => {
+                                    const socials = [
+                                        {
+                                            key: 'fb',
+                                            url: selectedUser.info!.fb_url,
+                                            label: 'Facebook',
+                                            color: 'hover:bg-blue-600',
+                                            icon: (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                                                </svg>
+                                            ),
+                                        },
+                                        {
+                                            key: 'x',
+                                            url: selectedUser.info!.x_url,
+                                            label: 'X (Twitter)',
+                                            color: 'hover:bg-black',
+                                            icon: (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                                </svg>
+                                            ),
+                                        },
+                                        {
+                                            key: 'insta',
+                                            url: selectedUser.info!.insta_url,
+                                            label: 'Instagram',
+                                            color: 'hover:bg-gradient-to-br hover:from-purple-600 hover:via-pink-500 hover:to-orange-400',
+                                            icon: (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                                                </svg>
+                                            ),
+                                        },
+                                        {
+                                            key: 'linkedin',
+                                            url: selectedUser.info!.linkedin_url,
+                                            label: 'LinkedIn',
+                                            color: 'hover:bg-blue-700',
+                                            icon: (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                                                    <rect x="2" y="9" width="4" height="12"/>
+                                                    <circle cx="4" cy="4" r="2"/>
+                                                </svg>
+                                            ),
+                                        },
+                                    ].filter(s => s.url);
+
+                                    return socials.length > 0 ? (
+                                        <div className="mb-5">
+                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 text-center">Connect on Social</p>
+                                            <div className="flex justify-center gap-3">
+                                                {socials.map(social => (
+                                                    <a
+                                                        key={social.key}
+                                                        href={social.url!}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        title={social.label}
+                                                        className={`w-11 h-11 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center transition-all duration-200 hover:text-white hover:scale-110 hover:shadow-lg ${social.color}`}
+                                                    >
+                                                        {social.icon}
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : null;
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+
+            {/* Edit Report Modal */}
+            {showEditModal && editingItem && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+                        onClick={closeEditModal}
+                    />
+                    <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto pt-20 md:pt-24">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 my-8 max-h-[calc(100vh-10rem)] overflow-y-auto">
+                            <div className="p-6 md:p-8">
+                                <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2 border-b">
+                                    <h2 className="text-2xl font-bold text-gray-800">Edit Report</h2>
+                                    <button
+                                        type="button"
+                                        onClick={closeEditModal}
+                                        className="text-gray-600 hover:text-gray-900 text-3xl font-bold leading-none"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+
+                                <form onSubmit={handleUpdateItem} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
+                                        <input
+                                            type="text"
+                                            name="item_name"
+                                            value={editForm.item_name}
+                                            onChange={handleEditInputChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                        <input
+                                            type="text"
+                                            name="category"
+                                            value={editForm.category}
+                                            onChange={handleEditInputChange}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                                        <textarea
+                                            name="description"
+                                            value={editForm.description}
+                                            onChange={handleEditInputChange}
+                                            required
+                                            rows={3}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+                                        <input
+                                            type="datetime-local"
+                                            name="date_time"
+                                            value={editForm.date_time}
+                                            onChange={handleEditInputChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+                                        <input
+                                            type="text"
+                                            name="location"
+                                            value={editForm.location}
+                                            onChange={handleEditInputChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contact Info *</label>
+                                        <input
+                                            type="text"
+                                            name="contact_info"
+                                            value={editForm.contact_info}
+                                            onChange={handleEditInputChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-3">Item Image (optional)</label>
+                                        <div className="flex items-center gap-4">
+                                            {(imagePreview || editForm.item_image_url) && (
+                                                <img
+                                                    src={imagePreview || editForm.item_image_url}
+                                                    alt="Preview"
+                                                    className="w-20 h-20 rounded-lg object-cover border-2 border-blue-300"
+                                                />
+                                            )}
+                                            <input
+                                                ref={imageInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageChange}
+                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="md:col-span-2 flex justify-end gap-4 mt-6">
+                                        <button
+                                            type="button"
+                                            onClick={closeEditModal}
+                                            className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={editSaving}
+                                            className="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
+                                            {editSaving ? 'Saving...' : 'Save Changes'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

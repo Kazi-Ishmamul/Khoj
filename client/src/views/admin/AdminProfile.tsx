@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import AdminProfile from '../admin/AdminProfile';
+
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     FaUser, FaEnvelope, FaPhoneAlt, FaMapMarkerAlt,
-    FaFacebook, FaInstagram, FaLinkedin,
-    FaCamera, FaEdit, FaCheck, FaBoxOpen, FaSearch,
-    FaExclamationTriangle, FaTimes
+    FaCamera, FaEdit, FaCheck, FaTimes
 } from 'react-icons/fa';
-import { FaXTwitter } from 'react-icons/fa6';
 import toast, { Toaster } from 'react-hot-toast';
 
 const mkAvatar = (name: string) =>
@@ -16,21 +13,17 @@ const mkAvatar = (name: string) =>
 
 interface ProfileData {
     name: string; email: string; phone: string; address: string; role: string;
-    profilePic: string; bio: string;
-    fb_url: string; x_url: string; insta_url: string; linkedin_url: string;
-    items_lost: number; items_found: number; strikes: number;
+    profilePic: string;
 }
 
 const EMPTY: ProfileData = {
-    name: '', email: '', phone: '', address: '', role: 'User',
-    profilePic: mkAvatar('User'), bio: '',
-    fb_url: '', x_url: '', insta_url: '', linkedin_url: '',
-    items_lost: 0, items_found: 0, strikes: 0,
+    name: '', email: '', phone: '', address: '', role: 'Admin',
+    profilePic: mkAvatar('User'),
 };
 
 const iCls = 'w-full px-5 py-3.5 rounded-xl font-medium outline-none bg-slate-50 border-2 border-indigo-100 focus:border-indigo-400 focus:bg-white text-slate-800 transition-all';
 
-const Profile = () => {
+const AdminProfile = () => {
     const [userData, setUserData] = useState<ProfileData>(EMPTY);
     const [editData, setEditData] = useState<ProfileData>(EMPTY);
     const [picPreview, setPicPreview] = useState<string | null>(null);
@@ -53,7 +46,6 @@ const Profile = () => {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const u = data.user;
-                const i = u.info || {};
                 const isDefaultPic = !u.pic_url ||
                     u.pic_url === 'assets/profile_pictures/default_profile_pic.png';
                 const pic = isDefaultPic
@@ -63,12 +55,7 @@ const Profile = () => {
                 const loaded: ProfileData = {
                     name: u.name || '', email: u.email || '', phone: u.phone || '',
                     address: u.address || '', role: u.role === 'admin' ? 'Admin' : 'User',
-                    profilePic: pic, bio: i.bio || '',
-                    fb_url: i.fb_url || '', x_url: i.x_url || '',
-                    insta_url: i.insta_url || '', linkedin_url: i.linkedin_url || '',
-                    items_lost: i.items_lost_count || 0,
-                    items_found: i.items_found_count || 0,
-                    strikes: i.report_strikes || 0,
+                    profilePic: pic
                 };
                 setUserData(loaded);
                 setEditData(loaded);
@@ -87,7 +74,7 @@ const Profile = () => {
         }
     }, [isEditing]);
 
-    const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    const onChange = (e: React.ChangeEvent<HTMLInputElement>) =>
         setEditData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
     const onPicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,9 +120,7 @@ const Profile = () => {
             const token = localStorage.getItem('token');
             const form = new FormData();
             Object.entries({
-                name: editData.name, phone: editData.phone, address: editData.address,
-                bio: editData.bio, fb_url: editData.fb_url, x_url: editData.x_url,
-                insta_url: editData.insta_url, linkedin_url: editData.linkedin_url,
+                name: editData.name, phone: editData.phone, address: editData.address
             }).forEach(([k, v]) => {
                 if (v !== undefined && v !== null) {
                     form.append(k, v.toString());
@@ -148,7 +133,7 @@ const Profile = () => {
             });
 
             setUserData(prev => ({ ...prev, ...editData, profilePic: finalPicUrl }));
-            toast.success('Profile updated!');
+            toast.success('Admin Profile updated!');
             closeEdit();
         } catch {
             toast.error('Failed to save.');
@@ -186,7 +171,7 @@ const Profile = () => {
             await axios.post('http://localhost:8000/api/profile/password', passwordData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success('Password updated successfully!');
+            toast.success('Admin Password updated successfully!');
             closePasswordModal();
         } catch (error: any) {
             if (error.response?.data?.errors?.current_password) {
@@ -201,23 +186,12 @@ const Profile = () => {
         }
     };
 
-    const socials = [
-        { key: 'fb_url', url: userData.fb_url, icon: <FaFacebook className="text-[#1877F2]" />, label: 'Facebook' },
-        { key: 'x_url', url: userData.x_url, icon: <FaXTwitter className="text-black" />, label: 'X' },
-        { key: 'insta_url', url: userData.insta_url, icon: <FaInstagram className="text-[#E4405F]" />, label: 'Instagram' },
-        { key: 'linkedin_url', url: userData.linkedin_url, icon: <FaLinkedin className="text-[#0A66C2]" />, label: 'LinkedIn' },
-    ].filter(s => s.url);
-
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-indigo-600" />
             </div>
         );
-    }
-
-    if (userData.role === 'Admin') {
-        return <AdminProfile />;
     }
 
     return (
@@ -233,11 +207,10 @@ const Profile = () => {
             {/* Page content: single column */}
             <div className="max-w-3xl mx-auto px-4 sm:px-6 -mt-16 pb-20 space-y-5 relative z-10">
 
-                {/* ── EDIT SETTINGS PANEL (floating overlay above the profile card) ── */}
+                {/* ── EDIT SETTINGS PANEL ── */}
                 <AnimatePresence>
                     {isEditing && (
                         <>
-                            {/* Full-screen backdrop to dim the page behind */}
                             <motion.div
                                 key="backdrop"
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -245,7 +218,6 @@ const Profile = () => {
                                 className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
                             />
 
-                            {/* Centered modal subpage overlay placed below the navbar */}
                             <motion.div
                                 key="edit-panel"
                                 initial={{ opacity: 0, scale: 0.95, y: -20 }}
@@ -255,11 +227,10 @@ const Profile = () => {
                                 className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4 pointer-events-none"
                             >
                                 <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[80vh] overflow-y-auto pointer-events-auto flex flex-col">
-                                    {/* Panel header bar */}
                                     <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-purple-50 sticky top-0 z-10">
                                         <div>
-                                            <h3 className="text-lg font-extrabold text-slate-800">Edit Profile</h3>
-                                            <p className="text-xs text-slate-400 mt-0.5">Changes only apply after saving</p>
+                                            <h3 className="text-lg font-extrabold text-slate-800">Edit Admin Profile</h3>
+                                            <p className="text-xs text-slate-400 mt-0.5">Basic info management</p>
                                         </div>
                                         <div className="flex gap-2">
                                             <button onClick={closeEdit}
@@ -273,7 +244,7 @@ const Profile = () => {
                                         </div>
                                     </div>
 
-                                    <div className="px-8 py-6 space-y-6">
+                                    <div ref={editRef} className="px-8 py-6 space-y-6">
                                         {/* Profile Picture Upload */}
                                         <div className="flex items-center gap-5">
                                             <div className="relative flex-shrink-0">
@@ -318,38 +289,6 @@ const Profile = () => {
                                                         <input name="address" value={editData.address} onChange={onChange} className={`${iCls} pl-12`} />
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
-
-                                        <hr className="border-slate-100" />
-
-                                        {/* Bio */}
-                                        <div>
-                                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">About Me</p>
-                                            <textarea name="bio" value={editData.bio} onChange={onChange} rows={3}
-                                                placeholder="Tell everyone a bit about yourself…"
-                                                className={`${iCls} resize-none`} />
-                                        </div>
-
-                                        <hr className="border-slate-100" />
-
-                                        {/* Social Links */}
-                                        <div>
-                                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Social Links</p>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                {[
-                                                    { name: 'fb_url', icon: <FaFacebook className="text-[#1877F2] text-lg" />, ph: 'Facebook URL' },
-                                                    { name: 'x_url', icon: <FaXTwitter className="text-black text-lg" />, ph: 'X URL' },
-                                                    { name: 'insta_url', icon: <FaInstagram className="text-[#E4405F] text-lg" />, ph: 'Instagram URL' },
-                                                    { name: 'linkedin_url', icon: <FaLinkedin className="text-[#0A66C2] text-lg" />, ph: 'LinkedIn URL' },
-                                                ].map(s => (
-                                                    <div key={s.name} className="relative">
-                                                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">{s.icon}</div>
-                                                        <input name={s.name} value={(editData as any)[s.name]}
-                                                            onChange={onChange} placeholder={s.ph}
-                                                            className={`${iCls} pl-11`} />
-                                                    </div>
-                                                ))}
                                             </div>
                                         </div>
                                     </div>
@@ -405,14 +344,13 @@ const Profile = () => {
                     )}
                 </AnimatePresence>
 
-                {/* ── PROFILE CARD (always visible, never moves) ── */}
+                {/* ── PROFILE CARD ── */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45 }}
                     className="bg-white rounded-3xl shadow-[0_8px_40px_rgb(0,0,0,0.07)] border border-slate-100 overflow-hidden"
                 >
-                    {/* Avatar + name + Edit button */}
                     <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 px-8 pt-8 pb-6 border-b border-slate-100">
                         <img
                             src={userData.profilePic}
@@ -422,28 +360,28 @@ const Profile = () => {
                         />
                         <div className="flex-1 text-center sm:text-left">
                             <h2 className="text-2xl font-extrabold text-slate-800">{userData.name}</h2>
-                            <span className="inline-block mt-1 px-4 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold tracking-widest uppercase border border-indigo-100">
+                            <span className="inline-block mt-1 px-4 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-bold tracking-widest uppercase border border-purple-100">
                                 {userData.role}
                             </span>
                         </div>
                         <div className="flex gap-2 shrink-0">
                             {!isEditing && (
                                 <button onClick={openEdit}
-                                    className="flex-shrink-0 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                                    className="flex-shrink-0 px-6 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
                                     <FaEdit /> Edit Profile
                                 </button>
                             )}
                             <button onClick={openPasswordModal}
                                 className="flex-shrink-0 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm hover:shadow hover:-translate-y-0.5 transition-all">
-                                🔐 Change Password
+                                🔐 Change
                             </button>
                         </div>
                     </div>
 
                     <div className="p-8 space-y-8">
-                        {/* Contact Info */}
+                        {/* Contact Info ONLY */}
                         <div>
-                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4 flex items-center gap-2"><FaUser /> Contact Info</p>
+                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4 flex items-center gap-2"><FaUser /> Admin Contact Info</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {[
                                     { icon: <FaEnvelope className="text-indigo-400" />, label: 'Email', value: userData.email },
@@ -460,54 +398,6 @@ const Profile = () => {
                                 ))}
                             </div>
                         </div>
-
-                        {/* Bio */}
-                        {userData.bio && (
-                            <div>
-                                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">About Me</p>
-                                <div className="bg-slate-50 rounded-2xl px-5 py-4 border border-slate-100 text-slate-600 leading-relaxed italic">
-                                    "{userData.bio}"
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Activity Stats */}
-                        <div>
-                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4">Activity</p>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="flex flex-col items-center p-5 bg-gradient-to-br from-red-50 to-orange-50 text-red-600 rounded-2xl border border-red-100/50 shadow-sm">
-                                    <FaBoxOpen className="mb-2 text-2xl opacity-70" />
-                                    <span className="font-black text-3xl">{userData.items_lost}</span>
-                                    <span className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-70">Lost</span>
-                                </div>
-                                <div className="flex flex-col items-center p-5 bg-gradient-to-br from-emerald-50 to-green-50 text-emerald-600 rounded-2xl border border-emerald-100/50 shadow-sm">
-                                    <FaSearch className="mb-2 text-2xl opacity-70" />
-                                    <span className="font-black text-3xl">{userData.items_found}</span>
-                                    <span className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-70">Found</span>
-                                </div>
-                                <div className="flex flex-col items-center p-5 bg-gradient-to-br from-amber-50 to-yellow-50 text-amber-600 rounded-2xl border border-amber-100/50 shadow-sm">
-                                    <FaExclamationTriangle className="mb-2 text-2xl opacity-70" />
-                                    <span className="font-black text-3xl">{userData.strikes}</span>
-                                    <span className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-70">Strikes</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Social Links — only shown if set in DB */}
-                        {socials.length > 0 && (
-                            <div>
-                                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4">Connect</p>
-                                <div className="flex flex-wrap gap-3">
-                                    {socials.map(s => (
-                                        <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer"
-                                            className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white border border-slate-200 shadow-sm text-slate-700 font-semibold text-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
-                                            <span className="text-xl">{s.icon}</span>
-                                            {s.label}
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </motion.div>
             </div>
@@ -515,5 +405,4 @@ const Profile = () => {
     );
 };
 
-export default Profile;
-
+export default AdminProfile;

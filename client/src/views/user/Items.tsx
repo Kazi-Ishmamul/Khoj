@@ -1,11 +1,23 @@
 // Items.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
+
+interface UserInfo {
+    bio?: string | null;
+    fb_url?: string | null;
+    x_url?: string | null;
+    insta_url?: string | null;
+    linkedin_url?: string | null;
+}
 
 interface User {
     id: number;
     name: string;
+    email?: string;
+    phone?: string;
     pic_url?: string;
+    info?: UserInfo | null;
 }
 
 interface Item {
@@ -28,45 +40,218 @@ const ITEMS_PER_PAGE = 15;
 
 export default function Items() {
     const [filter, setFilter] = useState<'all' | 'lost' | 'found'>('all');
+    const [activeView, setActiveView] = useState<'database' | 'search' | 'suggestions'>('database');
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [showReportModal, setShowReportModal] = useState(false);
-    const [fetchedItems, setFetchedItems] = useState<Item[]>([]);
+
+    // Separated State Models
+    const [dbItems, setDbItems] = useState<Item[]>([]);
+    const [searchItems, setSearchItems] = useState<Item[]>([]);
+    const [suggestionItems, setSuggestionItems] = useState<Item[]>([]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [claimedItemIds, setClaimedItemIds] = useState<number[]>([]);
+    const [claimLoadingId, setClaimLoadingId] = useState<number | null>(null);
+    const [reportedItemIds, setReportedItemIds] = useState<number[]>([]);
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const fetchItems = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+            const response = await axios.get('http://localhost:8000/api/items', config);
+            setDbItems(response.data.items);
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred');
+            setDbItems([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleViewSuggestions = () => {
+        setActiveView('suggestions');
+
+        // If we already have items in state, no need to fetch
+        if (suggestionItems.length > 0) return;
+
+        // Try to load from localStorage cache
+        const cached = localStorage.getItem('khoj_suggestions_cache');
+        if (cached) {
+            try {
+                setSuggestionItems(JSON.parse(cached));
+                return;
+            } catch (e) {
+                console.error("Failed to parse cached suggestions", e);
+            }
+        }
+
+        // Only explicitly hit Gemini if we have nothing at all
+        fetchSuggestions(false);
+    };
+
+    const fetchSuggestions = async (forceRefresh = false) => {
+        try {
+            setLoading(true);
+            setActiveView('suggestions');
+            setCurrentPage(1);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error('Please login to get suggestions');
+                setSuggestionItems([]);
+                return;
+            }
+            const response = await axios.get('http://localhost:8000/api/items/suggestions/match', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const items = response.data.items || [];
+            setSuggestionItems(items);
+            localStorage.setItem('khoj_suggestions_cache', JSON.stringify(items));
+            setError(null);
+
+            if (forceRefresh) {
+                toast.success('Suggestions refreshed successfully!');
+            }
+        } catch (err) {
+            console.error('Suggestions error:', err);
+            setError(err instanceof Error ? err.message : 'Suggestions failed to load');
+            setSuggestionItems([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const performGeminiSearch = async (query: string) => {
+        const normalizedQuery = query.trim().toLowerCase();
+        if (!normalizedQuery) return;
+        
+        // Try to load exact query match from localStorage cache
+        const cacheKey = `khoj_search_cache_${normalizedQuery}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            try {
+                setSearchItems(JSON.parse(cached));
+                setActiveView('search');
+                setCurrentPage(1);
+                return;
+            } catch (e) {
+                console.error("Failed to parse cached search logic", e);
+            }
+        }
+
+        try {
+            setLoading(true);
+            setActiveView('search');
+            setCurrentPage(1);
+            const params = { q: query, filter: 'all' }; // Search across all initially
+            const response = await axios.get('http://localhost:8000/api/items/search', { params });
+            const items = response.data.items || [];
+            
+            setSearchItems(items);
+            localStorage.setItem(cacheKey, JSON.stringify(items));
+            setError(null);
+        } catch (err) {
+            console.error('Search error:', err);
+            setError(err instanceof Error ? err.message : 'Search failed');
+            setSearchItems([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const triggerSearch = () => {
+        if (!searchTerm.trim()) {
+            setActiveView('database');
+            setCurrentPage(1);
+        } else {
+            performGeminiSearch(searchTerm);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            triggerSearch();
+        }
+    };
+
+    const fetchClaimedItemIds = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setClaimedItemIds([]);
+            return;
+        }
+
+        try {
+            const response = await axios.get('http://localhost:8000/api/my-activity', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const claimedIds = (response.data?.data?.claim_requests?.items || [])
+                .map((item: Item) => item.id);
+
+            setClaimedItemIds(Array.from(new Set(claimedIds)));
+        } catch {
+            setClaimedItemIds([]);
+        }
+    };
+
+    const fetchReportedItemIds = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setReportedItemIds([]);
+            return;
+        }
+        try {
+            const response = await axios.get('http://localhost:8000/api/my-reports', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+            if (response.data?.success) {
+                setReportedItemIds(response.data.data.reported_item_ids || []);
+            }
+        } catch {
+            setReportedItemIds([]);
+        }
+    };
 
     // Fetch items from API on component mount
     useEffect(() => {
-        const fetchItems = async () => {
+        // Get current user ID from localStorage
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
             try {
-                setLoading(true);
-                // Get current user ID from localStorage
-                const userStr = localStorage.getItem('user');
-                if (userStr) {
-                    try {
-                        const user = JSON.parse(userStr);
-                        setCurrentUserId(user.id);
-                    } catch (e) {
-                        console.error('Failed to parse user from localStorage');
-                    }
-                }
-
-                const response = await axios.get('http://localhost:8000/api/items');
-                setFetchedItems(response.data.items);
-                setError(null);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'An error occurred');
-                setFetchedItems([]);
-            } finally {
-                setLoading(false);
+                const user = JSON.parse(userStr);
+                setCurrentUserId(user.id);
+            } catch {
+                console.error('Failed to parse user from localStorage');
             }
-        };
+        }
 
         fetchItems();
+        fetchClaimedItemIds();
+        fetchReportedItemIds();
+
+        // Cleanup timeout on component unmount
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
     }, []);
 
-    // Report form state
+    // Report item form state (for submitting lost/found)
     const [formData, setFormData] = useState({
         itemName: '',
         category: '',
@@ -79,86 +264,118 @@ export default function Items() {
 
     const [itemImage, setItemImage] = useState<File | null>(null);
     const [itemImagePreview, setItemImagePreview] = useState<string | null>(null);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [showUserModal, setShowUserModal] = useState(false);
 
-    // Toggleable actions per item (local state only — use backend in production)
-    const [itemActions, setItemActions] = useState<Record<number, { claimed?: boolean; reported?: boolean }>>({});
+    // Report violation form state (for reporting items as fake/suspicious)
+    const [showViolationModal, setShowViolationModal] = useState(false);
+    const [selectedItemForReport, setSelectedItemForReport] = useState<Item | null>(null);
+    const [violationReason, setViolationReason] = useState('');
+    const [reportingId, setReportingId] = useState<number | null>(null);
 
-    const toggleClaim = (id: number) => {
+    const toggleClaim = async (id: number) => {
         const token = localStorage.getItem('token');
         if (!token) {
-            alert('Please login to claim items');
+            toast.error('Please login to claim items');
             return;
         }
 
-        // Update local state immediately for UI feedback
-        setItemActions(prev => {
-            const current = prev[id] || {};
-            const willBeClaimed = !current.claimed;
-            return {
-                ...prev,
-                [id]: {
-                    claimed: willBeClaimed,
-                    reported: false,
-                },
-            };
-        });
-
-        // Send to backend
-        axios.put(`http://localhost:8000/api/items/${id}/claim`, {}, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        }).then(response => {
+        try {
+            setClaimLoadingId(id);
+            const response = await axios.put(`http://localhost:8000/api/items/${id}/claim`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
             console.log('Claim response:', response.data);
-            alert(response.data.message || 'Claim updated successfully');
-        }).catch(err => {
+            toast.success(response.data.message || 'Claim updated successfully');
+            await fetchItems();
+            await fetchClaimedItemIds();
+        } catch (err: any) {
             console.error('Error toggling claim:', err);
             const errorMsg = err.response?.data?.message || 'Failed to update claim status';
-            alert(errorMsg);
-            // Revert UI change on error
-            setItemActions(prev => {
-                const current = prev[id] || {};
-                return {
-                    ...prev,
-                    [id]: {
-                        ...current,
-                        claimed: !current.claimed
-                    }
-                };
-            });
-        });
+            toast.error(errorMsg);
+        } finally {
+            setClaimLoadingId(null);
+        }
     };
 
-    const toggleReport = (id: number) => {
-        setItemActions(prev => {
-            const current = prev[id] || {};
-            const willBeReported = !current.reported;
-            return {
-                ...prev,
-                [id]: {
-                    reported: willBeReported,
-                    claimed: false, // mutually exclusive
+    const toggleReport = (item: Item) => {
+        setSelectedItemForReport(item);
+        setViolationReason('');
+        setShowViolationModal(true);
+    };
+
+    const submitViolationReport = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            toast.error('Please login to report items');
+            return;
+        }
+
+        if (!selectedItemForReport || !violationReason.trim()) {
+            toast.error('Please provide a reason for the report');
+            return;
+        }
+
+        try {
+            setReportingId(selectedItemForReport.id);
+            await axios.post(
+                'http://localhost:8000/api/reports',
+                {
+                    item_id: selectedItemForReport.id,
+                    reason: violationReason
                 },
-            };
-        });
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            toast.success('Report submitted successfully. Admins will review it.');
+            setShowViolationModal(false);
+            setSelectedItemForReport(null);
+            setViolationReason('');
+            setReportedItemIds(prev => [...prev, selectedItemForReport.id]);
+            // Refresh from server to keep state in sync
+            fetchReportedItemIds();
+        } catch (err: any) {
+            console.error('Error submitting report:', err);
+            const errorMsg = err.response?.data?.message || 'Failed to submit report';
+            toast.error(errorMsg);
+        } finally {
+            setReportingId(null);
+        }
     };
 
 
-    // Filter + search logic
-    const filteredReports = fetchedItems.filter((report) => {
+    // Select correct array based on activeView
+    let sourceItems: Item[] = [];
+    if (activeView === 'database') {
+        sourceItems = dbItems.filter(item => filter === 'all' || item.status === filter);
+    } else if (activeView === 'search') {
+        sourceItems = searchItems;
+    } else if (activeView === 'suggestions') {
+        sourceItems = suggestionItems;
+    }
+
+    const filteredReports = sourceItems.filter((report) => {
+        if (report.valid !== 1 || report.resolution_status === 'resolved') {
+            return false;
+        }
+
         // Exclude user's own items
         if (currentUserId && report.user_id === currentUserId) {
             return false;
         }
-        const matchesFilter = filter === 'all' || report.status === filter;
-        const matchesSearch =
-            searchTerm === '' ||
-            report.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            report.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            report.location.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesFilter && matchesSearch;
+
+        return true;
     });
 
     const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE);
@@ -184,7 +401,7 @@ export default function Items() {
         const token = localStorage.getItem('token');
 
         if (!token) {
-            alert('Please login to report items');
+            toast.error('Please login to report items');
             return;
         }
 
@@ -195,13 +412,13 @@ export default function Items() {
             if (itemImage) {
                 const uploadData = new FormData();
                 uploadData.append('file', itemImage);
-                uploadData.append('upload_preset', 'khoj-profile');
+                uploadData.append('upload_preset', 'khoj-items');
 
                 try {
                     const cloudinaryRes = await axios.post('https://api.cloudinary.com/v1_1/dait0sacc/image/upload', uploadData);
                     imageUrl = cloudinaryRes.data.secure_url;
                 } catch (err) {
-                    alert('Failed to upload image to Cloudinary.');
+                    toast.error('Failed to upload image to Cloudinary.');
                     return;
                 }
             }
@@ -224,7 +441,7 @@ export default function Items() {
                 }
             });
 
-            alert('Report submitted successfully!');
+            toast.success('Report submitted successfully!');
             setFormData({
                 itemName: '',
                 category: '',
@@ -239,11 +456,11 @@ export default function Items() {
             setShowReportModal(false);
 
             // Refresh items list
-            const itemsResponse = await axios.get('http://localhost:8000/api/items');
-            setFetchedItems(itemsResponse.data.items);
+            await fetchItems();
+            await fetchClaimedItemIds();
         } catch (err) {
             console.error('Error submitting report:', err);
-            alert(err instanceof Error ? err.message : 'Failed to submit report');
+            toast.error(err instanceof Error ? err.message : 'Failed to submit report');
         }
     };
 
@@ -251,50 +468,115 @@ export default function Items() {
         <div className="min-h-screen bg-gray-50 py-10 relative">
             <div className="container mx-auto px-4 max-w-7xl">
 
-                {/* Header + Report Button */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-800">Lost & Found Items</h1>
-                    <button
-                        onClick={() => setShowReportModal(true)}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-medium shadow-md transition-all"
-                    >
-                        + Report Lost / Found Item
-                    </button>
-                </div>
+                {/* Header + Actions */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+                    <div>
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 mb-3 tracking-tight">
+                            Lost & Found
+                        </h1>
+                        <p className="text-gray-500 text-lg max-w-xl">
+                            {activeView === 'database' && "Browse reported physical items across the ecosystem."}
+                            {activeView === 'search' && `AI Search Results for "${searchTerm}"`}
+                            {activeView === 'suggestions' && "AI-powered proactive matching for your registered items."}
+                        </p>
+                    </div>
 
-                {/* Filters + Search */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-8 items-center justify-between bg-white p-4 rounded-lg shadow-sm border">
-                    <div className="flex gap-3">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
                         <button
-                            onClick={() => { setFilter('all'); setCurrentPage(1); }}
-                            className={`px-5 py-2 rounded-full font-medium transition-colors ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            onClick={() => activeView === 'suggestions' ? fetchSuggestions(true) : handleViewSuggestions()}
+                            className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-sm border ${activeView === 'suggestions'
+                                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-purple-500/30 border-transparent'
+                                    : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50 hover:shadow-md'
                                 }`}
                         >
-                            All
+                            <span className="text-xl">✨</span>
+                            {activeView === 'suggestions' ? 'Refresh Suggestions' : 'Smart Suggestions'}
+                        </button>
+
+                        <button
+                            onClick={() => setShowReportModal(true)}
+                            className="flex-1 md:flex-none justify-center bg-gray-900 hover:bg-black text-white px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-gray-900/20"
+                        >
+                            + Report Item
+                        </button>
+                    </div>
+                </div>
+
+                {/* Main Filter & Search Control Panel */}
+                <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-4 mb-10 sticky top-4 z-40">
+                    {/* Segmented Control Tabs */}
+                    <div className="flex p-1 bg-gray-50/80 backdrop-blur-md rounded-xl w-full lg:w-auto flex-1 lg:flex-none relative h-14">
+                        <button
+                            onClick={() => {
+                                setActiveView('database');
+                                setFilter('all');
+                                setCurrentPage(1);
+                                setSearchTerm('');
+                            }}
+                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'all' ? 'bg-white text-gray-900 shadow border border-gray-100' : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                        >
+                            All Posts
                         </button>
                         <button
-                            onClick={() => { setFilter('lost'); setCurrentPage(1); }}
-                            className={`px-5 py-2 rounded-full font-medium transition-colors ${filter === 'lost' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            onClick={() => {
+                                setActiveView('database');
+                                setFilter('lost');
+                                setCurrentPage(1);
+                                setSearchTerm('');
+                            }}
+                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'lost' ? 'bg-rose-50 text-rose-700 shadow border border-rose-100' : 'text-gray-500 hover:text-rose-600'
                                 }`}
                         >
                             Lost
                         </button>
                         <button
-                            onClick={() => { setFilter('found'); setCurrentPage(1); }}
-                            className={`px-5 py-2 rounded-full font-medium transition-colors ${filter === 'found' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            onClick={() => {
+                                setActiveView('database');
+                                setFilter('found');
+                                setCurrentPage(1);
+                                setSearchTerm('');
+                            }}
+                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'found' ? 'bg-emerald-50 text-emerald-700 shadow border border-emerald-100' : 'text-gray-500 hover:text-emerald-600'
                                 }`}
                         >
                             Found
                         </button>
                     </div>
 
-                    <input
-                        type="text"
-                        placeholder="Search items, locations..."
-                        value={searchTerm}
-                        onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                        className="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                    {/* Search Field */}
+                    <div className="relative flex-1 lg:max-w-md h-14">
+                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                            {activeView === 'search' ? (
+                                <span className="flex h-3 w-3 relative">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                                </span>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            )}
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Ask Gemini to find something..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className={`w-full h-full pl-12 pr-14 outline-none border transition-all duration-300 rounded-xl text-gray-800 placeholder-gray-400 ${activeView === 'search' ? 'border-blue-400 ring-4 ring-blue-50 bg-blue-50/30' : 'border-gray-200 focus:border-gray-300 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-gray-100'
+                                }`}
+                        />
+                        <button
+                            onClick={triggerSearch}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors shadow-sm"
+                            title="Semantic Search"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Items Grid */}
@@ -313,7 +595,8 @@ export default function Items() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {paginatedReports.map(report => {
-                            const action = itemActions[report.id] || {};
+                            const isClaimed = claimedItemIds.includes(report.id);
+                            const isReported = reportedItemIds.includes(report.id);
                             return (
                                 <div
                                     key={report.id}
@@ -330,11 +613,10 @@ export default function Items() {
                                         )}
                                         {/* Status Badge - Floating */}
                                         <span
-                                            className={`absolute top-3 right-3 px-4 py-2 rounded-full text-xs font-bold backdrop-blur-md ${
-                                                report.status === 'lost'
+                                            className={`absolute top-3 right-3 px-4 py-2 rounded-full text-xs font-bold backdrop-blur-md ${report.status === 'lost'
                                                     ? 'bg-red-500/90 text-white shadow-lg'
                                                     : 'bg-green-500/90 text-white shadow-lg'
-                                            }`}
+                                                }`}
                                         >
                                             {report.status === 'lost' ? '🔴 LOST' : '🟢 FOUND'}
                                         </span>
@@ -357,15 +639,18 @@ export default function Items() {
                                         {/* User Info Card */}
                                         {report.user && (
                                             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-4 border border-blue-100">
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-3 cursor-pointer" onClick={() => {
+                                                    setSelectedUser(report.user!);
+                                                    setShowUserModal(true);
+                                                }}>
                                                     <img
                                                         src={report.user.pic_url || 'https://ui-avatars.com/api/?name=User&background=random'}
                                                         alt={report.user.name}
-                                                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+                                                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-blue-500 transition-all"
                                                     />
                                                     <div>
                                                         <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Posted by</p>
-                                                        <p className="text-sm font-bold text-gray-900">{report.user.name}</p>
+                                                        <p className="text-sm font-bold text-gray-900 hover:text-blue-600 transition-colors">{report.user.name}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -391,24 +676,24 @@ export default function Items() {
                                         <div className="mt-auto flex gap-2">
                                             <button
                                                 onClick={() => toggleClaim(report.id)}
-                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${
-                                                    action.claimed
-                                                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl'
+                                                disabled={claimLoadingId === report.id}
+                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${isClaimed
+                                                        ? 'bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg hover:shadow-xl'
                                                         : 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 border border-green-300'
-                                                }`}
+                                                    }`}
                                             >
-                                                {action.claimed ? '✓ Claimed' : '🙋 Claim'}
+                                                {claimLoadingId === report.id ? '⏳ Processing...' : isClaimed ? 'Release' : '🙋 Claim'}
                                             </button>
 
                                             <button
-                                                onClick={() => toggleReport(report.id)}
-                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${
-                                                    action.reported
-                                                        ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg hover:shadow-xl'
-                                                        : 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 hover:from-orange-200 hover:to-red-200 border border-orange-300'
-                                                }`}
+                                                onClick={() => !isReported && toggleReport(report)}
+                                                disabled={isReported || reportingId === report.id}
+                                                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 ${isReported
+                                                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300'
+                                                        : 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 hover:from-orange-200 hover:to-red-200 border border-orange-300 transform hover:scale-105 active:scale-100'
+                                                    }`}
                                             >
-                                                {action.reported ? '⚠ Reported' : '🚩 Report'}
+                                                {reportingId === report.id ? '⏳ Reporting...' : isReported ? '⚠ Reported' : '🚩 Report'}
                                             </button>
                                         </div>
                                     </div>
@@ -580,6 +865,236 @@ export default function Items() {
                                             className="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
                                         >
                                             Submit Report
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* User Profile Modal */}
+            {showUserModal && selectedUser && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+                        onClick={() => setShowUserModal(false)}
+                    />
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 my-8 overflow-hidden">
+
+                            {/* Modal Header Banner */}
+                            <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 h-24">
+                                <button
+                                    onClick={() => setShowUserModal(false)}
+                                    aria-label="Close"
+                                    className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:shadow-xl transition-all duration-150"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div className="px-8 pb-8">
+                                {/* Profile Picture - overlapping banner */}
+                                <div className="flex flex-col items-center -mt-12 mb-4 relative z-10">
+                                    <img
+                                        src={selectedUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedUser.name) + '&background=4F46E5&color=fff&size=150'}
+                                        alt={selectedUser.name}
+                                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl bg-white"
+                                    />
+                                    <h2 className="text-2xl font-bold text-gray-900 text-center mt-3">{selectedUser.name}</h2>
+                                    {selectedUser.info?.bio && (
+                                        <div className="mt-3 px-2 text-center">
+                                            <p className="text-sm text-gray-600 italic leading-relaxed">"{selectedUser.info.bio}"</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Contact Info */}
+                                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-5 mb-5 border border-blue-100 space-y-3">
+                                    {selectedUser.email && (
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                                                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                                                </svg>
+                                            </span>
+                                            <div>
+                                                <p className="text-xs text-gray-400 font-medium">Email</p>
+                                                <p className="text-sm font-semibold text-gray-800">{selectedUser.email}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {selectedUser.phone && (
+                                        <div className="flex items-center gap-3">
+                                            <span className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.98-2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.09a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.33v-.41z" />
+                                                </svg>
+                                            </span>
+                                            <div>
+                                                <p className="text-xs text-gray-400 font-medium">Phone</p>
+                                                <p className="text-sm font-semibold text-gray-800">{selectedUser.phone}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Social Media Icons */}
+                                {selectedUser.info && (
+                                    (() => {
+                                        const socials = [
+                                            {
+                                                key: 'fb',
+                                                url: selectedUser.info.fb_url,
+                                                label: 'Facebook',
+                                                color: 'hover:bg-blue-600',
+                                                icon: (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                                                    </svg>
+                                                ),
+                                            },
+                                            {
+                                                key: 'x',
+                                                url: selectedUser.info.x_url,
+                                                label: 'X (Twitter)',
+                                                color: 'hover:bg-black',
+                                                icon: (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                                    </svg>
+                                                ),
+                                            },
+                                            {
+                                                key: 'insta',
+                                                url: selectedUser.info.insta_url,
+                                                label: 'Instagram',
+                                                color: 'hover:bg-gradient-to-br hover:from-purple-600 hover:via-pink-500 hover:to-orange-400',
+                                                icon: (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                                                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                                                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                                                    </svg>
+                                                ),
+                                            },
+                                            {
+                                                key: 'linkedin',
+                                                url: selectedUser.info.linkedin_url,
+                                                label: 'LinkedIn',
+                                                color: 'hover:bg-blue-700',
+                                                icon: (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                                                        <rect x="2" y="9" width="4" height="12" />
+                                                        <circle cx="4" cy="4" r="2" />
+                                                    </svg>
+                                                ),
+                                            },
+                                        ].filter(s => s.url);
+
+                                        return socials.length > 0 ? (
+                                            <div className="mb-5">
+                                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 text-center">Connect on Social</p>
+                                                <div className="flex justify-center gap-3">
+                                                    {socials.map(social => (
+                                                        <a
+                                                            key={social.key}
+                                                            href={social.url!}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            title={social.label}
+                                                            className={`w-11 h-11 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center transition-all duration-200 hover:text-white hover:scale-110 hover:shadow-lg ${social.color}`}
+                                                        >
+                                                            {social.icon}
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : null;
+                                    })()
+                                )}
+
+
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+            {/* Violation Report Modal */}
+            {showViolationModal && selectedItemForReport && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]"
+                        onClick={() => !reportingId && setShowViolationModal(false)}
+                    />
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all relative">
+                            {/* Accent line */}
+                            <div className="h-1.5 w-full bg-gradient-to-r from-red-500 to-rose-500" />
+
+                            <button
+                                onClick={() => setShowViolationModal(false)}
+                                disabled={reportingId !== null}
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl disabled:opacity-50"
+                            >
+                                ✕
+                            </button>
+
+                            <div className="p-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-red-500 text-2xl">
+                                        🚨
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900">Report Item</h3>
+                                        <p className="text-sm text-gray-500">Flag this item for admin review</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 rounded-xl p-3 mb-5 border border-gray-100">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Reporting:</p>
+                                    <p className="font-bold text-gray-900 line-clamp-1">{selectedItemForReport.item_name}</p>
+                                </div>
+
+                                <form onSubmit={submitViolationReport}>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Reason for reporting <span className="text-red-500">*</span>
+                                    </label>
+                                    <textarea
+                                        value={violationReason}
+                                        onChange={(e) => setViolationReason(e.target.value)}
+                                        placeholder="e.g., Fake item, inappropriate content, spam..."
+                                        rows={4}
+                                        required
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none text-sm"
+                                        disabled={reportingId !== null}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-2 mb-6">
+                                        False reports may result in account suspension.
+                                    </p>
+
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowViolationModal(false)}
+                                            disabled={reportingId !== null}
+                                            className="flex-1 px-4 py-3 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={reportingId !== null || !violationReason.trim()}
+                                            className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-sm shadow-md transition-all disabled:opacity-50"
+                                        >
+                                            {reportingId !== null ? 'Submitting...' : 'Submit Report'}
                                         </button>
                                     </div>
                                 </form>
