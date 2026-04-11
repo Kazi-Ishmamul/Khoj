@@ -54,6 +54,11 @@ Route::middleware(['jwt.auth', 'role:user'])->group(function () {
     Route::post('/claims/{claimId}/accept', [App\Http\Controllers\ClaimController::class, 'acceptClaim']);
     Route::post('/claims/{claimId}/decline', [App\Http\Controllers\ClaimController::class, 'declineClaim']);
 
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [App\Http\Controllers\NotificationController::class, 'unreadCount']);
+    Route::put('/notifications/{notificationId}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
+    Route::put('/notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
+
     // User can report items
     Route::post('/reports', [App\Http\Controllers\ReportController::class, 'store']);
     Route::get('/items/{itemId}/reports', [App\Http\Controllers\ReportController::class, 'getItemReports']);

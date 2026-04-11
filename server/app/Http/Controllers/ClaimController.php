@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Claim;
 use App\Models\Item;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class ClaimController extends Controller
@@ -34,6 +35,11 @@ class ClaimController extends Controller
             return response()->json(['message' => 'Only pending claims can be accepted'], 400);
         }
 
+        $pendingClaimsToDecline = Claim::where('item_id', $item->id)
+            ->where('claim_id', '!=', $claim->claim_id)
+            ->where('validity', 0)
+            ->get();
+
         // Update selected claim validity to 1 (accepted)
         $claim->validity = 1;
         $claim->save();
@@ -43,6 +49,28 @@ class ClaimController extends Controller
             ->where('claim_id', '!=', $claim->claim_id)
             ->where('validity', 0)
             ->update(['validity' => -1]);
+
+        $notifications = app(NotificationService::class);
+
+        $notifications->notifyUser(
+            (int) $claim->claimed_by_id,
+            'claim_accepted',
+            "Your claim for \"{$item->item_name}\" was accepted.",
+            'claim',
+            (int) $claim->claim_id,
+            (int) $user->id
+        );
+
+        foreach ($pendingClaimsToDecline as $pendingClaim) {
+            $notifications->notifyUser(
+                (int) $pendingClaim->claimed_by_id,
+                'claim_declined',
+                "Your claim for \"{$item->item_name}\" was declined because another claim was accepted.",
+                'claim',
+                (int) $pendingClaim->claim_id,
+                (int) $user->id
+            );
+        }
 
         // Update item resolution_status to resolved
         $item->resolution_status = 'resolved';
@@ -84,6 +112,15 @@ class ClaimController extends Controller
         // Update selected claim validity to -1 (declined)
         $claim->validity = -1;
         $claim->save();
+
+        app(NotificationService::class)->notifyUser(
+            (int) $claim->claimed_by_id,
+            'claim_declined',
+            "Your claim for \"{$item->item_name}\" was declined.",
+            'claim',
+            (int) $claim->claim_id,
+            (int) $user->id
+        );
 
         // Keep item as claimed while at least one pending claim exists.
         $pendingClaims = Claim::where('item_id', $item->id)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\Claim;
 use App\Models\Report;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
@@ -40,6 +41,7 @@ class ItemController extends Controller
 
         try {
             $item = Item::findOrFail($id);
+            $notifications = app(NotificationService::class);
 
             if ((int) $item->valid !== 1 || $item->resolution_status === 'resolved') {
                 return response()->json([
@@ -56,6 +58,14 @@ class ItemController extends Controller
             Claim::where('item_id', $item->id)->update(['validity' => -1]);
 
             Report::where('item_id', $item->id)->update(['status' => -1]);
+
+            $notifications->notifyUser(
+                (int) $item->user_id,
+                'item_struck',
+                "Your post \"{$item->item_name}\" was struck by an admin.",
+                'item',
+                (int) $item->id
+            );
 
             DB::commit();
 
@@ -202,6 +212,15 @@ class ItemController extends Controller
                     'validity' => 0 // pending
                 ]);
             }
+
+            app(NotificationService::class)->notifyUser(
+                (int) $item->user_id,
+                'item_claimed',
+                "Someone has claimed your post \"{$item->item_name}\".",
+                'item',
+                (int) $item->id,
+                (int) $user->id
+            );
 
             // Update item resolution_status to claimed
             $item->resolution_status = 'claimed';
