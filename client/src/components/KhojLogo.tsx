@@ -12,14 +12,14 @@ const KhojLogo = () => {
                 <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-400 border-r-purple-400"
+                    className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-600 border-r-purple-600"
                 />
 
                 {/* Inner pulsing circle */}
                 <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute inset-2 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 opacity-60"
+                    className="absolute inset-2 rounded-full bg-gradient-to-br from-blue-600 to-purple-700 opacity-60"
                 />
 
                 {/* Center dot */}
@@ -35,10 +35,10 @@ const KhojLogo = () => {
 
             {/* Text Logo */}
             <div className="flex flex-col">
-                <span className="text-lg font-black bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent leading-none">
+                <span className="text-lg font-black bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent leading-none">
                     KHOJ
                 </span>
-                <span className="text-[10px] font-bold text-blue-400 tracking-wider">SEARCH</span>
+                <span className="text-[10px] font-bold text-blue-500 tracking-wider">SEARCH</span>
             </div>
         </motion.div>
     );
