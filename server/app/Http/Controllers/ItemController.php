@@ -78,9 +78,6 @@ class ItemController extends Controller
 
             Report::where('item_id', $item->id)->update(['status' => -1]);
 
-            $ownerInfo = UserInfo::firstOrCreate(['user_id' => $item->user_id]);
-            $ownerInfo->increment('report_strikes');
-
             $notifications->notifyUser(
                 (int) $item->user_id,
                 'item_struck',

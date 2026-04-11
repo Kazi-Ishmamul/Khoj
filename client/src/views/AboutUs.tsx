@@ -68,46 +68,46 @@ const MailIcon = () => (
 
 const AboutUs = () => {
     return (
-        <div className="min-h-screen bg-slate-50 py-16 px-4 md:px-8 font-sans w-full">
+        <div className="min-h-screen bg-slate-950 py-16 px-4 md:px-8 font-sans w-full text-slate-100">
             <div className="max-w-7xl mx-auto w-full">
                 <div className="text-center mb-24">
-                    <p className="text-sm font-bold tracking-[0.2em] text-slate-400 uppercase mb-4">About</p>
-                    <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight">
-                        The team behind Khoj.
+                    <p className="text-sm font-bold tracking-[0.2em] text-violet-400 uppercase mb-4">About</p>
+                    <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
+                        Meet the Khoj Team.
                     </h1>
-                    <p className="text-xl text-slate-500 max-w-2xl mx-auto font-medium">
-                        We build communities. Period.
+                    <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
+                        Building communities, one lost item at a time.
                     </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12 mb-32">
                     {developers.map((dev, index) => (
                         <div key={index} className="group relative pt-12">
-                            <div className="bg-white rounded-[2.5rem] p-8 pt-44 relative shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)]">
-                                <div className="absolute -top-12 left-6 right-6 h-56 rounded-[2rem] overflow-hidden bg-[#eef2eb] shadow-lg border-4 border-white transition-all duration-300 group-hover:border-slate-50">
+                            <div className="bg-slate-900/70 rounded-[2.5rem] p-8 pt-44 relative shadow-xl border border-slate-800 transition-all duration-300 hover:-translate-y-2 hover:border-slate-700 hover:shadow-2xl hover:shadow-blue-900/20">
+                                <div className="absolute -top-12 left-6 right-6 h-56 rounded-[2rem] overflow-hidden bg-slate-800/50 shadow-lg border-4 border-slate-900 transition-all duration-300 group-hover:border-slate-800">
                                     <img
                                         src={dev.image}
                                         alt={dev.name}
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                     />
-                                    <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        <span className="text-sm font-extrabold text-slate-800">{dev.name}</span>
+                                    <div className="absolute bottom-4 right-4 bg-slate-900/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        <span className="text-sm font-extrabold text-white">{dev.name}</span>
                                     </div>
                                 </div>
 
                                 <div className="relative z-10 pt-4">
-                                    <h3 className="text-2xl font-bold text-slate-900 mb-3">{dev.role}</h3>
-                                    <p className="text-slate-500 leading-relaxed mb-8 min-h-[4rem]">
+                                    <h3 className="text-2xl font-bold text-white mb-3">{dev.role}</h3>
+                                    <p className="text-slate-400 leading-relaxed mb-8 min-h-[4rem]">
                                         {dev.description}
                                     </p>
 
                                     <div className="flex flex-wrap items-center gap-3">
-                                        <a href={dev.socials.gmail} aria-label="Mail" className="text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 p-2.5 rounded-full transition-all duration-300"><MailIcon /></a>
-                                        <a href={dev.socials.facebook} aria-label="Facebook" className="text-slate-400 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 p-2.5 rounded-full transition-all duration-300"><FacebookIcon /></a>
-                                        <a href={dev.socials.x} aria-label="X" className="text-slate-400 hover:text-sky-500 bg-slate-50 hover:bg-sky-50 p-2.5 rounded-full transition-all duration-300"><XIcon /></a>
-                                        <a href={dev.socials.linkedin} aria-label="LinkedIn" className="text-slate-400 hover:text-blue-700 bg-slate-50 hover:bg-blue-50 p-2.5 rounded-full transition-all duration-300"><LinkedinIcon /></a>
-                                        <a href={dev.socials.github} aria-label="GitHub" className="text-slate-400 hover:text-slate-900 bg-slate-50 hover:bg-slate-200 p-2.5 rounded-full transition-all duration-300"><GithubIcon /></a>
+                                        <a href={dev.socials.gmail} aria-label="Mail" className="text-slate-400 hover:text-red-400 bg-slate-800/60 hover:bg-red-500/20 p-2.5 rounded-full transition-all duration-300"><MailIcon /></a>
+                                        <a href={dev.socials.facebook} aria-label="Facebook" className="text-slate-400 hover:text-blue-400 bg-slate-800/60 hover:bg-blue-500/20 p-2.5 rounded-full transition-all duration-300"><FacebookIcon /></a>
+                                        <a href={dev.socials.x} aria-label="X" className="text-slate-400 hover:text-sky-400 bg-slate-800/60 hover:bg-sky-500/20 p-2.5 rounded-full transition-all duration-300"><XIcon /></a>
+                                        <a href={dev.socials.linkedin} aria-label="LinkedIn" className="text-slate-400 hover:text-blue-400 bg-slate-800/60 hover:bg-blue-500/20 p-2.5 rounded-full transition-all duration-300"><LinkedinIcon /></a>
+                                        <a href={dev.socials.github} aria-label="GitHub" className="text-slate-400 hover:text-slate-300 bg-slate-800/60 hover:bg-slate-700 p-2.5 rounded-full transition-all duration-300"><GithubIcon /></a>
                                     </div>
                                 </div>
                             </div>
@@ -115,27 +115,27 @@ const AboutUs = () => {
                     ))}
                 </div>
 
-                <div className="bg-slate-900 rounded-[3rem] p-10 md:p-16 lg:p-24 text-center relative overflow-hidden shadow-2xl">
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400"></div>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle,rgba(52,211,153,0.1)_0%,transparent_50%)]"></div>
+                <div className="bg-gradient-to-br from-slate-900/80 to-slate-950 rounded-[3rem] p-10 md:p-16 lg:p-24 text-center relative overflow-hidden shadow-2xl border border-slate-800/60">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 via-violet-600 to-teal-600"></div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle,rgba(99,102,241,0.1)_0%,transparent_50%)]"></div>
 
                     <div className="relative z-10 max-w-4xl mx-auto">
-                        <h2 className="text-sm font-bold tracking-[0.2em] text-white uppercase mb-6">Our Mission</h2>
+                        <h2 className="text-sm font-bold tracking-[0.2em] text-violet-400 uppercase mb-6">Our Mission</h2>
                         <h3 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-8 leading-tight">
-                            Bringing lost belongings <br className="hidden md:block" /> back home.
+                            Reuniting people with <br className="hidden md:block" /> their belongings.
                         </h3>
-                        <p className="text-lg md:text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto mb-12 font-light">
+                        <p className="text-lg md:text-xl text-slate-400 leading-relaxed max-w-3xl mx-auto mb-12 font-light">
                             Khoj is a dedicated platform designed to help individuals find their lost belongings and assist those who have found items in returning them to their rightful owners. We believe that by creating an accessible and easy-to-use platform, we can increase the chances of happy reunions between people and their cherished possessions.
                         </p>
 
                         <div className="flex justify-center flex-wrap gap-4">
-                            <span className="bg-white/5 border border-white/10 hover:bg-white/10 transition-colors backdrop-blur-md rounded-full px-6 py-3 text-white font-medium flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Trustworthy
+                            <span className="bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 transition-colors backdrop-blur-md rounded-full px-6 py-3 text-blue-300 font-medium flex items-center gap-3">
+                                <span className="w-2.5 h-2.5 rounded-full bg-blue-400"></span> Trustworthy
                             </span>
-                            <span className="bg-white/5 border border-white/10 hover:bg-white/10 transition-colors backdrop-blur-md rounded-full px-6 py-3 text-white font-medium flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Accessible
+                            <span className="bg-violet-600/20 border border-violet-500/30 hover:bg-violet-600/30 transition-colors backdrop-blur-md rounded-full px-6 py-3 text-violet-300 font-medium flex items-center gap-3">
+                                <span className="w-2.5 h-2.5 rounded-full bg-violet-400"></span> Accessible
                             </span>
-                            <span className="bg-white/5 border border-white/10 hover:bg-white/10 transition-colors backdrop-blur-md rounded-full px-6 py-3 text-white font-medium flex items-center gap-3">
+                            <span className="bg-teal-600/20 border border-teal-500/30 hover:bg-teal-600/30 transition-colors backdrop-blur-md rounded-full px-6 py-3 text-teal-300 font-medium flex items-center gap-3">
                                 <span className="w-2.5 h-2.5 rounded-full bg-teal-400"></span> Community Driven
                             </span>
                         </div>
