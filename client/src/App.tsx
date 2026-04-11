@@ -17,7 +17,6 @@ import Forbidden from './views/Forbidden';
 
 import Items from './views/user/Items';
 import MyActivity from './views/user/MyActivity';
-import Notifications from './views/user/Notifications';
 import Profile from './views/user/Profile';
 
 import Reports from './views/admin/Reports';
@@ -52,7 +51,6 @@ function App() {
             <Route index element={<Navigate to="items" replace />} />
             <Route path="items" element={<Items />} />
             <Route path="activity" element={<MyActivity />} />
-            <Route path="notifications" element={<Notifications />} />
             <Route path="profile" element={<Profile />} />
           </Route>
         </Route>

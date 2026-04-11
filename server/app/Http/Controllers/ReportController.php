@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use App\Models\Item;
 use App\Models\Claim;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -129,6 +130,7 @@ class ReportController extends Controller
 
         try {
             $report = Report::findOrFail($reportId);
+            $notifications = app(NotificationService::class);
 
             // Already struck
             if ($report->status === -1) {
@@ -139,6 +141,8 @@ class ReportController extends Controller
             }
 
             $itemId = $report->item_id;
+            $item = Item::findOrFail($itemId);
+            $affectedReports = Report::where('item_id', $itemId)->get();
 
             // 1. Strike the report
             $report->update(['status' => -1]);
@@ -156,6 +160,24 @@ class ReportController extends Controller
 
             // 5. Decline all claims on this item
             Claim::where('item_id', $itemId)->update(['validity' => -1]);
+
+            $notifications->notifyUser(
+                (int) $item->user_id,
+                'item_struck',
+                "Your post \"{$item->item_name}\" was struck by an admin after report review.",
+                'item',
+                (int) $item->id
+            );
+
+            foreach ($affectedReports as $affectedReport) {
+                $notifications->notifyUser(
+                    (int) $affectedReport->r_user_id,
+                    'report_struck',
+                    "Your report for \"{$item->item_name}\" was struck by an admin.",
+                    'report',
+                    (int) $affectedReport->report_id
+                );
+            }
 
             DB::commit();
 
@@ -188,6 +210,7 @@ class ReportController extends Controller
     {
         try {
             $report = Report::findOrFail($reportId);
+            $notifications = app(NotificationService::class);
 
             if ($report->status !== 0) {
                 return response()->json([
@@ -197,6 +220,14 @@ class ReportController extends Controller
             }
 
             $report->update(['status' => 1]);
+
+            $notifications->notifyUser(
+                (int) $report->r_user_id,
+                'report_dismissed',
+                'Your report was reviewed and dismissed by an admin.',
+                'report',
+                (int) $report->report_id
+            );
 
             return response()->json([
                 'success' => true,
