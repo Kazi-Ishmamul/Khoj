@@ -23,6 +23,7 @@ import Profile from './views/user/Profile';
 import Reports from './views/admin/Reports';
 import AdminProfile from './views/admin/AdminProfile';
 import AllUsers from './views/admin/AllUsers';
+import ManagePosts from './views/admin/ManagePosts';
 
 
 
@@ -60,6 +61,7 @@ function App() {
           <Route path="/admin-dashboard" element={<AdminLayout />}>
             <Route index element={<Navigate to="users" replace />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="posts" element={<ManagePosts />} />
             <Route path="profile" element={<AdminProfile />} />
             <Route path="users" element={<AllUsers />} />
           </Route>

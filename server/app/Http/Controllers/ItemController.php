@@ -4,12 +4,82 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\Claim;
+use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 
 class ItemController extends Controller
 {
+    public function adminActivePosts()
+    {
+        try {
+            $items = Item::where('valid', 1)
+                ->where('resolution_status', '!=', 'resolved')
+                ->with(['user', 'user.info'])
+                ->orderByDesc('created_at')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'items' => $items
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch active posts',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function adminStrikeItem($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $item = Item::findOrFail($id);
+
+            if ((int) $item->valid !== 1 || $item->resolution_status === 'resolved') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only active unresolved posts can be struck'
+                ], 422);
+            }
+
+            $item->update([
+                'valid' => 0,
+                'resolution_status' => 'not_claimed'
+            ]);
+
+            Claim::where('item_id', $item->id)->update(['validity' => -1]);
+
+            Report::where('item_id', $item->id)->update(['status' => -1]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Post struck successfully. The post is hidden and related claims/reports were updated.',
+                'item' => $item->fresh(['user', 'user.info'])
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found'
+            ], 404);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to strike post',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function index(Request $request)
     {
         $query = Item::where('valid', 1)
