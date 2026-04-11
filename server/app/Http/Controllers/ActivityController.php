@@ -34,13 +34,15 @@ class ActivityController extends Controller
         // 3. Claim Requests - Items others reported that I've claimed (pending claims only - validity = 0)
         $claimRequests = Item::whereHas('claims', function ($query) use ($user) {
             $query->where('claimed_by_id', $user->id)
-                  ->where('validity', 0); // Only pending claims
+                  ->where('validity', 0)
+                  ->orderByDesc('created_at'); // Newest pending claim first
         })
         ->where('valid', 1)
         ->where('user_id', '!=', $user->id) // Not my items
         ->with(['user', 'user.info', 'claims' => function ($query) use ($user) {
             $query->where('claimed_by_id', $user->id)
                   ->where('validity', 0)
+                  ->orderByDesc('created_at')
                   ->with(['claimedBy', 'claimedBy.info']); // Load the claimer user info
         }])
         ->get();
@@ -51,16 +53,20 @@ class ActivityController extends Controller
                 $item->claimedByUser = $item->claims->first()->claimedBy;
             }
             return $item;
-        });
+        })->sortByDesc(function ($item) {
+            return optional($item->claims->first())->created_at;
+        })->values();
 
         // 4. Claims Received - Items I reported that others have claimed (pending claims only - validity = 0)
         $claimsReceived = Item::where('user_id', $user->id)
             ->where('valid', 1)
             ->whereHas('claims', function ($query) {
-                $query->where('validity', 0); // Only pending claims
+                $query->where('validity', 0)
+                      ->orderByDesc('created_at'); // Newest pending claim first
             })
             ->with(['user', 'user.info', 'claims' => function ($query) {
                 $query->where('validity', 0)
+                      ->orderByDesc('created_at')
                       ->with(['claimedBy', 'claimedBy.info']); // Load the claimer user info
             }])
             ->get();
@@ -71,7 +77,9 @@ class ActivityController extends Controller
                 $item->claimedByUser = $item->claims->first()->claimedBy;
             }
             return $item;
-        });
+        })->sortByDesc(function ($item) {
+            return optional($item->claims->first())->created_at;
+        })->values();
 
         // 5. Resolved - Items reported by me that are resolved AND items I claimed that were accepted
         $myResolvedItems = Item::where('user_id', $user->id)
@@ -79,6 +87,7 @@ class ActivityController extends Controller
             ->where('resolution_status', 'resolved')
             ->with(['user', 'user.info', 'claims' => function ($query) {
                 $query->where('validity', '!=', -1)
+                      ->orderByDesc('created_at')
                       ->with(['claimedBy', 'claimedBy.info']); // Load the claimer user info
             }])
             ->get();
@@ -89,18 +98,22 @@ class ActivityController extends Controller
                 $item->claimedByUser = $item->claims->first()->claimedBy;
             }
             return $item;
-        });
+        })->sortByDesc(function ($item) {
+            return optional($item->claims->first())->created_at;
+        })->values();
 
         // Items I claimed that were accepted
         $myAcceptedClaimsItems = Item::whereHas('claims', function ($query) use ($user) {
             $query->where('claimed_by_id', $user->id)
-                  ->where('validity', 1); // Accepted claims
+                  ->where('validity', 1)
+                  ->orderByDesc('created_at'); // Newest accepted claim first
         })
         ->where('valid', 1)
         ->where('user_id', '!=', $user->id) // Not my items
         ->with(['user', 'user.info', 'claims' => function ($query) use ($user) {
             $query->where('claimed_by_id', $user->id)
                   ->where('validity', 1)
+                  ->orderByDesc('created_at')
                   ->with(['claimedBy', 'claimedBy.info']); // Load the claimer user info
         }])
         ->get();
@@ -111,7 +124,9 @@ class ActivityController extends Controller
                 $item->claimedByUser = $item->claims->first()->claimedBy;
             }
             return $item;
-        });
+        })->sortByDesc(function ($item) {
+            return optional($item->claims->first())->created_at;
+        })->values();
 
         $resolved = $myResolvedItems->merge($myAcceptedClaimsItems);
 

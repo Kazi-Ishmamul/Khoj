@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use App\Models\Item;
 use App\Models\Claim;
+use App\Models\UserInfo;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,9 @@ class ReportController extends Controller
     {
         try {
             $reports = Report::pending()
+                ->whereHas('reportedBy', function ($query) {
+                    $query->where('role', '!=', 'admin');
+                })
                 ->with(['item', 'reportedBy', 'item.user'])
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
@@ -161,6 +165,9 @@ class ReportController extends Controller
             // 5. Decline all claims on this item
             Claim::where('item_id', $itemId)->update(['validity' => -1]);
 
+            $ownerInfo = UserInfo::firstOrCreate(['user_id' => $item->user_id]);
+            $ownerInfo->increment('report_strikes');
+
             $notifications->notifyUser(
                 (int) $item->user_id,
                 'item_struck',
@@ -249,11 +256,16 @@ class ReportController extends Controller
     public function getStats()
     {
         try {
+            $userReportsQuery = Report::whereHas('reportedBy', function ($query) {
+                $query->where('role', '!=', 'admin');
+            });
+
             $stats = [
-                'total_reports' => Report::count(),
-                'pending_reports' => Report::pending()->count(),
-                'struck_reports' => Report::struck()->distinct('item_id')->count('item_id'),
-                'dismissed_reports' => Report::dismissed()->count(),
+                'total_reports' => (clone $userReportsQuery)->count(),
+                'pending_reports' => (clone $userReportsQuery)->where('status', 0)->count(),
+                // Count all struck items, including direct admin strikes and user-originated reports.
+                'struck_reports' => Report::where('status', -1)->distinct('item_id')->count('item_id'),
+                'dismissed_reports' => (clone $userReportsQuery)->where('status', 1)->count(),
             ];
 
             return response()->json([

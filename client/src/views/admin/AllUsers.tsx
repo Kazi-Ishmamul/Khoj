@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaEnvelope, FaPhoneAlt, FaMapMarkerAlt, FaSearch } from 'react-icons/fa';
+import { FaEnvelope, FaPhoneAlt, FaMapMarkerAlt, FaSearch, FaUserShield } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface UserData {
@@ -52,21 +52,26 @@ const AllUsers = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-indigo-600" />
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-sky-500" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800 p-4 sm:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 font-sans text-slate-100 p-4 sm:p-8">
             <Toaster position="top-center" />
             
             <div className="max-w-7xl mx-auto space-y-8">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-900/70 p-6 rounded-3xl shadow-xl border border-slate-700/60 backdrop-blur-sm">
                     <div>
-                        <h1 className="text-2xl font-extrabold text-slate-800">All Database Users</h1>
-                        <p className="text-slate-500 text-sm mt-1">Manage and view all registered users in the platform.</p>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300">
+                                <FaUserShield />
+                            </div>
+                            <h1 className="text-2xl font-extrabold text-white">Manage Users</h1>
+                        </div>
+                        <p className="text-slate-300 text-sm mt-2">View all registered users and monitor account details.</p>
                     </div>
                     <div className="relative w-full sm:w-80">
                         <FaSearch className="absolute top-[14px] left-4 text-slate-400" />
@@ -75,7 +80,7 @@ const AllUsers = () => {
                             placeholder="Search users..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3 rounded-xl font-medium outline-none bg-slate-50 border-2 border-indigo-100 focus:border-indigo-400 focus:bg-white text-slate-800 transition-all"
+                            className="w-full pl-11 pr-4 py-3 rounded-xl font-medium outline-none bg-slate-800/70 border border-slate-600 focus:border-sky-400 text-slate-100 transition-all"
                         />
                     </div>
                 </div>
@@ -88,32 +93,32 @@ const AllUsers = () => {
                             : (u.pic_url.startsWith('http') ? u.pic_url : `http://localhost:8000/${u.pic_url}`);
 
                         return (
-                            <div key={u.id} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col items-center text-center hover:shadow-md transition-shadow relative overflow-hidden group">
-                                <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 transition-opacity group-hover:opacity-40" />
+                            <div key={u.id} className="bg-slate-900/70 rounded-3xl p-6 shadow-xl border border-slate-700/60 flex flex-col items-center text-center hover:border-slate-500 transition-all duration-300 relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-r from-sky-500/20 to-indigo-500/20 transition-opacity group-hover:opacity-70" />
                                 
                                 <img 
                                     src={avatarUrl} 
                                     alt={u.name} 
                                     onError={e => { (e.target as HTMLImageElement).src = mkAvatar(u.name); }}
-                                    className="w-20 h-20 rounded-full border-4 border-white shadow-md z-10 relative mb-4 object-cover"
+                                    className="w-20 h-20 rounded-full border-4 border-slate-800 shadow-md z-10 relative mb-4 object-cover"
                                 />
                                 
-                                <h3 className="font-bold text-lg text-slate-800 z-10">{u.name}</h3>
-                                <span className={`text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full mb-4 z-10 ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-indigo-50 text-indigo-700'}`}>
+                                <h3 className="font-bold text-lg text-slate-100 z-10">{u.name}</h3>
+                                <span className={`text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full mb-4 z-10 border ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-300 border-purple-400/30' : 'bg-sky-500/20 text-sky-300 border-sky-400/30'}`}>
                                     {u.role}
                                 </span>
 
-                                <div className="w-full space-y-3 z-10 text-left mt-2 border-t border-slate-50 pt-4">
-                                    <div className="flex items-center gap-3 text-sm text-slate-600">
-                                        <FaEnvelope className="text-indigo-400" />
+                                <div className="w-full space-y-3 z-10 text-left mt-2 border-t border-slate-700 pt-4">
+                                    <div className="flex items-center gap-3 text-sm text-slate-300">
+                                        <FaEnvelope className="text-sky-400" />
                                         <span className="truncate">{u.email}</span>
                                     </div>
-                                    <div className="flex items-center gap-3 text-sm text-slate-600">
-                                        <FaPhoneAlt className="text-indigo-400" />
+                                    <div className="flex items-center gap-3 text-sm text-slate-300">
+                                        <FaPhoneAlt className="text-sky-400" />
                                         <span>{u.phone || '—'}</span>
                                     </div>
-                                    <div className="flex items-center gap-3 text-sm text-slate-600">
-                                        <FaMapMarkerAlt className="text-indigo-400" />
+                                    <div className="flex items-center gap-3 text-sm text-slate-300">
+                                        <FaMapMarkerAlt className="text-sky-400" />
                                         <span className="truncate">{u.address || '—'}</span>
                                     </div>
                                 </div>
@@ -123,7 +128,7 @@ const AllUsers = () => {
                 </div>
 
                 {filteredUsers.length === 0 && (
-                    <div className="text-center py-20 text-slate-500 font-medium">
+                    <div className="text-center py-20 text-slate-300 font-medium bg-slate-900/50 rounded-2xl border border-slate-700/50">
                         No users found matching your search.
                     </div>
                 )}

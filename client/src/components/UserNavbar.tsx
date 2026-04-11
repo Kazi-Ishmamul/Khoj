@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { FaBars, FaBell, FaTimes } from 'react-icons/fa';
@@ -21,24 +21,66 @@ interface NotificationItem {
     related_id?: number | null;
     is_read: boolean | number;
     created_at: string;
+    created_at_human?: string | null;
     actor?: NotificationActor | null;
 }
 
 const isRead = (value: boolean | number) => value === true || value === 1;
 
-const relativeTime = (dateValue: string) => {
-    const date = new Date(dateValue);
-    const diff = Date.now() - date.getTime();
-    const minutes = Math.max(1, Math.floor(diff / 60000));
+const parseNotificationDate = (dateValue: string) => {
+    const normalized = dateValue.trim().replace(' ', 'T');
+    const parsed = new Date(normalized);
 
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d ago`;
+    if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+    }
+
+    const mysqlMatch = dateValue.match(
+        /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?$/
+    );
+
+    if (mysqlMatch) {
+        const [, year, month, day, hour, minute, second] = mysqlMatch;
+        return new Date(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(minute),
+            Number(second)
+        );
+    }
+
+    return new Date(dateValue);
+};
+
+const relativeTime = (dateValue: string) => {
+    const date = parseNotificationDate(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    const diffMs = Date.now() - date.getTime();
+    const diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
+
+    if (diffSeconds < 5) return 'just now';
+    if (diffSeconds < 60) return `${diffSeconds}s ago`;
+
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
 
     return date.toLocaleDateString();
 };
+
+const getNotificationTimeLabel = (notification: NotificationItem) =>
+    notification.created_at_human || relativeTime(notification.created_at);
 
 const UserNavbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -101,11 +143,6 @@ const UserNavbar = () => {
             setLoadingNotifications(false);
         }
     };
-
-    const unreadNotifications = useMemo(
-        () => notifications.filter((notification) => !isRead(notification.is_read)),
-        [notifications]
-    );
 
     const openNotifications = async () => {
         setShowNotifications(true);
@@ -208,88 +245,85 @@ const UserNavbar = () => {
     const notificationModal = showNotifications ? (
         <>
             <div
-                className="fixed inset-x-0 bottom-0 top-[80px] z-40 bg-black/45"
+                className="fixed inset-x-0 bottom-0 top-[80px] z-40 bg-slate-950/70 backdrop-blur-sm"
                 onClick={() => setShowNotifications(false)}
             />
             <div className="fixed inset-x-0 bottom-0 top-[80px] z-40 flex items-start justify-center overflow-y-auto p-4 sm:p-6">
-                <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 max-h-[calc(100vh-6rem)]">
-                    <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+                <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-slate-900 shadow-2xl ring-1 ring-slate-700/70 max-h-[calc(100vh-6rem)] backdrop-blur-sm">
+                    <div className="flex items-start justify-between border-b border-slate-700 px-6 py-5 bg-gradient-to-r from-slate-900 to-slate-800">
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-600">Notifications</p>
-                            <h2 className="mt-1 text-2xl font-black text-slate-900">Your alerts</h2>
-                            <p className="mt-1 text-sm text-slate-500">Claims, moderation updates, and report status.</p>
+                            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-sky-400">Notifications</p>
+                            <h2 className="mt-1 text-2xl font-black text-white">Your alerts</h2>
+                            <p className="mt-1 text-sm text-slate-400">Claims, moderation updates, and report status.</p>
                         </div>
                         <button
                             type="button"
                             onClick={() => setShowNotifications(false)}
-                            className="rounded-full bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                            className="rounded-full bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 border border-slate-600"
                         >
                             Close
                         </button>
                     </div>
 
-                    <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-6 py-4">
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                            <span className="font-bold text-slate-900">{unreadCount}</span>
+                    <div className="flex items-center justify-between gap-3 border-b border-slate-700 px-6 py-4 bg-slate-900/80">
+                        <div className="flex items-center gap-2 text-sm text-slate-300">
+                            <span className="font-bold text-slate-100">{unreadCount}</span>
                             unread notifications
                         </div>
                         <button
                             type="button"
                             onClick={markAllAsRead}
                             disabled={unreadCount === 0}
-                            className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-slate-300"
+                            className="rounded-2xl bg-sky-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-700"
                         >
                             Mark all read
                         </button>
                     </div>
 
-                    <div className="max-h-[calc(100vh-16rem)] overflow-y-auto bg-slate-50 p-4">
+                    <div className="max-h-[calc(100vh-16rem)] overflow-y-auto bg-slate-950 p-4">
                         {loadingNotifications ? (
                             <div className="space-y-3">
                                 {[1, 2, 3].map((item) => (
-                                    <div key={item} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm animate-pulse">
-                                        <div className="h-4 w-28 rounded bg-slate-200" />
-                                        <div className="mt-3 h-4 w-3/4 rounded bg-slate-200" />
+                                    <div key={item} className="rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-sm animate-pulse">
+                                        <div className="h-4 w-28 rounded bg-slate-700" />
+                                        <div className="mt-3 h-4 w-3/4 rounded bg-slate-700" />
                                     </div>
                                 ))}
                             </div>
                         ) : notifications.length === 0 ? (
-                            <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
-                                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-2xl">🔔</div>
-                                <p className="mt-4 text-lg font-bold text-slate-900">No notifications yet</p>
-                                <p className="mt-2 text-sm text-slate-500">You’ll see updates here when something changes on your posts or claims.</p>
-                            </div>
-                        ) : unreadNotifications.length === 0 ? (
-                            <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
-                                <p className="text-lg font-bold text-slate-900">All caught up</p>
-                                <p className="mt-2 text-sm text-slate-500">All notifications are marked as read.</p>
+                            <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900 px-6 py-14 text-center">
+                                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sky-500/10 text-2xl">🔔</div>
+                                <p className="mt-4 text-lg font-bold text-slate-100">No notifications yet</p>
+                                <p className="mt-2 text-sm text-slate-400">You’ll see updates here when something changes on your posts or claims.</p>
                             </div>
                         ) : (
                             <div className="space-y-3">
                                 {notifications.map((notification) => {
                                     const unread = !isRead(notification.is_read);
+                                    const timeLabel = getNotificationTimeLabel(notification);
 
                                     return (
                                         <div
                                             key={notification.notification_id}
-                                            className={`rounded-3xl border bg-white p-4 shadow-sm transition ${unread ? 'border-blue-200' : 'border-slate-200 opacity-80'}`}
+                                            className={`rounded-3xl border p-4 shadow-sm transition ${unread
+                                                ? 'border-sky-500/40 bg-slate-900'
+                                                : 'border-slate-700 bg-slate-900/70 opacity-90'
+                                                }`}
                                         >
                                             <div className="flex items-start gap-3">
-                                                <div className={`mt-1 h-2.5 w-2.5 rounded-full ${unread ? 'bg-blue-600' : 'bg-slate-300'}`} />
+                                                <div className={`mt-1 h-2.5 w-2.5 rounded-full ${unread ? 'bg-sky-400' : 'bg-slate-500'}`} />
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-sm font-semibold text-slate-900">{notification.message}</p>
-                                                    <p className="mt-1 text-xs text-slate-500">{relativeTime(notification.created_at)}</p>
+                                                    <p className="text-sm font-semibold text-white">{notification.message}</p>
+                                                    <p className="mt-1 text-xs text-slate-400">{timeLabel}</p>
                                                 </div>
-                                                {unread && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => markNotificationAsRead(notification.notification_id)}
-                                                        disabled={notificationActionId === notification.notification_id}
-                                                        className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-slate-400"
-                                                    >
-                                                        {notificationActionId === notification.notification_id ? '...' : 'Read'}
-                                                    </button>
-                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => !unread ? void 0 : markNotificationAsRead(notification.notification_id)}
+                                                    disabled={!unread || notificationActionId === notification.notification_id}
+                                                    className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-slate-100 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    {notificationActionId === notification.notification_id ? '...' : unread ? 'Mark read' : 'Read'}
+                                                </button>
                                             </div>
                                         </div>
                                     );

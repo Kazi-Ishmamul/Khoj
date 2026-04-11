@@ -5,7 +5,7 @@ const UserLayout = () => {
     return (
         <>
             <UserNavbar />
-            <main className="container">
+            <main className="w-full p-0 bg-slate-950">
                 <Outlet />
             </main>
         </>
