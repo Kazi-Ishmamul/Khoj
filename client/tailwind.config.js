@@ -6,6 +6,9 @@ export default {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+            },
             animation: {
                 'fade-in': 'fadeIn 0.6s ease-in-out',
                 'slide-up': 'slideUp 0.6s ease-out',
