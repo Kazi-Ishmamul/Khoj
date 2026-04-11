@@ -22,7 +22,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     role ENUM('user', 'admin') DEFAULT 'user',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
 
 
 
@@ -41,7 +41,7 @@ CREATE TABLE user_info (
     items_found_count INT DEFAULT 0,
     report_strikes INT DEFAULT 0,
     CONSTRAINT fk_user_stats FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)
+);
 
 
 CREATE TABLE items (
@@ -60,7 +60,7 @@ CREATE TABLE items (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_item_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)
+);
 
 CREATE TABLE claims (
     claim_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -71,7 +71,7 @@ CREATE TABLE claims (
     
     CONSTRAINT fk_claim_item FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
     CONSTRAINT fk_claim_user FOREIGN KEY (claimed_by_id) REFERENCES users(id) ON DELETE CASCADE
-)
+);
 
 
 
@@ -86,7 +86,7 @@ CREATE TABLE reports (
 
     CONSTRAINT fk_report_item FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
     CONSTRAINT fk_report_user FOREIGN KEY (r_user_id) REFERENCES users(id) ON DELETE CASCADE
-)
+);
 
 
 CREATE TABLE notifications (
