@@ -1,10 +1,17 @@
+@import "tailwindcss";
+
 :root {
   font-family: 'Josefin Sans', serif;
   line-height: 1.5;
   font-weight: 400;
 }
+
+html,
 body {
   font-family: 'Josefin Sans', serif;
+  background-color: #020617;
+  margin: 0;
+  padding: 0;
 }
 
 .layout {
@@ -19,8 +26,8 @@ header {
 
 main {
   flex: 1;
-  padding: 1em;
 }
+
 footer {
   padding: 1em;
   text-align: center;
@@ -37,4 +44,10 @@ footer {
     padding-left: 300px;
     padding-right: 300px;
   }
+}
+
+/* Hide default browser eye icon for password fields (especially Edge/IE) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
 }

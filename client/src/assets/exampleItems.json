@@ -1,0 +1,30 @@
+[
+  {
+    "image": "/assets/developer pics/phone.jpg",
+    "name": "Phone",
+    "location": "Delhi Metro",
+    "date": "2026-03-01",
+    "details": "Black Samsung Galaxy S21, lost near Gate 3."
+  },
+  {
+    "image": "/assets/developer pics/wallet.jpg",
+    "name": "Wallet",
+    "location": "Mumbai Mall",
+    "date": "2026-02-25",
+    "details": "Brown leather wallet, found at food court."
+  },
+  {
+    "image": "/assets/developer pics/keys.jpg",
+    "name": "Keys",
+    "location": "Bangalore Park",
+    "date": "2026-03-03",
+    "details": "Set of car keys, lost near playground."
+  },
+  {
+    "image": "/assets/developer pics/bag.jpg",
+    "name": "Bag",
+    "location": "Chennai Airport",
+    "date": "2026-02-28",
+    "details": "Blue backpack, found at security check."
+  }
+]
