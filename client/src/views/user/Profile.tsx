@@ -14,6 +14,14 @@ import toast, { Toaster } from 'react-hot-toast';
 const mkAvatar = (name: string) =>
     `https://ui-avatars.com/api/?background=6366f1&color=fff&size=200&name=${encodeURIComponent(name || 'User')}`;
 
+const EyeIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+);
+
+const EyeOffIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" /><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" /><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" /><line x1="2" x2="22" y1="2" y2="22" /></svg>
+);
+
 interface ProfileData {
     name: string; email: string; phone: string; address: string; role: string;
     profilePic: string; bio: string;
@@ -41,6 +49,11 @@ const Profile = () => {
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [passSaving, setPassSaving] = useState(false);
     const [passwordData, setPasswordData] = useState({ current_password: '', new_password: '', new_password_confirmation: '' });
+    const [showPassword, setShowPassword] = useState({
+        current_password: false,
+        new_password: false,
+        new_password_confirmation: false,
+    });
     const fileRef = useRef<HTMLInputElement>(null);
     const editRef = useRef<HTMLDivElement>(null);
 
@@ -162,12 +175,14 @@ const Profile = () => {
 
     const openPasswordModal = () => {
         setPasswordData({ current_password: '', new_password: '', new_password_confirmation: '' });
+        setShowPassword({ current_password: false, new_password: false, new_password_confirmation: false });
         setIsChangingPassword(true);
     };
 
     const closePasswordModal = () => {
         setIsChangingPassword(false);
         setPasswordData({ current_password: '', new_password: '', new_password_confirmation: '' });
+        setShowPassword({ current_password: false, new_password: false, new_password_confirmation: false });
     };
 
     const handlePasswordSave = async () => {
@@ -384,15 +399,45 @@ const Profile = () => {
                                     <div className="px-6 py-6 space-y-4">
                                         <div>
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Current Password</label>
-                                            <input type="password" name="current_password" value={passwordData.current_password} onChange={handlePasswordChange} className={iCls} />
+                                            <div className="relative">
+                                                <input type={showPassword.current_password ? 'text' : 'password'} name="current_password" value={passwordData.current_password} onChange={handlePasswordChange} className={`${iCls} pr-12`} />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword((prev) => ({ ...prev, current_password: !prev.current_password }))}
+                                                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-700"
+                                                    aria-label={showPassword.current_password ? 'Hide current password' : 'Show current password'}
+                                                >
+                                                    {showPassword.current_password ? <EyeOffIcon /> : <EyeIcon />}
+                                                </button>
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">New Password</label>
-                                            <input type="password" name="new_password" value={passwordData.new_password} onChange={handlePasswordChange} className={iCls} />
+                                            <div className="relative">
+                                                <input type={showPassword.new_password ? 'text' : 'password'} name="new_password" value={passwordData.new_password} onChange={handlePasswordChange} className={`${iCls} pr-12`} />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword((prev) => ({ ...prev, new_password: !prev.new_password }))}
+                                                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-700"
+                                                    aria-label={showPassword.new_password ? 'Hide new password' : 'Show new password'}
+                                                >
+                                                    {showPassword.new_password ? <EyeOffIcon /> : <EyeIcon />}
+                                                </button>
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Confirm New Password</label>
-                                            <input type="password" name="new_password_confirmation" value={passwordData.new_password_confirmation} onChange={handlePasswordChange} className={iCls} />
+                                            <div className="relative">
+                                                <input type={showPassword.new_password_confirmation ? 'text' : 'password'} name="new_password_confirmation" value={passwordData.new_password_confirmation} onChange={handlePasswordChange} className={`${iCls} pr-12`} />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword((prev) => ({ ...prev, new_password_confirmation: !prev.new_password_confirmation }))}
+                                                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-700"
+                                                    aria-label={showPassword.new_password_confirmation ? 'Hide confirm password' : 'Show confirm password'}
+                                                >
+                                                    {showPassword.new_password_confirmation ? <EyeOffIcon /> : <EyeIcon />}
+                                                </button>
+                                            </div>
                                         </div>
                                         <button onClick={handlePasswordSave} disabled={passSaving}
                                             className="w-full mt-2 px-5 py-3 rounded-xl font-bold bg-indigo-600 text-white shadow hover:bg-indigo-700 transition-all disabled:opacity-60">

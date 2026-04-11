@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\Claim;
 use App\Models\Report;
+use App\Models\UserInfo;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -40,10 +41,20 @@ class ItemController extends Controller
         DB::beginTransaction();
 
         try {
+            $admin = auth()->user();
+            if (!$admin) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated'
+                ], 401);
+            }
+
             $item = Item::findOrFail($id);
             $notifications = app(NotificationService::class);
 
             if ((int) $item->valid !== 1 || $item->resolution_status === 'resolved') {
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'Only active unresolved posts can be struck'
@@ -55,9 +66,20 @@ class ItemController extends Controller
                 'resolution_status' => 'not_claimed'
             ]);
 
+            // Always create an admin moderation report first, then mark all reports as struck.
+            Report::create([
+                'item_id' => $item->id,
+                'r_user_id' => (int) $admin->id,
+                'reason' => 'Direct strike by admin from Manage Posts',
+                'status' => 0,
+            ]);
+
             Claim::where('item_id', $item->id)->update(['validity' => -1]);
 
             Report::where('item_id', $item->id)->update(['status' => -1]);
+
+            $ownerInfo = UserInfo::firstOrCreate(['user_id' => $item->user_id]);
+            $ownerInfo->increment('report_strikes');
 
             $notifications->notifyUser(
                 (int) $item->user_id,
