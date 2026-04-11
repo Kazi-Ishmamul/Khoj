@@ -20,6 +20,7 @@ interface NotificationItem {
     actor_id?: number | null;
     is_read: boolean | number;
     created_at: string;
+    created_at_human?: string | null;
     actor?: NotificationActor | null;
 }
 
@@ -55,6 +56,9 @@ const relativeTime = (dateValue: string) => {
 
     return date.toLocaleDateString();
 };
+
+const getNotificationTimeLabel = (notification: NotificationItem) =>
+    notification.created_at_human || relativeTime(notification.created_at);
 
 export default function Notifications() {
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -271,7 +275,7 @@ export default function Notifications() {
                                                             {meta.label}
                                                         </span>
                                                         <span className="text-xs font-medium text-slate-500">
-                                                            {relativeTime(notification.created_at)}
+                                                            {getNotificationTimeLabel(notification)}
                                                         </span>
                                                     </div>
 

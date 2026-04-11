@@ -23,7 +23,17 @@ class NotificationController extends Controller
                 ->with(['actor'])
                 ->orderByDesc('created_at')
                 ->orderByDesc('notification_id')
-                ->get();
+                ->get()
+                ->map(function (UserNotification $notification) {
+                    $notification->created_at_human = $notification->created_at
+                        ? $notification->created_at
+                            ->copy()
+                            ->setTimezone(config('app.timezone'))
+                            ->diffForHumans(now(config('app.timezone')))
+                        : null;
+
+                    return $notification;
+                });
 
             return response()->json([
                 'success' => true,
