@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -69,7 +70,10 @@ type TabType = 'lost_items' | 'found_items' | 'claim_requests' | 'claims_receive
 
 const ITEMS_PER_PAGE = 12;
 
+const TAB_QUERY_VALUES: TabType[] = ['lost_items', 'found_items', 'claim_requests', 'claims_received', 'resolved'];
+
 export default function MyActivity() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState<TabType>('lost_items');
     const [currentPage, setCurrentPage] = useState(1);
     const [activityData, setActivityData] = useState<ActivityData | null>(null);
@@ -139,6 +143,15 @@ export default function MyActivity() {
     useEffect(() => {
         fetchActivityData();
     }, []);
+
+    useEffect(() => {
+        const t = searchParams.get('tab');
+        if (!t || !TAB_QUERY_VALUES.includes(t as TabType)) return;
+        setActiveTab(t as TabType);
+        const next = new URLSearchParams(searchParams);
+        next.delete('tab');
+        setSearchParams(next, { replace: true });
+    }, [searchParams, setSearchParams]);
 
     const handleAcceptClaim = async (claimId: number) => {
         try {
