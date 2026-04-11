@@ -7,7 +7,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
@@ -28,6 +28,13 @@ body {
 html.dark,
 html.dark body {
   background-color: #020617;
+}
+
+/* Bangla: readable Unicode stack when locale is bn */
+html[lang='bn'],
+html[lang='bn'] body,
+html[lang='bn'] #root {
+  font-family: 'Noto Sans Bengali', 'Inter', system-ui, sans-serif;
 }
 
 .layout {

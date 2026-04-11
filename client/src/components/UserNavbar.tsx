@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import {
@@ -7,7 +7,9 @@ import {
     FaUserCircle, FaSignOutAlt
 } from 'react-icons/fa';
 import KhojLogo from './KhojLogo';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { clearAuthStorage } from '../helpers/auth';
+import { useI18n } from '../i18n/I18nContext';
 
 interface NotificationActor {
     id: number;
@@ -57,40 +59,45 @@ const parseNotificationDate = (dateValue: string) => {
     return new Date(dateValue);
 };
 
-const relativeTime = (dateValue: string) => {
-    const date = parseNotificationDate(dateValue);
-
-    if (Number.isNaN(date.getTime())) {
-        return '';
-    }
-
-    const diffMs = Date.now() - date.getTime();
-    const diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
-
-    if (diffSeconds < 5) return 'just now';
-    if (diffSeconds < 60) return `${diffSeconds}s ago`;
-
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) return `${diffDays}d ago`;
-
-    return date.toLocaleDateString();
-};
-
-const getNotificationTimeLabel = (notification: NotificationItem) =>
-    notification.created_at_human || relativeTime(notification.created_at);
-
-const navLinks = [
-    { label: 'Items', path: '/user-dashboard/items', icon: <FaBoxOpen /> },
-    { label: 'My Activity', path: '/user-dashboard/activity', icon: <FaClipboardList /> },
-];
-
 const UserNavbar = () => {
+    const { t } = useI18n();
+
+    const formatRelativeTime = (dateValue: string) => {
+        const date = parseNotificationDate(dateValue);
+
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+
+        const diffMs = Date.now() - date.getTime();
+        const diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
+
+        if (diffSeconds < 5) return t('user_nav.time_just_now');
+        if (diffSeconds < 60) return t('user_nav.time_sec_ago').replace('{{n}}', String(diffSeconds));
+
+        const diffMinutes = Math.floor(diffSeconds / 60);
+        if (diffMinutes < 60) return t('user_nav.time_min_ago').replace('{{n}}', String(diffMinutes));
+
+        const diffHours = Math.floor(diffMinutes / 60);
+        if (diffHours < 24) return t('user_nav.time_hour_ago').replace('{{n}}', String(diffHours));
+
+        const diffDays = Math.floor(diffHours / 24);
+        if (diffDays < 7) return t('user_nav.time_day_ago').replace('{{n}}', String(diffDays));
+
+        return date.toLocaleDateString();
+    };
+
+    const getNotificationTimeLabel = (notification: NotificationItem) =>
+        notification.created_at_human || formatRelativeTime(notification.created_at);
+
+    const navLinks = useMemo(
+        () => [
+            { labelKey: 'user_nav.items' as const, path: '/user-dashboard/items', icon: <FaBoxOpen /> },
+            { labelKey: 'user_nav.my_activity' as const, path: '/user-dashboard/activity', icon: <FaClipboardList /> },
+        ],
+        []
+    );
+
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [showNotifications, setShowNotifications] = useState(false);
@@ -269,15 +276,15 @@ const UserNavbar = () => {
                                 <FaBell className="text-sky-400 text-base" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-400">Inbox</p>
-                                <h2 className="text-xl font-black text-white leading-tight">Your Notifications</h2>
+                                <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-400">{t('user_nav.inbox')}</p>
+                                <h2 className="text-xl font-black text-white leading-tight">{t('user_nav.your_notifications')}</h2>
                             </div>
                         </div>
                         <button
                             type="button"
                             onClick={() => setShowNotifications(false)}
                             className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all duration-200 border border-slate-700"
-                            aria-label="Close"
+                            aria-label={t('user_nav.close')}
                         >
                             <FaTimes />
                         </button>
@@ -286,7 +293,7 @@ const UserNavbar = () => {
                     {/* Subheader / Mark all */}
                     <div className="flex items-center justify-between px-6 py-3 border-b border-slate-800/80 bg-slate-900/60">
                         <p className="text-sm text-slate-400">
-                            <span className="font-bold text-white">{unreadCount}</span> unread
+                            {t('user_nav.unread_count').replace('{{n}}', String(unreadCount))}
                         </p>
                         <button
                             type="button"
@@ -294,7 +301,7 @@ const UserNavbar = () => {
                             disabled={unreadCount === 0}
                             className="rounded-xl bg-sky-600 px-4 py-1.5 text-xs font-bold text-white transition-all duration-200 hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
                         >
-                            Mark all read
+                            {t('user_nav.mark_all_read')}
                         </button>
                     </div>
 
@@ -314,8 +321,8 @@ const UserNavbar = () => {
                                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-500/10 border border-sky-500/20 text-2xl mb-4">
                                     🔔
                                 </div>
-                                <p className="text-base font-bold text-slate-100">No notifications yet</p>
-                                <p className="mt-2 text-sm text-slate-500">You'll see updates here when something changes on your posts or claims.</p>
+                                <p className="text-base font-bold text-slate-100">{t('user_nav.no_notifications')}</p>
+                                <p className="mt-2 text-sm text-slate-500">{t('user_nav.no_notifications_hint')}</p>
                             </div>
                         ) : (
                             notifications.map((notification) => {
@@ -347,7 +354,11 @@ const UserNavbar = () => {
                                                         : 'bg-slate-800 text-slate-500 border border-slate-700'
                                                 }`}
                                             >
-                                                {notificationActionId === notification.notification_id ? '...' : unread ? 'Mark read' : 'Read'}
+                                                {notificationActionId === notification.notification_id
+                                                    ? '...'
+                                                    : unread
+                                                      ? t('user_nav.mark_read')
+                                                      : t('user_nav.read')}
                                             </button>
                                         </div>
                                     </div>
@@ -389,9 +400,14 @@ const UserNavbar = () => {
                                     <span className="text-base text-slate-500">
                                         {link.icon}
                                     </span>
-                                    {link.label}
+                                    {t(link.labelKey)}
                                 </Link>
                             ))}
+
+                            <LanguageSwitcher
+                                id="user-nav-locale"
+                                selectClassName="h-10 cursor-pointer rounded-xl border border-slate-700 bg-slate-900 px-2 text-sm font-semibold text-slate-200 outline-none transition-colors hover:border-slate-600 focus-visible:ring-2 focus-visible:ring-sky-500/40"
+                            />
 
                             {/* Notification Bell */}
                             <button
@@ -402,7 +418,7 @@ const UserNavbar = () => {
                                         ? 'border-sky-500/40 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20'
                                         : 'border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white'
                                 }`}
-                                aria-label="Open notifications"
+                                aria-label={t('user_nav.open_notifications')}
                             >
                                 <FaBell className={`text-base ${bellPulse ? 'animate-bounce' : ''}`} />
                                 {unreadCount > 0 && (
@@ -425,7 +441,7 @@ const UserNavbar = () => {
                                 <span className="text-base text-slate-500">
                                     <FaUserCircle />
                                 </span>
-                                Profile
+                                {t('user_nav.profile')}
                             </Link>
 
                             {/* Divider */}
@@ -438,7 +454,7 @@ const UserNavbar = () => {
                                 className="flex items-center gap-2 ml-1 rounded-xl px-4 py-2 text-sm font-semibold text-rose-400 border border-rose-500/20 hover:bg-rose-500/10 hover:text-rose-300 hover:border-rose-500/40 transition-all duration-200"
                             >
                                 <FaSignOutAlt className="text-base text-rose-500" />
-                                Logout
+                                {t('user_nav.logout')}
                             </button>
                         </div>
 
@@ -452,7 +468,7 @@ const UserNavbar = () => {
                                         ? 'border-sky-500/40 bg-sky-500/10 text-sky-300'
                                         : 'border-slate-700 bg-slate-900 text-slate-400'
                                 }`}
-                                aria-label="Open notifications"
+                                aria-label={t('user_nav.open_notifications')}
                             >
                                 <FaBell className="text-base" />
                                 {unreadCount > 0 && (
@@ -464,7 +480,7 @@ const UserNavbar = () => {
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
                                 className="flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-slate-300 hover:text-white hover:bg-slate-800 transition-all duration-200 focus:outline-none"
-                                aria-label="Toggle menu"
+                                aria-label={t('user_nav.toggle_menu')}
                             >
                                 {isOpen ? <FaTimes className="text-base" /> : <FaBars className="text-base" />}
                             </button>
@@ -490,9 +506,16 @@ const UserNavbar = () => {
                                     <span className="text-base text-slate-500">
                                         {link.icon}
                                     </span>
-                                    {link.label}
+                                    {t(link.labelKey)}
                                 </Link>
                             ))}
+
+                            <div className="px-4 py-2">
+                                <LanguageSwitcher
+                                    id="user-nav-locale-mobile"
+                                    selectClassName="h-10 w-full max-w-xs cursor-pointer rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm font-semibold text-slate-200 outline-none"
+                                />
+                            </div>
 
                             {/* Profile */}
                             <Link
@@ -504,7 +527,7 @@ const UserNavbar = () => {
                                 <span className="text-base text-slate-500">
                                     <FaUserCircle />
                                 </span>
-                                Profile
+                                {t('user_nav.profile')}
                             </Link>
 
                             {/* Logout */}
@@ -514,7 +537,7 @@ const UserNavbar = () => {
                                 className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-rose-400 hover:bg-rose-500/10 transition-all duration-200 text-left"
                             >
                                 <span className="text-base text-rose-500"><FaSignOutAlt /></span>
-                                Logout
+                                {t('user_nav.logout')}
                             </button>
                         </div>
                     </div>

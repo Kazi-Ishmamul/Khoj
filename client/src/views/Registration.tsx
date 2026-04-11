@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { secrets } from '../secrets';
+import { useI18n } from '../i18n/I18nContext';
 
 const EyeIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
@@ -12,6 +13,7 @@ const EyeOffIcon = () => (
 );
 
 const Registration = () => {
+    const { t } = useI18n();
     const navigate = useNavigate();
 
     // Form State
@@ -74,31 +76,31 @@ const Registration = () => {
 
         // Name validation
         if (!formData.name.trim()) {
-            newErrors.name = 'Name is required.';
+            newErrors.name = t('register.err_name');
             isValid = false;
         }
 
         // Email validation
         if (!formData.email.trim()) {
-            newErrors.email = 'Email is required.';
+            newErrors.email = t('register.err_email_req');
             isValid = false;
         } else if (!formData.email.includes('@') || !formData.email.includes('.')) {
-            newErrors.email = 'Please enter a valid email address containing @ and .';
+            newErrors.email = t('register.err_email_fmt');
             isValid = false;
         }
 
         // Phone validation
         if (!formData.phone.trim()) {
-            newErrors.phone = 'Phone number is required.';
+            newErrors.phone = t('register.err_phone_req');
             isValid = false;
         } else if (!/^\d+$/.test(formData.phone)) {
-            newErrors.phone = 'Phone number must contain only numbers.';
+            newErrors.phone = t('register.err_phone_num');
             isValid = false;
         }
 
         // Address validation
         if (!formData.address.trim()) {
-            newErrors.address = 'Address is required.';
+            newErrors.address = t('register.err_address');
             isValid = false;
         }
 
@@ -106,14 +108,14 @@ const Registration = () => {
         if (formData.profile_pic) {
             const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
             if (!allowedTypes.includes(formData.profile_pic.type)) {
-                newErrors.profile_pic = 'Only JPG/JPEG/PNG formats are allowed.';
+                newErrors.profile_pic = t('register.err_pic_type');
                 isValid = false;
             }
         }
 
         // Password validation
         if (!formData.password) {
-            newErrors.password = 'Password is required.';
+            newErrors.password = t('register.err_password_req');
             isValid = false;
         } else {
             const hasUpperCase = /[A-Z]/.test(formData.password);
@@ -122,17 +124,17 @@ const Registration = () => {
             const hasSpecialChar = /[^A-Za-z0-9]/.test(formData.password);
 
             if (formData.password.length < 6 || !hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
-                newErrors.password = 'Password must be at least 6 characters long and contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character.';
+                newErrors.password = t('register.err_password_rules');
                 isValid = false;
             }
         }
 
         // Confirm Password validation
         if (!formData.confirmPassword) {
-            newErrors.confirmPassword = 'Please confirm your password.';
+            newErrors.confirmPassword = t('register.err_confirm_req');
             isValid = false;
         } else if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Passwords do not match.';
+            newErrors.confirmPassword = t('register.err_confirm_match');
             isValid = false;
         }
 
@@ -158,7 +160,7 @@ const Registration = () => {
                         const cloudinaryRes = await axios.post('https://api.cloudinary.com/v1_1/dait0sacc/image/upload', uploadData);
                         picUrl = cloudinaryRes.data.secure_url;
                     } catch (uploadError) {
-                        setErrorMessage('Failed to upload image to Cloudinary.');
+                        setErrorMessage(t('register.err_cloudinary'));
                         setIsLoading(false);
                         return;
                     }
@@ -180,13 +182,13 @@ const Registration = () => {
                 });
 
                 if (response.status === 201) {
-                    setSuccessMessage('Registration successful! Redirecting to login...');
+                    setSuccessMessage(t('register.success_msg'));
                     setTimeout(() => {
                         navigate('/login');
                     }, 2000);
                 }
             } catch (error: any) {
-                setErrorMessage(error.response?.data?.message || 'Registration failed.');
+                setErrorMessage(error.response?.data?.message || t('register.err_generic'));
             } finally {
                 setIsLoading(false);
             }
@@ -200,9 +202,9 @@ const Registration = () => {
                 {/* Left Side - Registration Form */}
                 <div className="w-full md:w-[55%] p-8 lg:p-12 flex flex-col justify-center bg-slate-900 relative z-10">
                     <div className="max-w-lg mx-auto w-full">
-                        <h2 className="text-4xl font-bold mb-3 text-white">Register</h2>
+                        <h2 className="text-4xl font-bold mb-3 text-white">{t('register.title')}</h2>
                         <p className="text-slate-400 text-sm mb-8 font-medium leading-relaxed">
-                            Create a new Khoj account to join the community and start recovering lost items.
+                            {t('register.subtitle')}
                         </p>
 
                         {successMessage && (
@@ -220,28 +222,32 @@ const Registration = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Name */}
                                 <div>
-                                    <label className="block text-slate-300 font-semibold text-sm mb-2">Full Name <span className="text-red-500">*</span></label>
+                                    <label className="block text-slate-300 font-semibold text-sm mb-2">
+                                        {t('register.full_name')} <span className="text-red-500">{t('register.required_star')}</span>
+                                    </label>
                                     <input
                                         type="text"
                                         name="name"
                                         value={formData.name}
                                         onChange={handleChange}
                                         className={`w-full px-4 py-2.5 rounded-lg border ${errors.name ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
-                                        placeholder="John Doe"
+                                        placeholder={t('register.placeholder_name')}
                                     />
                                     {errors.name && <p className="text-red-400 text-xs mt-1.5 font-medium">{errors.name}</p>}
                                 </div>
 
                                 {/* Phone */}
                                 <div>
-                                    <label className="block text-slate-300 font-semibold text-sm mb-2">Phone Number <span className="text-red-500">*</span></label>
+                                    <label className="block text-slate-300 font-semibold text-sm mb-2">
+                                        {t('register.phone')} <span className="text-red-500">{t('register.required_star')}</span>
+                                    </label>
                                     <input
                                         type="tel"
                                         name="phone"
                                         value={formData.phone}
                                         onChange={handleChange}
                                         className={`w-full px-4 py-2.5 rounded-lg border ${errors.phone ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
-                                        placeholder="01712345678"
+                                        placeholder={t('register.placeholder_phone')}
                                     />
                                     {errors.phone && <p className="text-red-400 text-xs mt-1.5 font-medium">{errors.phone}</p>}
                                 </div>
@@ -249,35 +255,39 @@ const Registration = () => {
 
                             {/* Email */}
                             <div>
-                                <label className="block text-slate-300 font-semibold text-sm mb-2">Email Address <span className="text-red-500">*</span></label>
+                                <label className="block text-slate-300 font-semibold text-sm mb-2">
+                                    {t('register.email')} <span className="text-red-500">{t('register.required_star')}</span>
+                                </label>
                                 <input
                                     type="text"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
                                     className={`w-full px-4 py-2.5 rounded-lg border ${errors.email ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
-                                    placeholder="you@example.com"
+                                    placeholder={t('login.placeholder_email')}
                                 />
                                 {errors.email && <p className="text-red-400 text-xs mt-1.5 font-medium">{errors.email}</p>}
                             </div>
 
                             {/* Address */}
                             <div>
-                                <label className="block text-slate-300 font-semibold text-sm mb-2">Address <span className="text-red-500">*</span></label>
+                                <label className="block text-slate-300 font-semibold text-sm mb-2">
+                                    {t('register.address')} <span className="text-red-500">{t('register.required_star')}</span>
+                                </label>
                                 <textarea
                                     name="address"
                                     rows={2}
                                     value={formData.address}
                                     onChange={handleChange}
                                     className={`w-full px-4 py-2.5 rounded-lg border ${errors.address ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium resize-none placeholder-slate-500`}
-                                    placeholder="Your address"
+                                    placeholder={t('register.placeholder_address')}
                                 />
                                 {errors.address && <p className="text-red-400 text-xs mt-1.5 font-medium">{errors.address}</p>}
                             </div>
 
                             {/* Profile Pic */}
                             <div>
-                                <label className="block text-slate-300 font-semibold text-sm mb-2">Profile Picture (Optional)</label>
+                                <label className="block text-slate-300 font-semibold text-sm mb-2">{t('register.profile_pic')}</label>
                                 <input
                                     type="file"
                                     accept=".jpg,.jpeg,.png,image/jpeg,image/png"
@@ -290,7 +300,9 @@ const Registration = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Password */}
                                 <div>
-                                    <label className="block text-slate-300 font-semibold text-sm mb-2">Password <span className="text-red-500">*</span></label>
+                                    <label className="block text-slate-300 font-semibold text-sm mb-2">
+                                        {t('register.password')} <span className="text-red-500">{t('register.required_star')}</span>
+                                    </label>
                                     <div className="relative">
                                         <input
                                             type={showPassword ? "text" : "password"}
@@ -313,7 +325,9 @@ const Registration = () => {
 
                                 {/* Confirm Password */}
                                 <div>
-                                    <label className="block text-slate-300 font-semibold text-sm mb-2">Confirm Password <span className="text-red-500">*</span></label>
+                                    <label className="block text-slate-300 font-semibold text-sm mb-2">
+                                        {t('register.confirm_password')} <span className="text-red-500">{t('register.required_star')}</span>
+                                    </label>
                                     <div className="relative">
                                         <input
                                             type={showConfirmPassword ? "text" : "password"}
@@ -341,13 +355,16 @@ const Registration = () => {
                                 disabled={!!successMessage || isLoading}
                                 className="w-full py-3.5 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-700 text-white font-bold rounded-lg shadow-lg shadow-teal-900/30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:ring-offset-2 focus:ring-offset-slate-900 mt-8 active:scale-[0.98]"
                             >
-                                {isLoading ? 'REGISTERING...' : 'REGISTER'}
+                                {isLoading ? t('register.submitting') : t('register.submit')}
                             </button>
                         </form>
 
                         <div className="flex justify-center items-center mt-8 text-sm">
                             <p className="text-slate-400 font-medium">
-                                Already have an account? <Link to="/login" className="text-teal-400 hover:text-teal-300 hover:underline font-bold transition-colors ml-1">Login here.</Link>
+                                {t('register.have_account')}{' '}
+                                <Link to="/login" className="text-teal-400 hover:text-teal-300 hover:underline font-bold transition-colors ml-1">
+                                    {t('register.login_link')}
+                                </Link>
                             </p>
                         </div>
                     </div>
@@ -367,14 +384,16 @@ const Registration = () => {
                     </svg>
 
                     <div className="relative z-10 mt-8 text-left">
-                        <h1 className="text-5xl font-extrabold mb-6 tracking-tight">Join <br /> Khoj</h1>
+                        <h1 className="text-5xl font-extrabold mb-6 tracking-tight">
+                            {t('register.join_line1')} <br /> {t('register.join_line2')}
+                        </h1>
                         <p className="text-lg text-white/90 leading-relaxed max-w-sm mr-auto font-medium">
-                            Become a member to report lost items, claim found belongings, and help build a trustworthy network.
+                            {t('register.join_sub')}
                         </p>
                     </div>
 
                     <div className="relative z-10 text-sm opacity-90 mt-auto pt-16 font-medium tracking-wide text-left">
-                        Together, we make recoveries possible.
+                        {t('register.join_footer')}
                     </div>
                 </div>
 

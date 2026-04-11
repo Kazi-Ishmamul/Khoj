@@ -1,17 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FaBars, FaTimes, FaHome, FaInfoCircle, FaSignInAlt, FaUserPlus, FaSun, FaMoon } from 'react-icons/fa';
 import KhojLogo from './KhojLogo';
-
-const navLinks = [
-    { label: 'Home', path: '/', icon: <FaHome /> },
-    { label: 'About Us', path: '/about', icon: <FaInfoCircle /> },
-];
-
-const ctaLinks = [
-    { label: 'Login', path: '/login', icon: <FaSignInAlt /> },
-    { label: 'Register', path: '/register', icon: <FaUserPlus /> },
-];
+import { useI18n } from '../i18n/I18nContext';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 type HomeNavbarProps = {
     isHomePage: boolean;
@@ -22,6 +14,23 @@ type HomeNavbarProps = {
 const HomeNavbar = ({ isHomePage, homeIsDark, onToggleHomeTheme }: HomeNavbarProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const location = useLocation();
+    const { t } = useI18n();
+
+    const navLinks = useMemo(
+        () => [
+            { labelKey: 'nav.home' as const, path: '/', icon: <FaHome /> },
+            { labelKey: 'nav.about' as const, path: '/about', icon: <FaInfoCircle /> },
+        ],
+        []
+    );
+
+    const ctaLinks = useMemo(
+        () => [
+            { labelKey: 'nav.login' as const, path: '/login', icon: <FaSignInAlt /> },
+            { labelKey: 'nav.register' as const, path: '/register', icon: <FaUserPlus /> },
+        ],
+        []
+    );
 
     const lightHome = isHomePage && !homeIsDark;
 
@@ -70,9 +79,20 @@ const HomeNavbar = ({ isHomePage, homeIsDark, onToggleHomeTheme }: HomeNavbarPro
                                     style={{ textDecoration: 'none' }}
                                 >
                                     <span className={`text-base ${iconMuted}`}>{link.icon}</span>
-                                    {link.label}
+                                    {t(link.labelKey)}
                                 </Link>
                             ))}
+                        </div>
+
+                        <div className="mr-2">
+                            <LanguageSwitcher
+                                id="nav-locale"
+                                selectClassName={`h-10 cursor-pointer rounded-xl border px-2.5 text-sm font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-violet-500/50 ${
+                                    lightHome
+                                        ? 'border-slate-200 bg-white text-slate-800 hover:border-slate-300'
+                                        : 'border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-600'
+                                }`}
+                            />
                         </div>
 
                         {isHomePage && (
@@ -96,7 +116,7 @@ const HomeNavbar = ({ isHomePage, homeIsDark, onToggleHomeTheme }: HomeNavbarPro
                                 style={{ textDecoration: 'none' }}
                             >
                                 <FaSignInAlt className={`text-base ${iconMuted}`} />
-                                Login
+                                {t('nav.login')}
                             </Link>
                             <Link
                                 to="/register"
@@ -104,12 +124,20 @@ const HomeNavbar = ({ isHomePage, homeIsDark, onToggleHomeTheme }: HomeNavbarPro
                                 style={{ textDecoration: 'none' }}
                             >
                                 <FaUserPlus className="text-base text-blue-200" />
-                                Register
+                                {t('nav.register')}
                             </Link>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2 md:hidden">
+                        <LanguageSwitcher
+                            id="nav-locale-mobile"
+                            selectClassName={`h-10 max-w-[4.5rem] cursor-pointer rounded-xl border px-1.5 text-xs font-semibold outline-none ${
+                                lightHome
+                                    ? 'border-slate-200 bg-white text-slate-800'
+                                    : 'border-slate-700 bg-slate-900 text-slate-200'
+                            }`}
+                        />
                         {isHomePage && (
                             <button
                                 type="button"
@@ -146,7 +174,7 @@ const HomeNavbar = ({ isHomePage, homeIsDark, onToggleHomeTheme }: HomeNavbarPro
                                 style={{ textDecoration: 'none' }}
                             >
                                 <span className={`text-base ${iconMuted}`}>{link.icon}</span>
-                                {link.label}
+                                {t(link.labelKey)}
                             </Link>
                         ))}
                         <div className={`my-1 h-px ${dividerClass}`} />
@@ -156,7 +184,7 @@ const HomeNavbar = ({ isHomePage, homeIsDark, onToggleHomeTheme }: HomeNavbarPro
                                 to={link.path}
                                 onClick={() => setIsOpen(false)}
                                 className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 no-underline ${
-                                    link.label === 'Register'
+                                    link.path === '/register'
                                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
                                         : lightHome
                                           ? 'text-slate-700 border border-slate-200 hover:bg-slate-50'
@@ -165,7 +193,7 @@ const HomeNavbar = ({ isHomePage, homeIsDark, onToggleHomeTheme }: HomeNavbarPro
                                 style={{ textDecoration: 'none' }}
                             >
                                 <span className="text-base opacity-80">{link.icon}</span>
-                                {link.label}
+                                {t(link.labelKey)}
                             </Link>
                         ))}
                     </div>
