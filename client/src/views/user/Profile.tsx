@@ -36,7 +36,7 @@ const EMPTY: ProfileData = {
     items_lost: 0, items_found: 0, strikes: 0,
 };
 
-const iCls = 'w-full px-5 py-3.5 rounded-xl font-medium outline-none bg-slate-50 border-2 border-indigo-100 focus:border-indigo-400 focus:bg-white text-slate-800 transition-all';
+const iCls = 'w-full px-5 py-3.5 rounded-xl font-medium outline-none bg-slate-800/70 border border-slate-600 focus:border-sky-400 text-slate-100 transition-all';
 
 const Profile = () => {
     const [userData, setUserData] = useState<ProfileData>(EMPTY);
@@ -225,8 +225,8 @@ const Profile = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-indigo-600" />
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-sky-500" />
             </div>
         );
     }
@@ -236,13 +236,13 @@ const Profile = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800">
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 font-sans text-slate-100">
             <Toaster position="top-center" />
 
             {/* Cover Banner */}
-            <div className="h-48 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 relative overflow-hidden">
-                <div className="absolute top-[-50%] left-[-10%] w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-[-50%] right-[-10%] w-96 h-96 bg-black/10 rounded-full blur-3xl" />
+            <div className="h-48 w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden border-b border-slate-700/60">
+                <div className="absolute top-[-50%] left-[-10%] w-96 h-96 bg-sky-500/20 rounded-full blur-3xl" />
+                <div className="absolute bottom-[-50%] right-[-10%] w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl" />
             </div>
 
             {/* Page content: single column */}
@@ -269,20 +269,20 @@ const Profile = () => {
                                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                                 className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4 pointer-events-none"
                             >
-                                <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden max-h-[80vh] overflow-y-auto pointer-events-auto flex flex-col">
+                                <div className="bg-slate-900 rounded-3xl shadow-2xl border border-slate-700 overflow-hidden max-h-[80vh] overflow-y-auto pointer-events-auto flex flex-col">
                                     {/* Panel header bar */}
-                                    <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-purple-50 sticky top-0 z-10">
+                                    <div className="flex items-center justify-between px-8 py-5 border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800 sticky top-0 z-10">
                                         <div>
-                                            <h3 className="text-lg font-extrabold text-slate-800">Edit Profile</h3>
+                                            <h3 className="text-lg font-extrabold text-slate-100">Edit Profile</h3>
                                             <p className="text-xs text-slate-400 mt-0.5">Changes only apply after saving</p>
                                         </div>
                                         <div className="flex gap-2">
                                             <button onClick={closeEdit}
-                                                className="px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all text-sm shadow-sm">
+                                                className="px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 bg-slate-800 border border-slate-600 text-slate-200 hover:bg-slate-700 transition-all text-sm shadow-sm">
                                                 <FaTimes size={12} /> Cancel
                                             </button>
                                             <button onClick={handleSave} disabled={saving}
-                                                className="px-5 py-2 rounded-xl font-bold flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm disabled:opacity-60">
+                                                className="px-5 py-2 rounded-xl font-bold flex items-center gap-1.5 bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm disabled:opacity-60">
                                                 <FaCheck size={12} /> {saving ? 'Saving…' : 'Save'}
                                             </button>
                                         </div>
@@ -295,25 +295,25 @@ const Profile = () => {
                                                 <img
                                                     src={picPreview || userData.profilePic}
                                                     alt="Preview"
-                                                    className="w-20 h-20 rounded-full object-cover border-4 border-indigo-100 shadow-md"
+                                                    className="w-20 h-20 rounded-full object-cover border-4 border-slate-700 shadow-md"
                                                 />
                                                 <button type="button" onClick={() => fileRef.current?.click()}
-                                                    className="absolute -bottom-1 -right-1 bg-indigo-600 text-white p-1.5 rounded-full shadow-md hover:bg-indigo-700 transition-all">
+                                                    className="absolute -bottom-1 -right-1 bg-sky-600 text-white p-1.5 rounded-full shadow-md hover:bg-sky-700 transition-all">
                                                     <FaCamera size={11} />
                                                 </button>
                                             </div>
                                             <div>
-                                                <p className="font-semibold text-slate-700 text-sm">Profile Photo</p>
+                                                <p className="font-semibold text-slate-200 text-sm">Profile Photo</p>
                                                 <p className="text-xs text-slate-400 mt-0.5">Click the camera icon to upload a new photo</p>
                                             </div>
                                             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPicChange} />
                                         </div>
 
-                                        <hr className="border-slate-100" />
+                                        <hr className="border-slate-700" />
 
                                         {/* Basic Info */}
                                         <div>
-                                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3 flex items-center gap-2"><FaUser /> Basic Info</p>
+                                            <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-3 flex items-center gap-2"><FaUser /> Basic Info</p>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
                                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block ml-1">Full Name</label>
@@ -336,25 +336,25 @@ const Profile = () => {
                                             </div>
                                         </div>
 
-                                        <hr className="border-slate-100" />
+                                        <hr className="border-slate-700" />
 
                                         {/* Bio */}
                                         <div>
-                                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">About Me</p>
+                                            <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-3">About Me</p>
                                             <textarea name="bio" value={editData.bio} onChange={onChange} rows={3}
                                                 placeholder="Tell everyone a bit about yourself…"
                                                 className={`${iCls} resize-none`} />
                                         </div>
 
-                                        <hr className="border-slate-100" />
+                                        <hr className="border-slate-700" />
 
                                         {/* Social Links */}
                                         <div>
-                                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Social Links</p>
+                                            <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-3">Social Links</p>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 {[
                                                     { name: 'fb_url', icon: <FaFacebook className="text-[#1877F2] text-lg" />, ph: 'Facebook URL' },
-                                                    { name: 'x_url', icon: <FaXTwitter className="text-black text-lg" />, ph: 'X URL' },
+                                                    { name: 'x_url', icon: <FaXTwitter className="text-slate-200 text-lg" />, ph: 'X URL' },
                                                     { name: 'insta_url', icon: <FaInstagram className="text-[#E4405F] text-lg" />, ph: 'Instagram URL' },
                                                     { name: 'linkedin_url', icon: <FaLinkedin className="text-[#0A66C2] text-lg" />, ph: 'LinkedIn URL' },
                                                 ].map(s => (
@@ -389,10 +389,10 @@ const Profile = () => {
                                 exit={{ opacity: 0, scale: 0.95, y: -20 }}
                                 className="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4"
                             >
-                                <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col">
-                                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50">
-                                        <h3 className="text-lg font-extrabold text-slate-800">Change Password</h3>
-                                        <button onClick={closePasswordModal} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                                <div className="bg-slate-900 rounded-3xl shadow-2xl border border-slate-700 overflow-hidden flex flex-col">
+                                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800">
+                                        <h3 className="text-lg font-extrabold text-slate-100">Change Password</h3>
+                                        <button onClick={closePasswordModal} className="p-2 text-slate-400 hover:text-slate-200 transition-colors">
                                             <FaTimes />
                                         </button>
                                     </div>
@@ -404,7 +404,7 @@ const Profile = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPassword((prev) => ({ ...prev, current_password: !prev.current_password }))}
-                                                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-700"
+                                                    className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-200"
                                                     aria-label={showPassword.current_password ? 'Hide current password' : 'Show current password'}
                                                 >
                                                     {showPassword.current_password ? <EyeOffIcon /> : <EyeIcon />}
@@ -418,7 +418,7 @@ const Profile = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPassword((prev) => ({ ...prev, new_password: !prev.new_password }))}
-                                                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-700"
+                                                    className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-200"
                                                     aria-label={showPassword.new_password ? 'Hide new password' : 'Show new password'}
                                                 >
                                                     {showPassword.new_password ? <EyeOffIcon /> : <EyeIcon />}
@@ -432,7 +432,7 @@ const Profile = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPassword((prev) => ({ ...prev, new_password_confirmation: !prev.new_password_confirmation }))}
-                                                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-700"
+                                                    className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-200"
                                                     aria-label={showPassword.new_password_confirmation ? 'Hide confirm password' : 'Show confirm password'}
                                                 >
                                                     {showPassword.new_password_confirmation ? <EyeOffIcon /> : <EyeIcon />}
@@ -440,7 +440,7 @@ const Profile = () => {
                                             </div>
                                         </div>
                                         <button onClick={handlePasswordSave} disabled={passSaving}
-                                            className="w-full mt-2 px-5 py-3 rounded-xl font-bold bg-indigo-600 text-white shadow hover:bg-indigo-700 transition-all disabled:opacity-60">
+                                            className="w-full mt-2 px-5 py-3 rounded-xl font-bold bg-sky-600 text-white shadow hover:bg-sky-700 transition-all disabled:opacity-60">
                                             {passSaving ? 'Updating...' : 'Update Password'}
                                         </button>
                                     </div>
@@ -455,31 +455,31 @@ const Profile = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45 }}
-                    className="bg-white rounded-3xl shadow-[0_8px_40px_rgb(0,0,0,0.07)] border border-slate-100 overflow-hidden"
+                    className="bg-slate-900/70 rounded-3xl shadow-xl border border-slate-700/60 overflow-hidden backdrop-blur-sm"
                 >
                     {/* Avatar + name + Edit button */}
-                    <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 px-8 pt-8 pb-6 border-b border-slate-100">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 px-8 pt-8 pb-6 border-b border-slate-700">
                         <img
                             src={userData.profilePic}
                             alt={userData.name}
                             onError={e => { (e.target as HTMLImageElement).src = mkAvatar(userData.name); }}
-                            className="w-28 h-28 rounded-full object-cover border-[5px] border-white shadow-xl flex-shrink-0"
+                            className="w-28 h-28 rounded-full object-cover border-[5px] border-slate-800 shadow-xl flex-shrink-0"
                         />
                         <div className="flex-1 text-center sm:text-left">
-                            <h2 className="text-2xl font-extrabold text-slate-800">{userData.name}</h2>
-                            <span className="inline-block mt-1 px-4 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold tracking-widest uppercase border border-indigo-100">
+                            <h2 className="text-2xl font-extrabold text-slate-100">{userData.name}</h2>
+                            <span className="inline-block mt-1 px-4 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold tracking-widest uppercase border border-sky-400/30">
                                 {userData.role}
                             </span>
                         </div>
                         <div className="flex gap-2 shrink-0">
                             {!isEditing && (
                                 <button onClick={openEdit}
-                                    className="flex-shrink-0 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                                    className="flex-shrink-0 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-sky-600 text-white hover:bg-sky-700 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
                                     <FaEdit /> Edit Profile
                                 </button>
                             )}
                             <button onClick={openPasswordModal}
-                                className="flex-shrink-0 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm hover:shadow hover:-translate-y-0.5 transition-all">
+                                className="flex-shrink-0 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-slate-800 border border-slate-600 text-slate-200 hover:bg-slate-700 shadow-sm hover:shadow hover:-translate-y-0.5 transition-all">
                                 🔐 Change Password
                             </button>
                         </div>
@@ -488,18 +488,18 @@ const Profile = () => {
                     <div className="p-8 space-y-8">
                         {/* Contact Info */}
                         <div>
-                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4 flex items-center gap-2"><FaUser /> Contact Info</p>
+                            <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-4 flex items-center gap-2"><FaUser /> Contact Info</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {[
-                                    { icon: <FaEnvelope className="text-indigo-400" />, label: 'Email', value: userData.email },
-                                    { icon: <FaPhoneAlt className="text-indigo-400" />, label: 'Phone', value: userData.phone },
-                                    { icon: <FaMapMarkerAlt className="text-indigo-400" />, label: 'Address', value: userData.address, wide: true },
+                                    { icon: <FaEnvelope className="text-sky-400" />, label: 'Email', value: userData.email },
+                                    { icon: <FaPhoneAlt className="text-sky-400" />, label: 'Phone', value: userData.phone },
+                                    { icon: <FaMapMarkerAlt className="text-sky-400" />, label: 'Address', value: userData.address, wide: true },
                                 ].map(f => (
-                                    <div key={f.label} className={`${f.wide ? 'sm:col-span-2' : ''} flex items-start gap-3 bg-slate-50 rounded-2xl px-4 py-3.5 border border-slate-100`}>
+                                    <div key={f.label} className={`${f.wide ? 'sm:col-span-2' : ''} flex items-start gap-3 bg-slate-800/70 rounded-2xl px-4 py-3.5 border border-slate-700`}>
                                         <span className="mt-0.5 text-lg">{f.icon}</span>
                                         <div>
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{f.label}</p>
-                                            <p className="font-semibold text-slate-700 mt-0.5">{f.value || '—'}</p>
+                                            <p className="font-semibold text-slate-200 mt-0.5">{f.value || '—'}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -509,8 +509,8 @@ const Profile = () => {
                         {/* Bio */}
                         {userData.bio && (
                             <div>
-                                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">About Me</p>
-                                <div className="bg-slate-50 rounded-2xl px-5 py-4 border border-slate-100 text-slate-600 leading-relaxed italic">
+                                <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-3">About Me</p>
+                                <div className="bg-slate-800/70 rounded-2xl px-5 py-4 border border-slate-700 text-slate-300 leading-relaxed italic">
                                     "{userData.bio}"
                                 </div>
                             </div>
@@ -518,19 +518,19 @@ const Profile = () => {
 
                         {/* Activity Stats */}
                         <div>
-                            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4">Activity</p>
+                            <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-4">Activity</p>
                             <div className="grid grid-cols-3 gap-4">
-                                <div className="flex flex-col items-center p-5 bg-gradient-to-br from-red-50 to-orange-50 text-red-600 rounded-2xl border border-red-100/50 shadow-sm">
+                                <div className="flex flex-col items-center p-5 bg-red-500/15 text-red-300 rounded-2xl border border-red-500/30 shadow-sm">
                                     <FaBoxOpen className="mb-2 text-2xl opacity-70" />
                                     <span className="font-black text-3xl">{userData.items_lost}</span>
                                     <span className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-70">Lost</span>
                                 </div>
-                                <div className="flex flex-col items-center p-5 bg-gradient-to-br from-emerald-50 to-green-50 text-emerald-600 rounded-2xl border border-emerald-100/50 shadow-sm">
+                                <div className="flex flex-col items-center p-5 bg-emerald-500/15 text-emerald-300 rounded-2xl border border-emerald-500/30 shadow-sm">
                                     <FaSearch className="mb-2 text-2xl opacity-70" />
                                     <span className="font-black text-3xl">{userData.items_found}</span>
                                     <span className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-70">Found</span>
                                 </div>
-                                <div className="flex flex-col items-center p-5 bg-gradient-to-br from-amber-50 to-yellow-50 text-amber-600 rounded-2xl border border-amber-100/50 shadow-sm">
+                                <div className="flex flex-col items-center p-5 bg-amber-500/15 text-amber-300 rounded-2xl border border-amber-500/30 shadow-sm">
                                     <FaExclamationTriangle className="mb-2 text-2xl opacity-70" />
                                     <span className="font-black text-3xl">{userData.strikes}</span>
                                     <span className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-70">Strikes</span>
@@ -541,11 +541,11 @@ const Profile = () => {
                         {/* Social Links — only shown if set in DB */}
                         {socials.length > 0 && (
                             <div>
-                                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4">Connect</p>
+                                <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-4">Connect</p>
                                 <div className="flex flex-wrap gap-3">
                                     {socials.map(s => (
                                         <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer"
-                                            className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white border border-slate-200 shadow-sm text-slate-700 font-semibold text-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+                                            className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-slate-800 border border-slate-600 shadow-sm text-slate-200 font-semibold text-sm hover:bg-slate-700 hover:-translate-y-0.5 transition-all">
                                             <span className="text-xl">{s.icon}</span>
                                             {s.label}
                                         </a>
