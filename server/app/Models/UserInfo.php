@@ -43,6 +43,7 @@ class UserInfo extends Model
         'items_lost_count',
         'items_found_count',
         'report_strikes',
+        'wallet_balance',
     ];
 
     /**
