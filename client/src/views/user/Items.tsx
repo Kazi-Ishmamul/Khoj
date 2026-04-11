@@ -56,7 +56,7 @@ export default function Items() {
     const [claimedItemIds, setClaimedItemIds] = useState<number[]>([]);
     const [claimLoadingId, setClaimLoadingId] = useState<number | null>(null);
     const [reportedItemIds, setReportedItemIds] = useState<number[]>([]);
-    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const fetchItems = async () => {
         try {
@@ -497,7 +497,7 @@ export default function Items() {
                             onClick={() => setShowReportModal(true)}
                             className="flex-1 md:flex-none justify-center bg-gray-900 hover:bg-black text-white px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-gray-900/20"
                         >
-                            + Report Item
+                            + Post Item
                         </button>
                     </div>
                 </div>
@@ -505,7 +505,7 @@ export default function Items() {
                 {/* Main Filter & Search Control Panel */}
                 <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-4 mb-10 sticky top-4 z-40">
                     {/* Segmented Control Tabs */}
-                    <div className="flex p-1 bg-gray-50/80 backdrop-blur-md rounded-xl w-full lg:w-auto flex-1 lg:flex-none relative h-14">
+                    <div className="flex p-1 bg-gray-50/80 backdrop-blur-md rounded-xl w-full lg:w-auto flex-1 lg:flex-none relative h-14 min-h-14">
                         <button
                             onClick={() => {
                                 setActiveView('database');
@@ -545,7 +545,7 @@ export default function Items() {
                     </div>
 
                     {/* Search Field */}
-                    <div className="relative flex-1 lg:max-w-md h-14">
+                    <div className="relative flex-1 lg:max-w-md h-14 min-h-14 shrink-0">
                         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                             {activeView === 'search' ? (
                                 <span className="flex h-3 w-3 relative">
@@ -564,12 +564,12 @@ export default function Items() {
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            className={`w-full h-full pl-12 pr-14 outline-none border transition-all duration-300 rounded-xl text-gray-800 placeholder-gray-400 ${activeView === 'search' ? 'border-blue-400 ring-4 ring-blue-50 bg-blue-50/30' : 'border-gray-200 focus:border-gray-300 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-gray-100'
+                            className={`w-full h-full min-h-14 pl-12 pr-14 outline-none border transition-all duration-300 rounded-xl text-gray-800 placeholder-gray-400 ${activeView === 'search' ? 'border-blue-400 ring-4 ring-blue-50 bg-blue-50/30' : 'border-gray-200 focus:border-gray-300 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-gray-100'
                                 }`}
                         />
                         <button
                             onClick={triggerSearch}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors shadow-sm"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 h-10 w-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
                             title="Semantic Search"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

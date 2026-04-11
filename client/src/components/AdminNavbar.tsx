@@ -17,6 +17,7 @@ const AdminNavbar = () => {
 
     const navLinks = [
         { label: 'Manage Users', path: '/admin-dashboard/users' },
+        { label: 'Manage Posts', path: '/admin-dashboard/posts' },
         { label: 'Reports', path: '/admin-dashboard/reports' },
         { label: 'Profile', path: '/admin-dashboard/profile' },
         { label: 'Logout', path: '/' }
