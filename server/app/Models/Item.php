@@ -20,6 +20,8 @@ class Item extends Model
         'contact_info',
         'item_image_url',
         'resolution_status',
+        'lat',
+        'lng',
         'valid'
     ];
 
