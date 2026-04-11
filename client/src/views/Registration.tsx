@@ -193,7 +193,7 @@ const Registration = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans">
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
             <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col-reverse md:flex-row w-full max-w-6xl min-h-[700px]">
 
                 {/* Left Side - Registration Form */}
@@ -225,7 +225,7 @@ const Registration = () => {
                                         name="name"
                                         value={formData.name}
                                         onChange={handleChange}
-                                        className={`w-full px-4 py-2.5 rounded-lg border ${errors.name ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                        className={`w-full px-4 py-2.5 rounded-lg border ${errors.name ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-slate-800 font-medium`}
                                     />
                                     {errors.name && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.name}</p>}
                                 </div>
@@ -238,7 +238,7 @@ const Registration = () => {
                                         name="phone"
                                         value={formData.phone}
                                         onChange={handleChange}
-                                        className={`w-full px-4 py-2.5 rounded-lg border ${errors.phone ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                        className={`w-full px-4 py-2.5 rounded-lg border ${errors.phone ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-slate-800 font-medium`}
                                     />
                                     {errors.phone && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.phone}</p>}
                                 </div>
@@ -252,7 +252,7 @@ const Registration = () => {
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className={`w-full px-4 py-2.5 rounded-lg border ${errors.email ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                    className={`w-full px-4 py-2.5 rounded-lg border ${errors.email ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-slate-800 font-medium`}
                                 />
                                 {errors.email && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.email}</p>}
                             </div>
@@ -265,7 +265,7 @@ const Registration = () => {
                                     rows={2}
                                     value={formData.address}
                                     onChange={handleChange}
-                                    className={`w-full px-4 py-2.5 rounded-lg border ${errors.address ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium resize-none`}
+                                    className={`w-full px-4 py-2.5 rounded-lg border ${errors.address ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-slate-800 font-medium resize-none`}
                                 />
                                 {errors.address && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.address}</p>}
                             </div>
@@ -277,7 +277,7 @@ const Registration = () => {
                                     type="file"
                                     accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                                     onChange={handleFileChange}
-                                    className={`w-full px-3 py-2 rounded-lg border ${errors.profile_pic ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer`}
+                                    className={`w-full px-3 py-2 rounded-lg border ${errors.profile_pic ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 transition-all cursor-pointer`}
                                 />
                                 {errors.profile_pic && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.profile_pic}</p>}
                             </div>
@@ -292,7 +292,7 @@ const Registration = () => {
                                             name="password"
                                             value={formData.password}
                                             onChange={handleChange}
-                                            className={`w-full px-4 py-2.5 pr-10 rounded-lg border ${errors.password ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                            className={`w-full px-4 py-2.5 pr-10 rounded-lg border ${errors.password ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-slate-800 font-medium`}
                                         />
                                         <button
                                             type="button"
@@ -314,7 +314,7 @@ const Registration = () => {
                                             name="confirmPassword"
                                             value={formData.confirmPassword}
                                             onChange={handleChange}
-                                            className={`w-full px-4 py-2.5 pr-10 rounded-lg border ${errors.confirmPassword ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                            className={`w-full px-4 py-2.5 pr-10 rounded-lg border ${errors.confirmPassword ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-slate-800 font-medium`}
                                         />
                                         <button
                                             type="button"
@@ -332,7 +332,7 @@ const Registration = () => {
                             <button
                                 type="submit"
                                 disabled={!!successMessage || isLoading}
-                                className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold rounded-lg shadow-lg shadow-blue-500/30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 mt-8 active:scale-[0.98]"
+                                className="w-full py-3.5 px-4 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-500 text-white font-bold rounded-lg shadow-lg shadow-slate-500/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:ring-offset-2 mt-8 active:scale-[0.98]"
                             >
                                 {isLoading ? 'REGISTERING...' : 'REGISTER'}
                             </button>
@@ -340,22 +340,22 @@ const Registration = () => {
 
                         <div className="flex justify-center items-center mt-8 text-sm">
                             <p className="text-slate-500 font-medium">
-                                Already have an account? <Link to="/login" className="text-blue-600 hover:text-blue-800 hover:underline font-bold transition-colors ml-1">Login here.</Link>
+                                Already have an account? <Link to="/login" className="text-teal-700 hover:text-teal-800 hover:underline font-bold transition-colors ml-1">Login here.</Link>
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Side - Blue Gradient Background */}
-                <div className="w-full md:w-[45%] bg-gradient-to-bl from-cyan-400 to-blue-500 p-10 lg:p-14 text-white flex flex-col justify-between relative overflow-hidden hidden md:flex rounded-l-none md:rounded-l-3xl shadow-[-10px_0_30px_rgb(0,0,0,0.1)] z-20">
+                {/* Right Side - Theme Gradient Background */}
+                <div className="w-full md:w-[45%] bg-gradient-to-bl from-teal-900 via-slate-900 to-slate-800 p-10 lg:p-14 text-white flex flex-col justify-between relative overflow-hidden hidden md:flex rounded-l-none md:rounded-l-3xl shadow-[-10px_0_30px_rgb(0,0,0,0.1)] z-20">
                     {/* Decorative SVGs for the wave effect (Inverted X axis horizontally) */}
-                    <svg className="absolute bottom-0 right-0 w-full text-blue-600/20 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <svg className="absolute bottom-0 right-0 w-full text-slate-700/30 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
                         <path fill="currentColor" fillOpacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                     </svg>
-                    <svg className="absolute bottom-0 right-0 w-full text-cyan-400/20 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <svg className="absolute bottom-0 right-0 w-full text-teal-500/20 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
                         <path fill="currentColor" fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                     </svg>
-                    <svg className="absolute bottom-0 right-0 w-full text-blue-500/40 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <svg className="absolute bottom-0 right-0 w-full text-slate-800/50 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
                         <path fill="currentColor" fillOpacity="1" d="M0,256L48,245.3C96,235,192,213,288,213.3C384,213,480,235,576,224C672,213,768,171,864,149.3C960,128,1056,128,1152,144C1248,160,1344,192,1392,208L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                     </svg>
 
