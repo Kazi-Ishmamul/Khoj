@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaEnvelope, FaPhoneAlt, FaMapMarkerAlt, FaSearch, FaUserShield } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
+import { secrets } from '../../secrets';
 
 interface UserData {
     id: number;
@@ -30,13 +31,15 @@ const AllUsers = () => {
         const fetchUsers = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const { data } = await axios.get('http://localhost:8000/api/users', {
+                const { data } = await axios.get(`${secrets.backendEndpoint}/users`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                setUsers(data.users);
+                const list = data?.users;
+                setUsers(Array.isArray(list) ? list : []);
             } catch (error) {
                 console.error("Failed to fetch users", error);
                 toast.error("Failed to load users");
+                setUsers([]);
             } finally {
                 setLoading(false);
             }
@@ -44,10 +47,12 @@ const AllUsers = () => {
         fetchUsers();
     }, []);
 
-    const filteredUsers = users.filter((u) => 
-        u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.phone.includes(searchTerm)
+    const list = Array.isArray(users) ? users : [];
+    const q = searchTerm.toLowerCase();
+    const filteredUsers = list.filter((u) =>
+        (u.name ?? '').toLowerCase().includes(q) ||
+        (u.email ?? '').toLowerCase().includes(q) ||
+        (u.phone ?? '').includes(searchTerm)
     );
 
     if (loading) {

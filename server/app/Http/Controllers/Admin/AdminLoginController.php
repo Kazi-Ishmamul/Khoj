@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AdminLoginController extends Controller
 {
@@ -19,23 +21,29 @@ class AdminLoginController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        $request->validate([
+            'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::guard('web')->attempt($credentials, false)) {
+        $email = strtolower(trim($request->input('email')));
+        $password = $request->input('password');
+
+        // Case-insensitive email match (same password check as API / JWT login)
+        $user = User::query()
+            ->whereRaw('LOWER(TRIM(email)) = ?', [$email])
+            ->first();
+
+        if (! $user || ! Hash::check($password, $user->password)) {
             return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
         }
 
-        $request->session()->regenerate();
-
-        $user = Auth::guard('web')->user();
         if ($user->role !== 'admin') {
-            Auth::guard('web')->logout();
-
             return back()->withErrors(['email' => 'This account is not an administrator.'])->onlyInput('email');
         }
+
+        Auth::guard('web')->login($user, false);
+        $request->session()->regenerate();
 
         return redirect()->intended(route('admin.analytics'));
     }

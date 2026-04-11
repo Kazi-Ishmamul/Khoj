@@ -4,6 +4,14 @@ import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useI18n } from '../../i18n/I18nContext';
+import { secrets } from '../../secrets';
+
+function extractQrToken(input: string): string {
+    const s = input.trim();
+    const m = s.match(/\/scan\/([^/?#]+)/);
+    if (m) return m[1];
+    return s;
+}
 
 interface UserInfo {
     bio?: string | null;
@@ -36,6 +44,8 @@ interface Item {
     resolution_status: 'not_claimed' | 'claimed' | 'resolved';
     valid: number;
     user?: User;
+    qr_scan_url?: string | null;
+    qr_image_url?: string | null;
 }
 
 const ITEMS_PER_PAGE = 15;
@@ -62,13 +72,17 @@ export default function Items() {
     const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const [searchParams, setSearchParams] = useSearchParams();
+    const [highlightItemId, setHighlightItemId] = useState<number | null>(null);
+    const [showQrFindModal, setShowQrFindModal] = useState(false);
+    const [qrTokenInput, setQrTokenInput] = useState('');
+    const qrResolvedRef = useRef(false);
 
     const fetchItems = async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
             const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-            const response = await axios.get('http://localhost:8000/api/items', config);
+            const response = await axios.get(`${secrets.backendEndpoint}/items`, config);
             setDbItems(response.data.items);
             setError(null);
         } catch (err) {
@@ -278,6 +292,72 @@ export default function Items() {
         setSearchParams(next, { replace: true });
     }, [searchParams, setSearchParams]);
 
+    useEffect(() => {
+        const h = searchParams.get('highlight');
+        if (h) {
+            const n = Number(h);
+            if (!Number.isNaN(n)) setHighlightItemId(n);
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (highlightItemId == null || dbItems.length === 0) return;
+        const idx = dbItems.findIndex(i => i.id === highlightItemId);
+        if (idx === -1) return;
+        const page = Math.floor(idx / ITEMS_PER_PAGE) + 1;
+        setCurrentPage(page);
+    }, [highlightItemId, dbItems]);
+
+    useEffect(() => {
+        const qr = searchParams.get('qr');
+        if (!qr || qrResolvedRef.current) return;
+        const token = extractQrToken(qr);
+        (async () => {
+            try {
+                const { data } = await axios.get(
+                    `${secrets.backendEndpoint}/items/qr/${encodeURIComponent(token)}`
+                );
+                const id = data?.item?.id;
+                if (typeof id !== 'number') throw new Error('missing id');
+                qrResolvedRef.current = true;
+                setActiveView('database');
+                setFilter('all');
+                setHighlightItemId(id);
+                const next = new URLSearchParams(searchParams);
+                next.delete('qr');
+                next.set('highlight', String(id));
+                setSearchParams(next, { replace: true });
+            } catch {
+                qrResolvedRef.current = true;
+                toast.error(t('items_page.qr_not_found'));
+                const next = new URLSearchParams(searchParams);
+                next.delete('qr');
+                setSearchParams(next, { replace: true });
+            }
+        })();
+    }, [searchParams, setSearchParams, t]);
+
+    const resolveQrAndHighlight = async (raw: string) => {
+        const token = extractQrToken(raw);
+        if (!token) return;
+        try {
+            const { data } = await axios.get(
+                `${secrets.backendEndpoint}/items/qr/${encodeURIComponent(token)}`
+            );
+            const id = data?.item?.id;
+            if (typeof id !== 'number') throw new Error('missing id');
+            setActiveView('database');
+            setFilter('all');
+            setHighlightItemId(id);
+            setSearchParams({ highlight: String(id) }, { replace: true });
+            setShowQrFindModal(false);
+            setQrTokenInput('');
+            await fetchItems();
+        } catch {
+            toast.error(t('items_page.qr_not_found'));
+        }
+    };
+
     // Report item form state (for submitting lost/found)
     const [formData, setFormData] = useState({
         itemName: '',
@@ -408,6 +488,17 @@ export default function Items() {
     const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const paginatedReports = filteredReports.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    useEffect(() => {
+        if (highlightItemId == null || loading) return;
+        const timer = window.setTimeout(() => {
+            document.querySelector(`[data-item-id="${highlightItemId}"]`)?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        }, 250);
+        return () => clearTimeout(timer);
+    }, [highlightItemId, currentPage, activeView, filter, loading, paginatedReports.length]);
 
     const handleFormChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -605,6 +696,14 @@ export default function Items() {
                             </svg>
                         </button>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowQrFindModal(true)}
+                        className="h-14 min-h-14 shrink-0 px-5 rounded-xl font-semibold text-sm bg-violet-600/20 text-violet-200 border border-violet-500/40 hover:bg-violet-600/30 transition-colors"
+                    >
+                        {t('items_page.find_by_qr')}
+                    </button>
                 </div>
 
                 {/* Items Grid */}
@@ -630,7 +729,12 @@ export default function Items() {
                             return (
                                 <div
                                     key={report.id}
-                                    className="bg-slate-900/90 rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-slate-700/70 flex flex-col group backdrop-blur-sm"
+                                    data-item-id={report.id}
+                                    className={`bg-slate-900/90 rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border flex flex-col group backdrop-blur-sm ${
+                                        highlightItemId === report.id
+                                            ? 'border-sky-400 ring-2 ring-sky-500/50 shadow-sky-900/30'
+                                            : 'border-slate-700/70'
+                                    }`}
                                 >
                                     {/* Image Container with Status Badge */}
                                     <div className="relative overflow-hidden h-56 bg-gradient-to-br from-slate-800 to-slate-900">
@@ -667,6 +771,42 @@ export default function Items() {
                                         <p className="text-slate-400 text-sm mb-4 line-clamp-2 leading-relaxed">
                                             {report.description}
                                         </p>
+
+                                        {(report.qr_image_url || report.qr_scan_url) && (
+                                            <div className="mb-4 rounded-2xl border border-slate-700/60 bg-slate-800/50 p-3 flex flex-col sm:flex-row items-center gap-3">
+                                                {report.qr_image_url && (
+                                                    <img
+                                                        src={report.qr_image_url}
+                                                        alt="QR"
+                                                        className="w-24 h-24 rounded-lg bg-white p-1 object-contain"
+                                                    />
+                                                )}
+                                                <div className="flex flex-col gap-2 text-xs text-slate-300 flex-1 w-full">
+                                                    <span className="font-semibold text-slate-200">{t('items_page.qr_label')}</span>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {report.qr_image_url && (
+                                                            <a
+                                                                href={report.qr_image_url}
+                                                                download={`khoj-item-${report.id}-qr.png`}
+                                                                className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-sky-600/30 text-sky-200 border border-sky-500/40 hover:bg-sky-600/50"
+                                                            >
+                                                                {t('items_page.qr_download')}
+                                                            </a>
+                                                        )}
+                                                        {report.qr_scan_url && (
+                                                            <a
+                                                                href={report.qr_scan_url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-slate-700 text-slate-200 border border-slate-600 hover:bg-slate-600"
+                                                            >
+                                                                {t('items_page.qr_open_scan')}
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* User Info Card */}
                                         {report.user && (
@@ -1144,6 +1284,51 @@ export default function Items() {
                         </div>
                     </div>
                 </>
+            )}
+
+            {showQrFindModal && (
+                <div
+                    className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+                    onClick={() => setShowQrFindModal(false)}
+                    role="presentation"
+                >
+                    <div
+                        className="bg-slate-900 rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                    >
+                        <h3 className="text-lg font-bold text-white mb-2">{t('items_page.find_by_qr')}</h3>
+                        <p className="text-slate-400 text-sm mb-4">{t('items_page.scan_qr_hint')}</p>
+                        <input
+                            type="text"
+                            value={qrTokenInput}
+                            onChange={(e) => setQrTokenInput(e.target.value)}
+                            placeholder={t('items_page.scan_qr_placeholder')}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-violet-500 outline-none"
+                            autoFocus
+                        />
+                        <div className="flex gap-3 mt-5">
+                            <button
+                                type="button"
+                                onClick={() => void resolveQrAndHighlight(qrTokenInput)}
+                                className="flex-1 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm"
+                            >
+                                {t('items_page.scan_qr_go')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowQrFindModal(false);
+                                    setQrTokenInput('');
+                                }}
+                                className="px-5 py-3 rounded-xl border border-slate-600 text-slate-300 font-semibold text-sm hover:bg-slate-800"
+                            >
+                                {t('items_page.cancel')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

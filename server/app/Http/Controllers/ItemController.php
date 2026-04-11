@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\Claim;
 use App\Models\Report;
 use App\Models\UserInfo;
+use App\Services\ItemQrService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -165,7 +166,34 @@ class ItemController extends Controller
 
         $item = Item::create($itemData);
 
+        try {
+            app(ItemQrService::class)->generateForItem($item->fresh());
+        } catch (\Throwable $e) {
+            \Log::warning('Item QR generation failed: '.$e->getMessage());
+        }
+
+        $item->refresh()->load(['user', 'user.info']);
+
         return response()->json(['message' => 'Item reported successfully', 'item' => $item], 201);
+    }
+
+    /**
+     * Resolve an item by public QR token (for SPA deep-link / search by QR).
+     */
+    public function findByQrToken(string $token)
+    {
+        $item = Item::query()
+            ->where('qr_token', $token)
+            ->where('valid', 1)
+            ->where('resolution_status', '!=', 'resolved')
+            ->with(['user', 'user.info'])
+            ->first();
+
+        if (! $item) {
+            return response()->json(['message' => 'Item not found'], 404);
+        }
+
+        return response()->json(['item' => $item]);
     }
 
     public function toggleClaim(Request $request, $id)
