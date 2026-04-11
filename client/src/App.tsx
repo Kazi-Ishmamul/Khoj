@@ -17,12 +17,12 @@ import Forbidden from './views/Forbidden';
 
 import Items from './views/user/Items';
 import MyActivity from './views/user/MyActivity';
-import Notifications from './views/user/Notifications';
 import Profile from './views/user/Profile';
 
 import Reports from './views/admin/Reports';
 import AdminProfile from './views/admin/AdminProfile';
 import AllUsers from './views/admin/AllUsers';
+import ManagePosts from './views/admin/ManagePosts';
 
 
 
@@ -51,7 +51,6 @@ function App() {
             <Route index element={<Navigate to="items" replace />} />
             <Route path="items" element={<Items />} />
             <Route path="activity" element={<MyActivity />} />
-            <Route path="notifications" element={<Notifications />} />
             <Route path="profile" element={<Profile />} />
           </Route>
         </Route>
@@ -60,6 +59,7 @@ function App() {
           <Route path="/admin-dashboard" element={<AdminLayout />}>
             <Route index element={<Navigate to="users" replace />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="posts" element={<ManagePosts />} />
             <Route path="profile" element={<AdminProfile />} />
             <Route path="users" element={<AllUsers />} />
           </Route>

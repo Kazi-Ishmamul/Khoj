@@ -6,8 +6,12 @@
   font-weight: 400;
 }
 
+html,
 body {
   font-family: 'Josefin Sans', serif;
+  background-color: #020617;
+  margin: 0;
+  padding: 0;
 }
 
 .layout {
@@ -22,7 +26,6 @@ header {
 
 main {
   flex: 1;
-  padding: 1em;
 }
 
 footer {

@@ -34,6 +34,8 @@ Route::middleware('jwt.auth')->group(function () {
 
 Route::middleware(['jwt.auth', 'role:admin'])->group(function () {
     Route::get('/users', [App\Http\Controllers\UserController::class, 'index']);
+    Route::get('/admin/items/active', [App\Http\Controllers\ItemController::class, 'adminActivePosts']);
+    Route::post('/admin/items/{id}/strike', [App\Http\Controllers\ItemController::class, 'adminStrikeItem']);
 
     // Admin report management
     Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index']);
@@ -51,6 +53,11 @@ Route::middleware(['jwt.auth', 'role:user'])->group(function () {
     Route::get('/my-activity', [App\Http\Controllers\ActivityController::class, 'myActivity']);
     Route::post('/claims/{claimId}/accept', [App\Http\Controllers\ClaimController::class, 'acceptClaim']);
     Route::post('/claims/{claimId}/decline', [App\Http\Controllers\ClaimController::class, 'declineClaim']);
+
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [App\Http\Controllers\NotificationController::class, 'unreadCount']);
+    Route::put('/notifications/{notificationId}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
+    Route::put('/notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
 
     // User can report items
     Route::post('/reports', [App\Http\Controllers\ReportController::class, 'store']);

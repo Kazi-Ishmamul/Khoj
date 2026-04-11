@@ -1,567 +1,561 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { FaKey, FaWallet, FaMobileAlt, FaSuitcase, FaUsers, FaCheckCircle, FaClipboardList, FaArrowRight, FaMapMarkerAlt, FaCalendarAlt, FaBolt, FaGem } from "react-icons/fa";
+import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 
-const exampleItems = [
-  {
-    image: "https://images.unsplash.com/photo-1511707267537-b85faf00021e?w=300&h=200&fit=crop",
-    name: "iPhone 13",
-    location: "Delhi Metro - Station 3",
-    date: "2026-03-01",
-    details: "Space Gray iPhone 13 Pro with AppleCare. Contains family photos.",
-    recovered: true,
-  },
-  {
-    image: "https://images.unsplash.com/photo-1539513172ce-8e48ae7580f9?w=300&h=200&fit=crop",
-    name: "Leather Wallet",
-    location: "Mumbai Mall - Food Court",
-    date: "2026-02-25",
-    details: "Brown leather RFID wallet with important documents.",
-    recovered: true,
-  },
-  {
-    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=300&h=200&fit=crop",
-    name: "Car Keys Set",
-    location: "Bangalore Park - Near Playground",
-    date: "2026-03-03",
-    details: "Silver Toyota car keys with blue keychain.",
-    recovered: false,
-  },
-  {
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=200&fit=crop",
-    name: "Blue Backpack",
-    location: "Chennai Airport - Security",
-    date: "2026-02-28",
-    details: "Dell laptop backpack with travel documents.",
-    recovered: true,
-  }
-];
+/* ─────────────────────────── tiny helpers ─────────────────────────── */
 
-const heroItems = [
-  { icon: <FaMobileAlt size={64} />, label: "Phone", delay: 0 },
-  { icon: <FaWallet size={64} />, label: "Wallet", delay: 0.2 },
-  { icon: <FaKey size={64} />, label: "Keys", delay: 0.4 },
-  { icon: <FaSuitcase size={64} />, label: "Bag", delay: 0.6 },
-];
+const Floating = ({ children, delay = 0, amplitude = 12 }: {
+    children: React.ReactNode;
+    delay?: number;
+    amplitude?: number;
+}) => (
+    <div
+        style={{
+            animation: `floatY ${3 + delay * 0.4}s ease-in-out infinite`,
+            animationDelay: `${delay * 0.3}s`,
+            '--amp': `${amplitude}px`,
+        } as React.CSSProperties}
+    >
+        {children}
+    </div>
+);
 
-const features = [
-  {
-    icon: <FaClipboardList size={40} />,
-    title: "Report Lost Items",
-    desc: "Instantly report your lost items with photos and details.",
-    color: "from-blue-400 to-blue-600",
-    delay: 0,
-  },
-  {
-    icon: <FaCheckCircle size={40} />,
-    title: "Report Found Items",
-    desc: "Help the community by reporting items you've found.",
-    color: "from-green-400 to-green-600",
-    delay: 0.1,
-  },
-  {
-    icon: <FaUsers size={40} />,
-    title: "Community Support",
-    desc: "Connect with thousands of helpful community members.",
-    color: "from-purple-400 to-purple-600",
-    delay: 0.2,
-  },
-];
+const Stat = ({ value, label, icon }: { value: string; label: string; icon: string }) => {
+    const [displayed, setDisplayed] = useState('0');
+    const ref = useRef<HTMLDivElement>(null);
+    const animated = useRef(false);
 
-const stats = [
-  { label: "Items Recovered", value: 1240, icon: "🎯" },
-  { label: "Active Users", value: 3200, icon: "👥" },
-  { label: "Items Reported", value: 5400, icon: "📦" },
-];
+    useEffect(() => {
+        const obs = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting && !animated.current) {
+                animated.current = true;
+                const target = parseInt(value.replace(/\D/g, '') || '0');
+                const suffix = value.replace(/[0-9]/g, '');
+                let start = 0;
+                const step = Math.ceil(target / 60);
+                const timer = setInterval(() => {
+                    start = Math.min(start + step, target);
+                    setDisplayed(start + suffix);
+                    if (start >= target) clearInterval(timer);
+                }, 20);
+            }
+        }, { threshold: 0.5 });
+        if (ref.current) obs.observe(ref.current);
+        return () => obs.disconnect();
+    }, [value]);
 
-const fadeIn = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0 },
+    return (
+        <div ref={ref} className="text-center group">
+            <div className="text-3xl mb-2">{icon}</div>
+            <div className="text-4xl md:text-5xl font-black text-white mb-1 tabular-nums">{displayed}</div>
+            <div className="text-sm font-semibold text-slate-400 uppercase tracking-widest">{label}</div>
+        </div>
+    );
 };
 
-const AnimatedCounter = ({ value }: { value: number }) => {
-  const [count, setCount] = useState(0);
+/* ─────────────────────────── data ─────────────────────────── */
 
-  useEffect(() => {
-    let start = 0;
-    const end = value;
-    const increment = end / 100;
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        setCount(end);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 20);
-    return () => clearInterval(timer);
-  }, [value]);
+const HOW_IT_WORKS = [
+    {
+        step: '01',
+        icon: '📢',
+        title: 'Post Your Item',
+        desc: 'Lost something? Found something? Post it in seconds — add a photo, location, date, and contact info.',
+        color: 'from-sky-500/20 to-blue-600/10',
+        border: 'border-sky-500/30',
+        dot: 'bg-sky-400',
+    },
+    {
+        step: '02',
+        icon: '🔍',
+        title: 'Search & Discover',
+        desc: 'Browse the live database or let our Gemini-powered AI search understand what you\'re looking for — even in natural language.',
+        color: 'from-violet-500/20 to-purple-600/10',
+        border: 'border-violet-500/30',
+        dot: 'bg-violet-400',
+    },
+    {
+        step: '03',
+        icon: '🤝',
+        title: 'Claim & Resolve',
+        desc: 'Found a match? Send a claim request. The poster reviews it and accepts — marking the item as officially resolved.',
+        color: 'from-emerald-500/20 to-teal-600/10',
+        border: 'border-emerald-500/30',
+        dot: 'bg-emerald-400',
+    },
+];
 
-  return <span>{count.toLocaleString()}</span>;
-};
+const FEATURES = [
+    {
+        icon: '✨',
+        title: 'AI-Powered Matching',
+        desc: 'Advanced Gemini AI engine intelligently matches lost and found items, understanding context, location, and descriptions to surface relevant results instantly.',
+        badge: 'Gemini AI',
+        badgeColor: 'bg-violet-500/20 text-violet-300 border-violet-500/30',
+        glow: 'shadow-violet-900/30',
+    },
+    {
+        icon: '🛡️',
+        title: 'Community Moderation',
+        desc: 'Built-in reporting system with dedicated admin review. Suspected fraud or inappropriate listings are investigated and struck to maintain community trust.',
+        badge: 'Trust & Safety',
+        badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+        glow: 'shadow-rose-900/30',
+    },
+    {
+        icon: '⚡',
+        title: 'Fast & Secure',
+        desc: 'Optimized for speed with secure authentication, encrypted communications, and verified user profiles to ensure safe transactions and quick reunions.',
+        badge: 'Performance',
+        badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+        glow: 'shadow-cyan-900/30',
+    },
+];
+
+const CATEGORIES = [
+    { name: 'Electronics', icon: '📱', count: '128 items', color: 'text-sky-400' },
+    { name: 'Wallets & Cards', icon: '💳', count: '94 items', color: 'text-emerald-400' },
+    { name: 'Bags & Luggage', icon: '🎒', count: '76 items', color: 'text-violet-400' },
+    { name: 'Jewellery', icon: '💍', count: '52 items', color: 'text-amber-400' },
+];
+
+/* ─────────────────────────── component ─────────────────────────── */
 
 export default function HomePage() {
-  return (
-    <div className="min-h-screen flex flex-col bg-black text-white overflow-hidden relative">
-      {/* Enhanced Animated Background */}
-      <div className="fixed inset-0 overflow-hidden z-0">
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950 to-black" />
-        
-        {/* Massive blurry KHOJ background text - even bigger and more unique */}
-        <motion.div
-          animate={{
-            y: [0, -30, 0],
-            opacity: [0.04, 0.08, 0.04],
-            scale: [1, 1.02, 1],
-          }}
-          transition={{ duration: 15, repeat: Infinity }}
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
-        >
-          <div 
-            className="font-black tracking-wider text-blue-600/30 select-none"
-            style={{
-              fontSize: 'clamp(200px, 40vw, 800px)',
-              lineHeight: '1',
-              textShadow: `
-                0 0 40px rgba(59, 130, 246, 0.6),
-                0 0 80px rgba(139, 92, 246, 0.4),
-                0 0 120px rgba(59, 130, 246, 0.3),
-                0 0 160px rgba(244, 63, 94, 0.2)
-              `,
-              filter: 'blur(2px)',
-              transform: 'perspective(1000px) rotateX(0deg)',
-            }}
-          >
-            KHOJ
-          </div>
-        </motion.div>
+    return (
+        <>
+            {/* ── Keyframe styles ── */}
+            <style>{`
+                @keyframes floatY {
+                    0%, 100% { transform: translateY(0px); }
+                    50%       { transform: translateY(calc(-1 * var(--amp, 12px))); }
+                }
+                @keyframes gradientShift {
+                    0%   { background-position: 0% 50%; }
+                    50%  { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                @keyframes pulseRing {
+                    0%   { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
+                    70%  { transform: scale(1);    box-shadow: 0 0 0 16px rgba(99,102,241,0); }
+                    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+                }
+                @keyframes fadeUp {
+                    from { opacity: 0; transform: translateY(24px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+                .fade-up { animation: fadeUp 0.7s ease forwards; }
+                .fade-up-delay-1 { animation: fadeUp 0.7s 0.15s ease both; }
+                .fade-up-delay-2 { animation: fadeUp 0.7s 0.30s ease both; }
+                .fade-up-delay-3 { animation: fadeUp 0.7s 0.45s ease both; }
+                .fade-up-delay-4 { animation: fadeUp 0.7s 0.60s ease both; }
+                .gradient-text {
+                    background: linear-gradient(135deg, #e2e8f0, #93c5fd, #c4b5fd, #6ee7b7);
+                    background-size: 300% 300%;
+                    animation: gradientShift 6s ease infinite;
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+                .hero-grid {
+                    background-image:
+                        linear-gradient(rgba(148,163,184,0.04) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px);
+                    background-size: 48px 48px;
+                }
+                .card-hover {
+                    transition: transform 0.25s ease, box-shadow 0.25s ease;
+                }
+                .card-hover:hover {
+                    transform: translateY(-4px);
+                }
+            `}</style>
 
-        {/* Animated gradient orbs */}
-        <motion.div
-          animate={{
-            x: [0, 150, 0],
-            y: [0, 100, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{ duration: 20, repeat: Infinity }}
-          className="absolute -top-32 -left-32 w-96 h-96 bg-blue-600 rounded-full blur-3xl opacity-20"
-        />
-        
-        <motion.div
-          animate={{
-            x: [0, -150, 0],
-            y: [0, -100, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 25, repeat: Infinity, delay: 1 }}
-          className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600 rounded-full blur-3xl opacity-25"
-        />
+            <div className="min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
 
-        <motion.div
-          animate={{
-            x: [0, 100, -100, 0],
-            y: [0, -100, 100, 0],
-          }}
-          transition={{ duration: 30, repeat: Infinity, delay: 2 }}
-          className="absolute top-1/2 left-1/4 w-80 h-80 bg-pink-600 rounded-full blur-3xl opacity-10"
-        />
+                {/* ════════════════════════════════════════════════
+                    HERO
+                ════════════════════════════════════════════════ */}
+                <section className="relative min-h-screen flex flex-col items-center justify-center hero-grid overflow-hidden">
 
-        {/* Floating animated shapes */}
-        {[...Array(12)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 blur-md"
-            style={{
-              width: Math.random() * 300 + 50,
-              height: Math.random() * 300 + 50,
-              left: Math.random() * 100 + '%',
-              top: Math.random() * 100 + '%',
-            }}
-            animate={{
-              y: [0, Math.random() * 200 - 100, 0],
-              x: [0, Math.random() * 200 - 100, 0],
-              opacity: [0.05, 0.15, 0.05],
-            }}
-            transition={{
-              duration: Math.random() * 20 + 15,
-              repeat: Infinity,
-              delay: i * 0.5,
-            }}
-          />
-        ))}
-      </div>
+                    {/* Background glows */}
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute top-[-10rem] left-[-8rem] w-[40rem] h-[40rem] rounded-full bg-blue-600/10 blur-[120px]" />
+                        <div className="absolute top-[10rem] right-[-8rem] w-[36rem] h-[36rem] rounded-full bg-purple-600/10 blur-[120px]" />
+                        <div className="absolute bottom-[-6rem] left-1/2 -translate-x-1/2 w-[50rem] h-[24rem] rounded-full bg-indigo-800/10 blur-[100px]" />
+                    </div>
 
-      <div className="relative z-10">
-        {/* Hero Section */}
-        <section className="min-h-screen flex flex-col items-center justify-center px-4 py-20 text-center">
-          {/* Top Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="mb-10 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full border border-blue-400/50 backdrop-blur-md hover:border-blue-300/80 transition-all"
-          >
-            <motion.span
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              className="text-2xl"
-            >
-              ⚡
-            </motion.span>
-            <span className="text-sm font-semibold bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">Find Lost. Return Found. Build Community.</span>
-          </motion.div>
+                    {/* Hero content */}
+                    <div className="relative z-10 max-w-5xl mx-auto px-6 text-center pt-12 pb-20">
 
-          {/* MASSIVE KHOJ Title - Ultra Bold and Unique */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="mb-6 relative"
-          >
-            <motion.div
-              animate={{
-                textShadow: [
-                  '0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3)',
-                  '0 0 40px rgba(59, 130, 246, 0.8), 0 0 80px rgba(139, 92, 246, 0.5)',
-                  '0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3)',
-                ],
-              }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="text-[120px] sm:text-[150px] md:text-[200px] lg:text-[280px] font-black tracking-wider leading-none"
-              style={{
-                background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 25%, #f472b6 50%, #06b6d4 75%, #60a5fa 100%)',
-                backgroundSize: '300% 300%',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              K
-              <span className="inline-block">H</span>
-              <span className="inline-block">O</span>
-              <span className="inline-block">J</span>
-            </motion.div>
-            
-            {/* Glow effect behind title */}
-            <div className="absolute inset-0 blur-3xl opacity-30 pointer-events-none" style={{
-              background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%)',
-            }} />
-          </motion.div>
-
-          {/* Subheading with unique styling */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-8 max-w-4xl leading-tight"
-          >
-            <span className="text-white">Find What </span>
-            <span className="text-transparent bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text">
-              Matters Most
-            </span>
-          </motion.h1>
-
-          {/* Description with enhanced styling */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="text-base sm:text-lg md:text-xl text-gray-300 mb-12 max-w-2xl leading-relaxed"
-          >
-            Reconnect lost items with their rightful owners through our revolutionary community platform. 
-            <span className="block text-gray-400 mt-2">Every item has a story. Every item deserves to come home.</span>
-          </motion.p>
-
-          {/* Enhanced CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="flex flex-col sm:flex-row gap-6 mb-20"
-          >
-            <motion.button
-              whileHover={{ 
-                scale: 1.08,
-                boxShadow: '0 0 50px rgba(59, 130, 246, 0.8), 0 0 100px rgba(139, 92, 246, 0.4)',
-              }}
-              whileTap={{ scale: 0.92 }}
-              className="group relative px-10 py-5 font-bold text-lg text-white overflow-hidden rounded-2xl transition-all duration-300"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 group-hover:scale-110 transition-transform duration-300" />
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-white" />
-              <span className="relative flex items-center gap-3 justify-center">
-                <FaBolt size={20} className="group-hover:animate-spin" />
-                Report Lost Item
-                <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
-              </span>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ 
-                scale: 1.08,
-                boxShadow: '0 0 50px rgba(34, 197, 94, 0.8), 0 0 100px rgba(16, 185, 129, 0.4)',
-              }}
-              whileTap={{ scale: 0.92 }}
-              className="group relative px-10 py-5 font-bold text-lg text-white overflow-hidden rounded-2xl transition-all duration-300"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-green-500 to-teal-500 group-hover:scale-110 transition-transform duration-300" />
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-white" />
-              <span className="relative flex items-center gap-3 justify-center">
-                <FaGem size={20} className="group-hover:animate-bounce" />
-                Report Found Item
-                <FaArrowRight className="group-hover:translate-x-2 transition-transform" />
-              </span>
-            </motion.button>
-          </motion.div>
-
-          {/* Hero Items Grid - Redesigned */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-3xl"
-          >
-            {heroItems.map((item, idx) => (
-              <motion.div
-                key={item.label}
-                whileHover={{ y: -10, scale: 1.05 }}
-                className="group relative p-6 rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-800/60 border border-gray-700/50 backdrop-blur-md hover:border-gray-500 transition-all"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-purple-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative flex flex-col items-center gap-3">
-                  <motion.div
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 3, delay: idx * 0.2, repeat: Infinity }}
-                    className="text-4xl text-blue-400 group-hover:text-cyan-400 transition-colors"
-                  >
-                    {item.icon}
-                  </motion.div>
-                  <span className="text-xs sm:text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">
-                    {item.label}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
-
-        {/* Features Section - Redesigned */}
-        <section className="py-32 px-4 relative">
-          <div className="max-w-6xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center mb-20"
-            >
-              <h2 className="text-5xl md:text-6xl font-black mb-6">
-                <span className="text-white">How </span>
-                <span className="text-transparent bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text">
-                  Khoj Works
-                </span>
-              </h2>
-              <p className="text-gray-400 text-lg">Three simple steps to reconnect what matters</p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-              {features.map((feature, idx) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -15, scale: 1.05 }}
-                  transition={{ duration: 0.6, delay: idx * 0.15 }}
-                  className="group relative overflow-hidden rounded-3xl backdrop-blur-xl border border-gray-700/50 p-10 hover:border-gray-500/80 transition-all bg-gray-900/40"
-                >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-15 transition duration-500`} />
-                  
-                  <motion.div
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className={`absolute -right-16 -top-16 w-40 h-40 bg-gradient-to-br ${feature.color} rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition`}
-                  />
-
-                  <div className="relative z-10">
-                    <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, delay: idx * 0.3, repeat: Infinity }}
-                      className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} mb-6 text-white`}
-                    >
-                      {feature.icon}
-                    </motion.div>
-                    
-                    <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-400 group-hover:to-purple-400 group-hover:bg-clip-text transition">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-400 leading-relaxed text-lg">{feature.desc}</p>
-                  </div>
-
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Community Section */}
-        <section className="py-20 px-4">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            variants={fadeIn}
-            className="max-w-6xl mx-auto"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-center bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Recent Items
-            </h2>
-            <p className="text-center text-gray-400 mb-16">Help reunite belongings with their owners</p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              {exampleItems.map((item) => (
-                <motion.div
-                  key={item.name}
-                  whileHover={{ y: -10, scale: 1.05 }}
-                  className="group cursor-pointer"
-                >
-                  <div className="relative overflow-hidden rounded-2xl bg-gray-800/50 backdrop-blur border border-gray-700/50 group-hover:border-gray-600 transition">
-                    <div className="relative h-40 overflow-hidden">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
-                      />
-                      {item.recovered && (
-                        <div className="absolute top-3 right-3 bg-green-500/80 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                          <FaCheckCircle size={12} /> Recovered
+                        {/* Badge */}
+                        <div className="fade-up inline-flex items-center gap-2 bg-slate-800/70 border border-slate-700/60 rounded-full px-5 py-2 mb-10 backdrop-blur-sm">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">
+                                AI-Powered Lost &amp; Found Portal
+                            </span>
                         </div>
-                      )}
+
+                        {/* Headline */}
+                        <h1 className="fade-up-delay-1 text-5xl sm:text-6xl md:text-8xl font-black leading-none mb-8">
+                            <span className="block text-white mb-2">Lost something?</span>
+                            <span className="gradient-text">Khoj finds it.</span>
+                        </h1>
+
+                        {/* Sub-headline */}
+                        <p className="fade-up-delay-2 text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed font-medium">
+                            Report lost &amp; found items, let Gemini AI match them intelligently,
+                            claim ownership and reunite with your belongings — all in one place.
+                        </p>
+
+                        {/* CTAs */}
+                        <div className="fade-up-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+                            <Link
+                                to="/register"
+                                className="group flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-bold text-base shadow-2xl shadow-blue-900/40 transition-all duration-300 hover:shadow-blue-800/60 hover:scale-105"
+                                style={{ textDecoration: 'none' }}
+                            >
+                                <span>Get Started</span>
+                                <span className="text-xl group-hover:translate-x-1 transition-transform duration-200">→</span>
+                            </Link>
+                            <Link
+                                to="/login"
+                                className="flex items-center gap-3 px-8 py-4 rounded-2xl border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 font-semibold text-base hover:bg-slate-800/60 transition-all duration-300"
+                                style={{ textDecoration: 'none' }}
+                            >
+                                <span className="text-xl">🔐</span>
+                                <span>Sign In</span>
+                            </Link>
+                        </div>
+
+                        {/* Floating item cards */}
+                        <div className="fade-up-delay-4 relative flex items-end justify-center gap-4 h-44 pointer-events-none select-none">
+                            <Floating delay={0} amplitude={10}>
+                                <div className="bg-slate-900/90 border border-slate-700/60 rounded-2xl px-4 py-3 shadow-xl backdrop-blur-sm flex items-center gap-3 text-left">
+                                    <span className="text-2xl">📱</span>
+                                    <div>
+                                        <p className="text-xs font-bold text-white">iPhone 14 Pro</p>
+                                        <p className="text-[10px] text-rose-400 font-semibold">🔴 LOST · Dhaka</p>
+                                    </div>
+                                </div>
+                            </Floating>
+                            <Floating delay={2} amplitude={16}>
+                                <div className="bg-slate-900/90 border border-emerald-500/30 rounded-2xl px-4 py-3 shadow-xl backdrop-blur-sm flex items-center gap-3 text-left scale-110">
+                                    <span className="text-2xl">✨</span>
+                                    <div>
+                                        <p className="text-xs font-bold text-emerald-300">AI Match Found!</p>
+                                        <p className="text-[10px] text-slate-400">98% confidence</p>
+                                    </div>
+                                </div>
+                            </Floating>
+                            <Floating delay={1} amplitude={8}>
+                                <div className="bg-slate-900/90 border border-slate-700/60 rounded-2xl px-4 py-3 shadow-xl backdrop-blur-sm flex items-center gap-3 text-left">
+                                    <span className="text-2xl">💳</span>
+                                    <div>
+                                        <p className="text-xs font-bold text-white">Blue Wallet</p>
+                                        <p className="text-[10px] text-emerald-400 font-semibold">🟢 FOUND · Chittagong</p>
+                                    </div>
+                                </div>
+                            </Floating>
+                            <Floating delay={3} amplitude={12}>
+                                <div className="bg-slate-900/90 border border-violet-500/30 rounded-2xl px-4 py-3 shadow-xl backdrop-blur-sm flex items-center gap-3 text-left">
+                                    <span className="text-2xl">🔔</span>
+                                    <div>
+                                        <p className="text-xs font-bold text-violet-300">Claim Accepted!</p>
+                                        <p className="text-[10px] text-slate-400">Just now</p>
+                                    </div>
+                                </div>
+                            </Floating>
+                        </div>
                     </div>
-                    <div className="p-4">
-                      <h4 className="text-lg font-bold text-white mb-2">{item.name}</h4>
-                      <div className="flex items-center gap-2 text-gray-400 text-sm mb-2">
-                        <FaMapMarkerAlt size={12} /> {item.location}
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
-                        <FaCalendarAlt size={10} /> {item.date}
-                      </div>
-                      <motion.p
-                        initial={{ opacity: 0, height: 0 }}
-                        whileHover={{ opacity: 1 }}
-                        className="text-sm text-gray-300 overflow-hidden transition"
-                      >
-                        {item.details}
-                      </motion.p>
+
+                    {/* Scroll indicator */}
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce opacity-40">
+                        <div className="w-px h-8 bg-gradient-to-b from-transparent to-slate-400" />
+                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">scroll</span>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </section>
+                </section>
 
-        {/* Statistics Section */}
-        <section className="py-20 px-4">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-            {stats.map((stat, idx) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: idx * 0.2 }}
-                whileHover={{ scale: 1.05 }}
-                className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur border border-gray-700/50 p-8 hover:border-gray-600 transition"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition" />
-                <div className="relative text-center">
-                  <div className="text-5xl mb-3">{stat.icon}</div>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    transition={{ duration: 1, delay: idx * 0.2 }}
-                    className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2"
-                  >
-                    <AnimatedCounter value={stat.value} />
-                    {stat.label === "Items Recovered" && "+"}
-                  </motion.div>
-                  <div className="text-gray-400 font-semibold">{stat.label}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
+                {/* ════════════════════════════════════════════════
+                    STATS
+                ════════════════════════════════════════════════ */}
+                <section className="relative py-20 border-y border-slate-800/60">
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900" />
+                    <div className="relative max-w-5xl mx-auto px-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+                            <Stat value="500+" label="Items Posted" icon="📦" />
+                            <Stat value="320+" label="Successfully Resolved" icon="✅" />
+                            <Stat value="1200+" label="Registered Users" icon="👥" />
+                            <Stat value="98%" label="AI Match Accuracy" icon="🤖" />
+                        </div>
+                    </div>
+                </section>
 
-        {/* CTA Section */}
-        <section className="py-20 px-4">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            variants={fadeIn}
-            className="max-w-4xl mx-auto text-center"
-          >
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600/30 to-purple-600/30 backdrop-blur border border-blue-500/30 p-12">
-              <h2 className="text-4xl font-bold mb-6 text-white">Join the Khoj Community</h2>
-              <p className="text-gray-300 mb-8 text-lg">
-                Together, we're making sure no item stays lost. Start reconnecting what matters.
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full font-bold text-white shadow-xl hover:shadow-purple-500/50 transition"
-              >
-                Get Started Now
-              </motion.button>
-            </div>
-          </motion.div>
-        </section>
+                {/* ════════════════════════════════════════════════
+                    HOW IT WORKS
+                ════════════════════════════════════════════════ */}
+                <section className="py-28 px-6">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="text-center mb-20">
+                            <p className="text-xs font-bold text-violet-400 uppercase tracking-[0.3em] mb-4">How It Works</p>
+                            <h2 className="text-4xl md:text-5xl font-black text-white leading-tight mb-4">
+                                Three steps to reunion
+                            </h2>
+                            <p className="text-slate-400 text-lg max-w-xl mx-auto">
+                                Khoj is designed to get your belongings back as fast as possible.
+                            </p>
+                        </div>
 
-        {/* Footer */}
-        <footer className="border-t border-gray-700/50 py-12 px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-              <div>
-                <h3 className="font-bold text-2xl bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-4">
-                  Khoj
-                </h3>
-                <p className="text-gray-400 text-sm">Reuniting lost items with their owners.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-white mb-4">Product</h4>
-                <ul className="space-y-2 text-gray-400 text-sm">
-                  <li><a href="#" className="hover:text-white transition">Features</a></li>
-                  <li><a href="#" className="hover:text-white transition">Pricing</a></li>
-                  <li><a href="#" className="hover:text-white transition">Security</a></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-white mb-4">Company</h4>
-                <ul className="space-y-2 text-gray-400 text-sm">
-                  <li><a href="#" className="hover:text-white transition">About</a></li>
-                  <li><a href="#" className="hover:text-white transition">Blog</a></li>
-                  <li><a href="#" className="hover:text-white transition">Careers</a></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-white mb-4">Legal</h4>
-                <ul className="space-y-2 text-gray-400 text-sm">
-                  <li><a href="#" className="hover:text-white transition">Privacy</a></li>
-                  <li><a href="#" className="hover:text-white transition">Terms</a></li>
-                  <li><a href="#" className="hover:text-white transition">Contact</a></li>
-                </ul>
-              </div>
+                        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Connector line (desktop) */}
+                            <div className="hidden md:block absolute top-14 left-[16.5%] right-[16.5%] h-px bg-gradient-to-r from-sky-500/40 via-violet-500/40 to-emerald-500/40 pointer-events-none" />
+
+                            {HOW_IT_WORKS.map((step) => (
+                                <div
+                                    key={step.step}
+                                    className={`card-hover relative bg-gradient-to-br ${step.color} border ${step.border} rounded-3xl p-8 backdrop-blur-sm`}
+                                >
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-6 bg-slate-900/60 border ${step.border} shadow-lg`}>
+                                        {step.icon}
+                                    </div>
+                                    <div className="absolute top-8 right-8">
+                                        <span className="text-6xl font-black text-white/5 select-none">{step.step}</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
+                                    <p className="text-slate-400 text-sm leading-relaxed">{step.desc}</p>
+                                    <div className={`mt-6 w-8 h-1 rounded-full ${step.dot}`} />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* ════════════════════════════════════════════════
+                    AI SPOTLIGHT
+                ════════════════════════════════════════════════ */}
+                <section className="py-28 px-6 relative overflow-hidden">
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60rem] h-[30rem] rounded-full bg-violet-900/10 blur-[100px]" />
+                    </div>
+
+                    <div className="relative max-w-6xl mx-auto">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+                            {/* Left: text */}
+                            <div>
+                                <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-full px-4 py-1.5 mb-6">
+                                    <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                                    <span className="text-xs font-bold text-violet-300 uppercase tracking-widest">Gemini AI</span>
+                                </div>
+                                <h2 className="text-4xl md:text-5xl font-black text-white leading-tight mb-6">
+                                    Don't just search. <br />
+                                    <span className="gradient-text">Think out loud.</span>
+                                </h2>
+                                <p className="text-slate-400 text-lg leading-relaxed mb-8">
+                                    Type exactly what happened — <em className="text-slate-300">"I lost my black backpack near the TSC canteen on Tuesday evening"</em> — and Gemini understands the context, location, and time to surface the best matches from the entire database.
+                                </p>
+                                <ul className="space-y-3 mb-10">
+                                    {[
+                                        ['✨', 'Proactive Smart Suggestions — we find matches before you search'],
+                                        ['🧠', 'Semantic Search — natural language, not just keywords'],
+                                        ['📍', 'Location-aware ranking for nearby results'],
+                                        ['🔄', 'Results cached intelligently for blazing speed'],
+                                    ].map(([icon, text]) => (
+                                        <li key={text} className="flex items-start gap-3 text-sm text-slate-300">
+                                            <span className="text-base mt-0.5 flex-shrink-0">{icon}</span>
+                                            <span>{text}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <Link
+                                    to="/register"
+                                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold shadow-xl shadow-violet-900/30 transition-all hover:scale-105"
+                                    style={{ textDecoration: 'none' }}
+                                >
+                                    Try AI Search <span>→</span>
+                                </Link>
+                            </div>
+
+                            {/* Right: mock search UI */}
+                            <div className="relative">
+                                <div className="bg-slate-900/80 border border-slate-700/60 rounded-3xl p-6 backdrop-blur-xl shadow-2xl">
+                                    {/* Search bar */}
+                                    <div className="flex items-center gap-3 bg-slate-800/80 border border-violet-500/40 rounded-2xl px-4 py-3 mb-6 ring-4 ring-violet-500/10">
+                                        <span className="flex h-2.5 w-2.5 relative">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500" />
+                                        </span>
+                                        <span className="text-sm text-slate-300 font-medium">black backpack near TSC canteen...</span>
+                                        <div className="ml-auto bg-violet-600 hover:bg-violet-500 text-white rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer">Ask AI</div>
+                                    </div>
+
+                                    {/* Result cards */}
+                                    <p className="text-xs font-bold text-violet-400 uppercase tracking-widest mb-3">AI Results — 3 matches</p>
+                                    <div className="space-y-3">
+                                        {[
+                                            { name: 'Black Adidas Backpack', location: 'TSC Area, Dhaka', date: 'Apr 9', match: '97%', status: 'found', matchColor: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+                                            { name: 'Dark Bag with Laptop Inside', location: 'TSC Canteen', date: 'Apr 8', match: '84%', status: 'found', matchColor: 'bg-sky-500/15 text-sky-300 border-sky-500/30' },
+                                            { name: 'Black Canvas Bag', location: 'Near University Gate', date: 'Apr 7', match: '71%', status: 'found', matchColor: 'bg-slate-700 text-slate-300 border-slate-600' },
+                                        ].map((item) => (
+                                            <div key={item.name} className="flex items-center gap-3 bg-slate-800/60 border border-slate-700/60 rounded-xl p-3">
+                                                <div className="w-12 h-12 rounded-xl bg-slate-700 flex items-center justify-center text-2xl flex-shrink-0">🎒</div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-bold text-white truncate">{item.name}</p>
+                                                    <p className="text-xs text-slate-500">📍 {item.location} · {item.date}</p>
+                                                </div>
+                                                <span className={`flex-shrink-0 text-xs font-bold px-2.5 py-1 rounded-full border ${item.matchColor}`}>
+                                                    {item.match}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Decorative floating badge */}
+                                <div className="absolute -top-4 -right-4 bg-gradient-to-br from-violet-600 to-purple-700 text-white rounded-2xl px-4 py-2 shadow-xl text-xs font-black uppercase tracking-wide">
+                                    Gemini AI ✨
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ════════════════════════════════════════════════
+                    FEATURES GRID
+                ════════════════════════════════════════════════ */}
+                <section className="py-28 px-6">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="text-center mb-20">
+                            <p className="text-xs font-bold text-sky-400 uppercase tracking-[0.3em] mb-4">Core Features</p>
+                            <h2 className="text-4xl md:text-5xl font-black text-white leading-tight mb-4">
+                                Intelligent & Secure
+                            </h2>
+                            <p className="text-slate-400 text-lg max-w-xl mx-auto">
+                                Advanced AI matching combined with trusted community moderation ensures fast, safe recoveries.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {FEATURES.map((feat) => (
+                                <div
+                                    key={feat.title}
+                                    className={`card-hover bg-slate-900/70 border border-slate-800 rounded-3xl p-7 hover:border-slate-600 shadow-xl ${feat.glow}`}
+                                >
+                                    <div className="text-4xl mb-5">{feat.icon}</div>
+                                    <span className={`inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border mb-4 ${feat.badgeColor}`}>
+                                        {feat.badge}
+                                    </span>
+                                    <h3 className="text-xl font-bold text-white mb-3">{feat.title}</h3>
+                                    <p className="text-slate-400 text-sm leading-relaxed">{feat.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* ════════════════════════════════════════════════
+                    CATEGORIES
+                ════════════════════════════════════════════════ */}
+                <section className="py-20 px-6">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="text-center mb-14">
+                            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.3em] mb-4">Popular Categories</p>
+                            <h2 className="text-3xl md:text-4xl font-black text-white">Start browsing</h2>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {CATEGORIES.map((cat) => (
+                                <Link
+                                    key={cat.name}
+                                    to="/login"
+                                    className="card-hover group bg-slate-900/70 border border-slate-800 hover:border-slate-600 rounded-2xl p-5 text-center block transition-all"
+                                    style={{ textDecoration: 'none' }}
+                                >
+                                    <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-200">{cat.icon}</div>
+                                    <p className={`font-bold text-sm ${cat.color} mb-1`}>{cat.name}</p>
+                                    <p className="text-xs text-slate-500">{cat.count}</p>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+
+                {/* ════════════════════════════════════════════════
+                    FINAL CTA
+                ════════════════════════════════════════════════ */}
+                <section className="py-28 px-6 relative overflow-hidden">
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-950/40 via-slate-950 to-violet-950/40" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50rem] h-[24rem] rounded-full bg-gradient-to-r from-blue-800/20 to-violet-800/20 blur-[100px]" />
+                    </div>
+
+                    <div className="relative max-w-3xl mx-auto text-center">
+                        <div
+                            className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-4xl mx-auto mb-8 shadow-2xl shadow-blue-900/40"
+                            style={{ animation: 'pulseRing 2s ease-in-out infinite' }}
+                        >
+                            💫
+                        </div>
+                        <h2 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight">
+                            Ready to reunite <br />
+                            <span className="gradient-text">with your belongings?</span>
+                        </h2>
+                        <p className="text-xl text-slate-400 leading-relaxed mb-12 max-w-xl mx-auto">
+                            Join thousands of users already using Khoj. Post, search, and recover lost items with AI-powered matching.
+                        </p>
+
+                        <Link
+                            to="/register"
+                            className="group inline-flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-bold text-lg shadow-2xl shadow-blue-900/40 transition-all hover:scale-105"
+                            style={{ textDecoration: 'none' }}
+                        >
+                            Create Account (Free)
+                            <span className="group-hover:translate-x-1 transition-transform duration-200">→</span>
+                        </Link>
+
+                        <p className="mt-8 text-sm text-slate-600">No credit card required &bull; Powered by Gemini AI</p>
+                    </div>
+                </section>
+
+                {/* ════════════════════════════════════════════════
+                    FOOTER
+                ════════════════════════════════════════════════ */}
+                <footer className="border-t border-slate-800/60 py-12 px-6 bg-slate-900/30">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                            <div>
+                                <p className="text-sm font-semibold text-slate-300 mb-4">Product</p>
+                                <div className="space-y-2">
+                                    <Link to="/login" className="block text-sm text-slate-500 hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>Sign In</Link>
+                                    <Link to="/register" className="block text-sm text-slate-500 hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>Create Account</Link>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-slate-300 mb-4">About</p>
+                                <div className="space-y-2">
+                                    <Link to="/about" className="block text-sm text-slate-500 hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>About Khoj</Link>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-slate-300 mb-4">Legal</p>
+                                <div className="space-y-2">
+                                    <a href="#" className="block text-sm text-slate-500 hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>Privacy Policy</a>
+                                    <a href="#" className="block text-sm text-slate-500 hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>Terms of Service</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="pt-8 border-t border-slate-800/60 flex flex-col md:flex-row items-center justify-between">
+                            <p className="text-xs text-slate-600">
+                                © 2026 Khoj. All rights reserved.
+                            </p>
+                            <p className="text-xs text-slate-600 mt-4 md:mt-0">
+                                Built with ❤️ by the Khoj team &bull; Powered by Gemini AI
+                            </p>
+                        </div>
+                    </div>
+                </footer>
+
             </div>
-            <div className="border-t border-gray-700/50 pt-8 flex flex-col sm:flex-row justify-between items-center">
-              <p className="text-gray-500 text-sm">© 2026 Khoj. All rights reserved.</p>
-              <div className="flex gap-6 mt-4 sm:mt-0">
-                <a href="#" className="text-gray-400 hover:text-blue-400 transition text-xl">𝕏</a>
-                <a href="#" className="text-gray-400 hover:text-blue-400 transition text-xl">f</a>
-                <a href="#" className="text-gray-400 hover:text-blue-400 transition text-xl">in</a>
-              </div>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </div>
-  );
+        </>
+    );
 }

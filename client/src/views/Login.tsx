@@ -119,31 +119,31 @@ const Login = () => {
 
     return (
 
-        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans">
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans">
 
-            <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row w-full max-w-5xl min-h-[600px]">
+            <div className="bg-slate-900/80 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row w-full max-w-5xl min-h-[600px] border border-slate-800">
 
 
 
-                {/* Left Side - Blue Gradient Background */}
+                {/* Left Side - Theme Gradient Background */}
 
-                <div className="w-full md:w-1/2 bg-gradient-to-br from-cyan-400 to-blue-500 p-10 lg:p-14 text-white flex flex-col justify-between relative overflow-hidden hidden md:flex">
+                <div className="w-full md:w-1/2 bg-gradient-to-br from-slate-800 via-slate-900 to-teal-900 p-10 lg:p-14 text-white flex flex-col justify-between relative overflow-hidden hidden md:flex">
 
                     {/* Decorative SVGs for the wave effect */}
 
-                    <svg className="absolute bottom-0 left-0 w-full text-blue-600/20" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <svg className="absolute bottom-0 left-0 w-full text-slate-700/30" viewBox="0 0 1440 320" preserveAspectRatio="none">
 
                         <path fill="currentColor" fillOpacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
 
                     </svg>
 
-                    <svg className="absolute bottom-0 left-0 w-full text-cyan-400/20" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <svg className="absolute bottom-0 left-0 w-full text-teal-500/20" viewBox="0 0 1440 320" preserveAspectRatio="none">
 
                         <path fill="currentColor" fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
 
                     </svg>
 
-                    <svg className="absolute bottom-0 left-0 w-full text-blue-500/40" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <svg className="absolute bottom-0 left-0 w-full text-slate-800/50" viewBox="0 0 1440 320" preserveAspectRatio="none">
 
                         <path fill="currentColor" fillOpacity="1" d="M0,256L48,245.3C96,235,192,213,288,213.3C384,213,480,235,576,224C672,213,768,171,864,149.3C960,128,1056,128,1152,144C1248,160,1344,192,1392,208L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
 
@@ -177,23 +177,23 @@ const Login = () => {
 
                 {/* Right Side - Login Form */}
 
-                <div className="w-full md:w-1/2 p-10 lg:p-14 flex flex-col justify-center bg-white relative z-10">
+                <div className="w-full md:w-1/2 p-10 lg:p-14 flex flex-col justify-center bg-slate-900 relative z-10">
 
                     <div className="max-w-md mx-auto w-full">
 
-                        <h2 className="text-4xl font-bold mb-3 text-slate-800">Login</h2>
+                        <h2 className="text-4xl font-bold mb-3 text-white">Login</h2>
 
-                        <p className="text-slate-500 text-sm mb-10 font-medium leading-relaxed">
+                        <p className="text-slate-400 text-sm mb-10 font-medium leading-relaxed">
                             Welcome back! Please enter your credentials to connect with the community.
                         </p>
 
                         {successMessage && (
-                            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg font-medium text-center shadow-sm">
+                            <div className="mb-6 p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded-lg font-medium text-center shadow-sm">
                                 {successMessage}
                             </div>
                         )}
                         {errorMessage && (
-                            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg font-medium text-center shadow-sm">
+                            <div className="mb-6 p-4 bg-red-500/15 border border-red-500/30 text-red-300 rounded-lg font-medium text-center shadow-sm">
                                 {errorMessage}
                             </div>
                         )}
@@ -204,7 +204,7 @@ const Login = () => {
 
                             <div>
 
-                                <label className="block text-slate-600 font-semibold text-sm mb-2">Email Address</label>
+                                <label className="block text-slate-300 font-semibold text-sm mb-2">Email Address</label>
 
                                 <input
 
@@ -214,13 +214,15 @@ const Login = () => {
 
                                     onChange={(e) => setEmail(e.target.value)}
 
-                                    className={`w-full px-4 py-3 rounded-lg border ${emailError ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                    className={`w-full px-4 py-3 rounded-lg border ${emailError ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
+
+                                    placeholder="you@example.com"
 
                                 />
 
                                 {emailError && (
 
-                                    <p className="text-red-500 text-xs mt-2 font-medium">{emailError}</p>
+                                    <p className="text-red-400 text-xs mt-2 font-medium">{emailError}</p>
 
                                 )}
 
@@ -232,7 +234,7 @@ const Login = () => {
 
                             <div>
 
-                                <label className="block text-slate-600 font-semibold text-sm mb-2">Password</label>
+                                <label className="block text-slate-300 font-semibold text-sm mb-2">Password</label>
 
                                 <div className="relative">
                                     <input
@@ -243,13 +245,15 @@ const Login = () => {
 
                                         onChange={(e) => setPassword(e.target.value)}
 
-                                        className={`w-full px-4 py-3 pr-10 rounded-lg border ${passwordError ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                        className={`w-full px-4 py-3 pr-10 rounded-lg border ${passwordError ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
+
+                                        placeholder="••••••••"
 
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                                     >
                                         {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                                     </button>
@@ -257,7 +261,7 @@ const Login = () => {
 
                                 {passwordError && (
 
-                                    <p className="text-red-500 text-xs mt-2 font-medium">{passwordError}</p>
+                                    <p className="text-red-400 text-xs mt-2 font-medium">{passwordError}</p>
 
                                 )}
 
@@ -271,9 +275,9 @@ const Login = () => {
 
                                 <label className="flex items-center cursor-pointer group">
 
-                                    <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-500 focus:ring-blue-500 cursor-pointer transition-colors" />
+                                    <input type="checkbox" className="w-4 h-4 rounded border-slate-600 text-teal-600 focus:ring-teal-500 cursor-pointer transition-colors" />
 
-                                    <span className="ml-2 text-sm text-slate-500 font-medium group-hover:text-slate-700 transition-colors">Remember me</span>
+                                    <span className="ml-2 text-sm text-slate-400 font-medium group-hover:text-slate-300 transition-colors">Remember me</span>
 
                                 </label>
 
@@ -287,7 +291,7 @@ const Login = () => {
 
                                 type="submit"
 
-                                className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg shadow-blue-500/30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 mt-6 active:scale-[0.98]"
+                                className="w-full py-3.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg shadow-lg shadow-teal-900/30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:ring-offset-2 focus:ring-offset-slate-900 mt-6 active:scale-[0.98]"
 
                             >
 
@@ -301,9 +305,9 @@ const Login = () => {
 
                         <div className="flex justify-center items-center mt-10 text-sm">
 
-                            <p className="text-slate-500 font-medium">
+                            <p className="text-slate-400 font-medium">
 
-                                Don't have an account? <Link to="/register" className="text-blue-600 hover:text-blue-800 hover:underline font-bold transition-colors ml-1">Register here.</Link>
+                                Don't have an account? <Link to="/register" className="text-teal-400 hover:text-teal-300 hover:underline font-bold transition-colors ml-1">Register here.</Link>
 
                             </p>
 

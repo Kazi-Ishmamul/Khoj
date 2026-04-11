@@ -56,7 +56,7 @@ export default function Items() {
     const [claimedItemIds, setClaimedItemIds] = useState<number[]>([]);
     const [claimLoadingId, setClaimLoadingId] = useState<number | null>(null);
     const [reportedItemIds, setReportedItemIds] = useState<number[]>([]);
-    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const fetchItems = async () => {
         try {
@@ -465,7 +465,7 @@ export default function Items() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-10 relative">
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-10 relative text-slate-100">
             <div className="container mx-auto px-4 max-w-7xl">
 
                 {/* Header + Actions */}
@@ -486,7 +486,7 @@ export default function Items() {
                             onClick={() => activeView === 'suggestions' ? fetchSuggestions(true) : handleViewSuggestions()}
                             className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-sm border ${activeView === 'suggestions'
                                     ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-purple-500/30 border-transparent'
-                                    : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50 hover:shadow-md'
+                                    : 'bg-slate-900/80 text-slate-100 border-slate-700 hover:bg-slate-800 hover:shadow-md'
                                 }`}
                         >
                             <span className="text-xl">✨</span>
@@ -495,17 +495,17 @@ export default function Items() {
 
                         <button
                             onClick={() => setShowReportModal(true)}
-                            className="flex-1 md:flex-none justify-center bg-gray-900 hover:bg-black text-white px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-gray-900/20"
+                            className="flex-1 md:flex-none justify-center bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-sky-900/30 border border-sky-300/30"
                         >
-                            + Report Item
+                            + Post Item
                         </button>
                     </div>
                 </div>
 
                 {/* Main Filter & Search Control Panel */}
-                <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-4 mb-10 sticky top-4 z-40">
+                <div className="bg-slate-900/80 p-2 rounded-3xl shadow-sm border border-slate-700/70 flex flex-col lg:flex-row gap-4 mb-10 sticky top-4 z-40 backdrop-blur-xl">
                     {/* Segmented Control Tabs */}
-                    <div className="flex p-1 bg-gray-50/80 backdrop-blur-md rounded-xl w-full lg:w-auto flex-1 lg:flex-none relative h-14">
+                    <div className="flex p-1 bg-slate-800/70 backdrop-blur-md rounded-2xl w-full lg:w-auto flex-1 lg:flex-none relative h-14 min-h-14 border border-slate-700/60">
                         <button
                             onClick={() => {
                                 setActiveView('database');
@@ -513,10 +513,10 @@ export default function Items() {
                                 setCurrentPage(1);
                                 setSearchTerm('');
                             }}
-                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'all' ? 'bg-white text-gray-900 shadow border border-gray-100' : 'text-gray-500 hover:text-gray-700'
+                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'all' ? 'bg-slate-100 text-slate-950 shadow border border-slate-200' : 'text-slate-400 hover:text-slate-200'
                                 }`}
                         >
-                            All Posts
+                            All
                         </button>
                         <button
                             onClick={() => {
@@ -525,7 +525,7 @@ export default function Items() {
                                 setCurrentPage(1);
                                 setSearchTerm('');
                             }}
-                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'lost' ? 'bg-rose-50 text-rose-700 shadow border border-rose-100' : 'text-gray-500 hover:text-rose-600'
+                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'lost' ? 'bg-rose-500/15 text-rose-300 shadow border border-rose-500/30' : 'text-slate-400 hover:text-rose-300'
                                 }`}
                         >
                             Lost
@@ -537,7 +537,7 @@ export default function Items() {
                                 setCurrentPage(1);
                                 setSearchTerm('');
                             }}
-                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'found' ? 'bg-emerald-50 text-emerald-700 shadow border border-emerald-100' : 'text-gray-500 hover:text-emerald-600'
+                            className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'found' ? 'bg-emerald-500/15 text-emerald-300 shadow border border-emerald-500/30' : 'text-slate-400 hover:text-emerald-300'
                                 }`}
                         >
                             Found
@@ -545,7 +545,7 @@ export default function Items() {
                     </div>
 
                     {/* Search Field */}
-                    <div className="relative flex-1 lg:max-w-md h-14">
+                    <div className="relative flex-1 lg:max-w-md h-14 min-h-14 shrink-0">
                         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                             {activeView === 'search' ? (
                                 <span className="flex h-3 w-3 relative">
@@ -564,12 +564,12 @@ export default function Items() {
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            className={`w-full h-full pl-12 pr-14 outline-none border transition-all duration-300 rounded-xl text-gray-800 placeholder-gray-400 ${activeView === 'search' ? 'border-blue-400 ring-4 ring-blue-50 bg-blue-50/30' : 'border-gray-200 focus:border-gray-300 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-gray-100'
+                            className={`w-full h-full min-h-14 pl-12 pr-14 outline-none border transition-all duration-300 rounded-xl text-slate-100 placeholder-slate-400 bg-slate-950/60 ${activeView === 'search' ? 'border-sky-400 ring-4 ring-sky-500/15' : 'border-slate-700 focus:border-slate-500 focus:ring-4 focus:ring-slate-500/10'
                                 }`}
                         />
                         <button
                             onClick={triggerSearch}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors shadow-sm"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 h-10 w-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
                             title="Semantic Search"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -581,16 +581,16 @@ export default function Items() {
 
                 {/* Items Grid */}
                 {loading ? (
-                    <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-                        <p className="text-xl text-gray-500">Loading items...</p>
+                    <div className="text-center py-16 bg-slate-900/80 rounded-3xl shadow-sm border border-slate-700/60">
+                        <p className="text-xl text-slate-300">Loading items...</p>
                     </div>
                 ) : error ? (
-                    <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-                        <p className="text-xl text-red-500">Error: {error}</p>
+                    <div className="text-center py-16 bg-slate-900/80 rounded-3xl shadow-sm border border-slate-700/60">
+                        <p className="text-xl text-rose-300">Error: {error}</p>
                     </div>
                 ) : paginatedReports.length === 0 ? (
-                    <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-                        <p className="text-xl text-gray-500">No items found.</p>
+                    <div className="text-center py-16 bg-slate-900/80 rounded-3xl shadow-sm border border-slate-700/60">
+                        <p className="text-xl text-slate-300">No items found.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -600,10 +600,10 @@ export default function Items() {
                             return (
                                 <div
                                     key={report.id}
-                                    className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col group"
+                                    className="bg-slate-900/90 rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-slate-700/70 flex flex-col group backdrop-blur-sm"
                                 >
                                     {/* Image Container with Status Badge */}
-                                    <div className="relative overflow-hidden h-56 bg-gradient-to-br from-gray-100 to-gray-200">
+                                    <div className="relative overflow-hidden h-56 bg-gradient-to-br from-slate-800 to-slate-900">
                                         {report.item_image_url && (
                                             <img
                                                 src={report.item_image_url}
@@ -624,21 +624,21 @@ export default function Items() {
 
                                     <div className="p-6 flex-1 flex flex-col">
                                         {/* Item Title */}
-                                        <h3 className="text-2xl font-bold text-gray-900 mb-1 line-clamp-2">
+                                        <h3 className="text-2xl font-bold text-slate-100 mb-1 line-clamp-2">
                                             {report.item_name}
                                         </h3>
-                                        <p className="text-sm font-semibold text-blue-600 mb-4 capitalize">
+                                        <p className="text-sm font-semibold text-sky-300 mb-4 capitalize">
                                             {report.category || 'Uncategorized'}
                                         </p>
 
                                         {/* Description */}
-                                        <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+                                        <p className="text-slate-400 text-sm mb-4 line-clamp-2 leading-relaxed">
                                             {report.description}
                                         </p>
 
                                         {/* User Info Card */}
                                         {report.user && (
-                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-4 border border-blue-100">
+                                            <div className="bg-slate-800/70 rounded-2xl p-3 mb-4 border border-slate-700/60">
                                                 <div className="flex items-center gap-3 cursor-pointer" onClick={() => {
                                                     setSelectedUser(report.user!);
                                                     setShowUserModal(true);
@@ -646,11 +646,11 @@ export default function Items() {
                                                     <img
                                                         src={report.user.pic_url || 'https://ui-avatars.com/api/?name=User&background=random'}
                                                         alt={report.user.name}
-                                                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-blue-500 transition-all"
+                                                        className="w-10 h-10 rounded-full object-cover border-2 border-slate-700 shadow-md hover:ring-2 hover:ring-sky-500 transition-all"
                                                     />
                                                     <div>
-                                                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Posted by</p>
-                                                        <p className="text-sm font-bold text-gray-900 hover:text-blue-600 transition-colors">{report.user.name}</p>
+                                                        <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Posted by</p>
+                                                        <p className="text-sm font-bold text-slate-100 hover:text-sky-300 transition-colors">{report.user.name}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -658,17 +658,17 @@ export default function Items() {
 
                                         {/* Info Grid */}
                                         <div className="grid grid-cols-2 gap-3 mb-5 text-xs">
-                                            <div className="bg-gray-50 rounded-lg p-2">
-                                                <p className="text-gray-500 font-semibold mb-1">📍 Location</p>
-                                                <p className="text-gray-800 font-medium line-clamp-1">{report.location}</p>
+                                            <div className="bg-slate-800/60 rounded-xl p-2 border border-slate-700/60">
+                                                <p className="text-slate-400 font-semibold mb-1">📍 Location</p>
+                                                <p className="text-slate-100 font-medium line-clamp-1">{report.location}</p>
                                             </div>
-                                            <div className="bg-gray-50 rounded-lg p-2">
-                                                <p className="text-gray-500 font-semibold mb-1">📅 Date</p>
-                                                <p className="text-gray-800 font-medium">{new Date(report.date_time).toLocaleDateString()}</p>
+                                            <div className="bg-slate-800/60 rounded-xl p-2 border border-slate-700/60">
+                                                <p className="text-slate-400 font-semibold mb-1">📅 Date</p>
+                                                <p className="text-slate-100 font-medium">{new Date(report.date_time).toLocaleDateString()}</p>
                                             </div>
-                                            <div className="bg-gray-50 rounded-lg p-2 col-span-2">
-                                                <p className="text-gray-500 font-semibold mb-1">📞 Contact</p>
-                                                <p className="text-gray-800 font-medium truncate">{report.contact_info}</p>
+                                            <div className="bg-slate-800/60 rounded-xl p-2 col-span-2 border border-slate-700/60">
+                                                <p className="text-slate-400 font-semibold mb-1">📞 Contact</p>
+                                                <p className="text-slate-100 font-medium truncate">{report.contact_info}</p>
                                             </div>
                                         </div>
 
@@ -679,7 +679,7 @@ export default function Items() {
                                                 disabled={claimLoadingId === report.id}
                                                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${isClaimed
                                                         ? 'bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg hover:shadow-xl'
-                                                        : 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 border border-green-300'
+                                                        : 'bg-gradient-to-r from-emerald-500/15 to-sky-500/15 text-emerald-200 hover:from-emerald-500/25 hover:to-sky-500/25 border border-emerald-500/30'
                                                     }`}
                                             >
                                                 {claimLoadingId === report.id ? '⏳ Processing...' : isClaimed ? 'Release' : '🙋 Claim'}
@@ -689,8 +689,8 @@ export default function Items() {
                                                 onClick={() => !isReported && toggleReport(report)}
                                                 disabled={isReported || reportingId === report.id}
                                                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 ${isReported
-                                                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300'
-                                                        : 'bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 hover:from-orange-200 hover:to-red-200 border border-orange-300 transform hover:scale-105 active:scale-100'
+                                                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                                        : 'bg-gradient-to-r from-amber-500/15 to-rose-500/15 text-amber-200 hover:from-amber-500/25 hover:to-rose-500/25 border border-amber-500/30 transform hover:scale-105 active:scale-100'
                                                     }`}
                                             >
                                                 {reportingId === report.id ? '⏳ Reporting...' : isReported ? '⚠ Reported' : '🚩 Report'}
@@ -709,17 +709,17 @@ export default function Items() {
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="px-5 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                            className="px-5 py-2 bg-slate-900/80 text-slate-100 border border-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800"
                         >
                             Previous
                         </button>
-                        <span className="text-gray-700 font-medium">
+                        <span className="text-slate-300 font-medium">
                             Page {currentPage} of {totalPages}
                         </span>
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="px-5 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                            className="px-5 py-2 bg-slate-900/80 text-slate-100 border border-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800"
                         >
                             Next
                         </button>
@@ -731,18 +731,18 @@ export default function Items() {
             {showReportModal && (
                 <>
                     <div
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+                        className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-[9998]"
                         onClick={() => setShowReportModal(false)}
                     />
 
                     <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto pt-20 md:pt-24">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 my-8 max-h-[calc(100vh-10rem)] overflow-y-auto">
-                            <div className="p-6 md:p-8">
-                                <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2 border-b">
-                                    <h2 className="text-2xl font-bold text-gray-800">Report Lost or Found Item</h2>
+                        <div className="bg-slate-900 rounded-3xl shadow-2xl ring-1 ring-slate-700/70 w-full max-w-2xl mx-4 my-8 max-h-[calc(100vh-10rem)] overflow-y-auto">
+                            <div className="p-6 md:p-8 text-slate-100">
+                                <div className="flex justify-between items-center mb-6 sticky top-0 bg-slate-900 z-10 pb-2 border-b border-slate-700">
+                                    <h2 className="text-2xl font-bold text-white">Post Lost or Found Item</h2>
                                     <button
                                         onClick={() => setShowReportModal(false)}
-                                        className="text-gray-600 hover:text-gray-900 text-3xl font-bold leading-none"
+                                        className="text-slate-300 hover:text-white text-3xl font-bold leading-none"
                                     >
                                         ×
                                     </button>
@@ -750,70 +750,70 @@ export default function Items() {
 
                                 <form onSubmit={handleSubmitReport} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Item Name *</label>
                                         <input
                                             type="text"
                                             name="itemName"
                                             value={formData.itemName}
                                             onChange={handleFormChange}
                                             required
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
                                         <input
                                             type="text"
                                             name="category"
                                             value={formData.category}
                                             onChange={handleFormChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Description *</label>
                                         <textarea
                                             name="description"
                                             value={formData.description}
                                             onChange={handleFormChange}
                                             rows={3}
                                             required
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Date & Time</label>
                                         <input
                                             type="datetime-local"
                                             name="dateTime"
                                             value={formData.dateTime}
                                             onChange={handleFormChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Location *</label>
                                         <input
                                             type="text"
                                             name="location"
                                             value={formData.location}
                                             onChange={handleFormChange}
                                             required
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Status *</label>
                                         <select
                                             name="status"
                                             value={formData.status}
                                             onChange={handleFormChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         >
                                             <option value="lost">Lost</option>
                                             <option value="found">Found</option>
@@ -821,7 +821,7 @@ export default function Items() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contact Info *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Contact Info *</label>
                                         <input
                                             type="text"
                                             name="contact"
@@ -829,25 +829,25 @@ export default function Items() {
                                             onChange={handleFormChange}
                                             required
                                             placeholder="Phone or Email"
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">Item Image (optional)</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-3">Item Image (optional)</label>
                                         <div className="flex items-center gap-4">
                                             {itemImagePreview && (
                                                 <img
                                                     src={itemImagePreview}
                                                     alt="Preview"
-                                                    className="w-20 h-20 rounded-lg object-cover border-2 border-blue-300"
+                                                    className="w-20 h-20 rounded-lg object-cover border-2 border-slate-600"
                                                 />
                                             )}
                                             <input
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={handleImageChange}
-                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-sky-500/15 file:text-sky-200 hover:file:bg-sky-500/25"
                                             />
                                         </div>
                                     </div>
@@ -856,15 +856,15 @@ export default function Items() {
                                         <button
                                             type="button"
                                             onClick={() => setShowReportModal(false)}
-                                            className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                                            className="px-6 py-2.5 bg-slate-800 text-slate-200 rounded-xl hover:bg-slate-700 transition-colors border border-slate-700"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="submit"
-                                            className="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                                            className="px-8 py-2.5 bg-sky-600 text-white rounded-xl hover:bg-sky-700 font-medium transition-colors"
                                         >
-                                            Submit Report
+                                            Submit Post
                                         </button>
                                     </div>
                                 </form>
@@ -878,20 +878,20 @@ export default function Items() {
             {showUserModal && selectedUser && (
                 <>
                     <div
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+                        className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-[9998]"
                         onClick={() => setShowUserModal(false)}
                     />
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 my-8 overflow-hidden">
+                        <div className="bg-slate-900 rounded-3xl shadow-2xl ring-1 ring-slate-700/70 w-full max-w-md mx-4 my-8 overflow-hidden text-slate-100">
 
                             {/* Modal Header Banner */}
-                            <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 h-24">
+                            <div className="relative bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 h-24">
                                 <button
                                     onClick={() => setShowUserModal(false)}
                                     aria-label="Close"
-                                    className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:shadow-xl transition-all duration-150"
+                                    className="absolute top-3 right-3 w-9 h-9 bg-slate-100 rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:shadow-xl transition-all duration-150"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <line x1="18" y1="6" x2="6" y2="18" />
                                         <line x1="6" y1="6" x2="18" y2="18" />
                                     </svg>
@@ -902,44 +902,44 @@ export default function Items() {
                                 {/* Profile Picture - overlapping banner */}
                                 <div className="flex flex-col items-center -mt-12 mb-4 relative z-10">
                                     <img
-                                        src={selectedUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedUser.name) + '&background=4F46E5&color=fff&size=150'}
+                                        src={selectedUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedUser.name) + '&background=0f172a&color=fff&size=150'}
                                         alt={selectedUser.name}
-                                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl bg-white"
+                                        className="w-24 h-24 rounded-full object-cover border-4 border-slate-800 shadow-xl bg-slate-800"
                                     />
-                                    <h2 className="text-2xl font-bold text-gray-900 text-center mt-3">{selectedUser.name}</h2>
+                                    <h2 className="text-2xl font-bold text-white text-center mt-3">{selectedUser.name}</h2>
                                     {selectedUser.info?.bio && (
                                         <div className="mt-3 px-2 text-center">
-                                            <p className="text-sm text-gray-600 italic leading-relaxed">"{selectedUser.info.bio}"</p>
+                                            <p className="text-sm text-slate-400 italic leading-relaxed">"{selectedUser.info.bio}"</p>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Contact Info */}
-                                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-5 mb-5 border border-blue-100 space-y-3">
+                                <div className="bg-slate-800/70 rounded-2xl p-5 mb-5 border border-slate-700/60 space-y-3">
                                     {selectedUser.email && (
                                         <div className="flex items-center gap-3">
-                                            <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                                            <span className="w-8 h-8 rounded-full bg-sky-500/15 flex items-center justify-center text-sky-300 flex-shrink-0">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                     <rect x="2" y="4" width="20" height="16" rx="2" />
                                                     <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                                                 </svg>
                                             </span>
                                             <div>
-                                                <p className="text-xs text-gray-400 font-medium">Email</p>
-                                                <p className="text-sm font-semibold text-gray-800">{selectedUser.email}</p>
+                                                <p className="text-xs text-slate-400 font-medium">Email</p>
+                                                <p className="text-sm font-semibold text-slate-100">{selectedUser.email}</p>
                                             </div>
                                         </div>
                                     )}
                                     {selectedUser.phone && (
                                         <div className="flex items-center gap-3">
-                                            <span className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                                            <span className="w-8 h-8 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-300 flex-shrink-0">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.98-2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.09a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.33v-.41z" />
                                                 </svg>
                                             </span>
                                             <div>
-                                                <p className="text-xs text-gray-400 font-medium">Phone</p>
-                                                <p className="text-sm font-semibold text-gray-800">{selectedUser.phone}</p>
+                                                <p className="text-xs text-slate-400 font-medium">Phone</p>
+                                                <p className="text-sm font-semibold text-slate-100">{selectedUser.phone}</p>
                                             </div>
                                         </div>
                                     )}
@@ -1001,7 +1001,7 @@ export default function Items() {
 
                                         return socials.length > 0 ? (
                                             <div className="mb-5">
-                                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 text-center">Connect on Social</p>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 text-center">Connect on Social</p>
                                                 <div className="flex justify-center gap-3">
                                                     {socials.map(social => (
                                                         <a
@@ -1010,7 +1010,7 @@ export default function Items() {
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             title={social.label}
-                                                            className={`w-11 h-11 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center transition-all duration-200 hover:text-white hover:scale-110 hover:shadow-lg ${social.color}`}
+                                                            className={`w-11 h-11 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center transition-all duration-200 hover:text-white hover:scale-110 hover:shadow-lg border border-slate-700 ${social.color}`}
                                                         >
                                                             {social.icon}
                                                         </a>
@@ -1031,40 +1031,40 @@ export default function Items() {
             {showViolationModal && selectedItemForReport && (
                 <>
                     <div
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]"
+                        className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-[9998]"
                         onClick={() => !reportingId && setShowViolationModal(false)}
                     />
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all relative">
+                        <div className="bg-slate-900 rounded-3xl shadow-2xl ring-1 ring-slate-700/70 w-full max-w-md overflow-hidden transform transition-all relative text-slate-100">
                             {/* Accent line */}
                             <div className="h-1.5 w-full bg-gradient-to-r from-red-500 to-rose-500" />
 
                             <button
                                 onClick={() => setShowViolationModal(false)}
                                 disabled={reportingId !== null}
-                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl disabled:opacity-50"
+                                className="absolute top-4 right-4 text-slate-400 hover:text-slate-200 font-bold text-xl disabled:opacity-50"
                             >
                                 ✕
                             </button>
 
                             <div className="p-6">
                                 <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-red-500 text-2xl">
+                                    <div className="w-12 h-12 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-300 text-2xl">
                                         🚨
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-gray-900">Report Item</h3>
-                                        <p className="text-sm text-gray-500">Flag this item for admin review</p>
+                                        <h3 className="text-xl font-bold text-white">Report Item</h3>
+                                        <p className="text-sm text-slate-400">Flag this item for admin review</p>
                                     </div>
                                 </div>
 
-                                <div className="bg-gray-50 rounded-xl p-3 mb-5 border border-gray-100">
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Reporting:</p>
-                                    <p className="font-bold text-gray-900 line-clamp-1">{selectedItemForReport.item_name}</p>
+                                <div className="bg-slate-800/70 rounded-xl p-3 mb-5 border border-slate-700/60">
+                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Reporting:</p>
+                                    <p className="font-bold text-slate-100 line-clamp-1">{selectedItemForReport.item_name}</p>
                                 </div>
 
                                 <form onSubmit={submitViolationReport}>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    <label className="block text-sm font-semibold text-slate-300 mb-2">
                                         Reason for reporting <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
@@ -1073,10 +1073,10 @@ export default function Items() {
                                         placeholder="e.g., Fake item, inappropriate content, spam..."
                                         rows={4}
                                         required
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none text-sm"
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none text-sm text-slate-100 placeholder-slate-500"
                                         disabled={reportingId !== null}
                                     />
-                                    <p className="text-xs text-gray-500 mt-2 mb-6">
+                                    <p className="text-xs text-slate-400 mt-2 mb-6">
                                         False reports may result in account suspension.
                                     </p>
 
@@ -1085,7 +1085,7 @@ export default function Items() {
                                             type="button"
                                             onClick={() => setShowViolationModal(false)}
                                             disabled={reportingId !== null}
-                                            className="flex-1 px-4 py-3 rounded-xl border border-gray-300 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                            className="flex-1 px-4 py-3 rounded-xl border border-slate-700 text-slate-200 font-bold text-sm hover:bg-slate-800 transition-colors disabled:opacity-50"
                                         >
                                             Cancel
                                         </button>

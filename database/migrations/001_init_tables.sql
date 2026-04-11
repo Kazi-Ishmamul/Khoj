@@ -87,3 +87,19 @@ CREATE TABLE reports (
     CONSTRAINT fk_report_item FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
     CONSTRAINT fk_report_user FOREIGN KEY (r_user_id) REFERENCES users(id) ON DELETE CASCADE
 )
+
+
+CREATE TABLE notifications (
+    notification_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    related_type VARCHAR(50) DEFAULT NULL,
+    related_id BIGINT UNSIGNED DEFAULT NULL,
+    actor_id INT DEFAULT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notification_actor FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL
+);

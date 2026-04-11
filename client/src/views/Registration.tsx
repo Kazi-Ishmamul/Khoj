@@ -194,24 +194,24 @@ const Registration = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans">
-            <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col-reverse md:flex-row w-full max-w-6xl min-h-[700px]">
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans">
+            <div className="bg-slate-900/80 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col-reverse md:flex-row w-full max-w-6xl min-h-[700px] border border-slate-800">
 
                 {/* Left Side - Registration Form */}
-                <div className="w-full md:w-[55%] p-8 lg:p-12 flex flex-col justify-center bg-white relative z-10 overflow-y-auto max-h-[90vh] md:max-h-none custom-scrollbar">
+                <div className="w-full md:w-[55%] p-8 lg:p-12 flex flex-col justify-center bg-slate-900 relative z-10">
                     <div className="max-w-lg mx-auto w-full">
-                        <h2 className="text-4xl font-bold mb-3 text-slate-800">Register</h2>
-                        <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">
+                        <h2 className="text-4xl font-bold mb-3 text-white">Register</h2>
+                        <p className="text-slate-400 text-sm mb-8 font-medium leading-relaxed">
                             Create a new Khoj account to join the community and start recovering lost items.
                         </p>
 
                         {successMessage && (
-                            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg font-medium text-center shadow-sm">
+                            <div className="mb-6 p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded-lg font-medium text-center shadow-sm">
                                 {successMessage}
                             </div>
                         )}
                         {errorMessage && (
-                            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg font-medium text-center shadow-sm">
+                            <div className="mb-6 p-4 bg-red-500/15 border border-red-500/30 text-red-300 rounded-lg font-medium text-center shadow-sm">
                                 {errorMessage}
                             </div>
                         )}
@@ -220,112 +220,118 @@ const Registration = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Name */}
                                 <div>
-                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Full Name <span className="text-red-500">*</span></label>
+                                    <label className="block text-slate-300 font-semibold text-sm mb-2">Full Name <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         name="name"
                                         value={formData.name}
                                         onChange={handleChange}
-                                        className={`w-full px-4 py-2.5 rounded-lg border ${errors.name ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                        className={`w-full px-4 py-2.5 rounded-lg border ${errors.name ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
+                                        placeholder="John Doe"
                                     />
-                                    {errors.name && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.name}</p>}
+                                    {errors.name && <p className="text-red-400 text-xs mt-1.5 font-medium">{errors.name}</p>}
                                 </div>
 
                                 {/* Phone */}
                                 <div>
-                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Phone Number <span className="text-red-500">*</span></label>
+                                    <label className="block text-slate-300 font-semibold text-sm mb-2">Phone Number <span className="text-red-500">*</span></label>
                                     <input
                                         type="tel"
                                         name="phone"
                                         value={formData.phone}
                                         onChange={handleChange}
-                                        className={`w-full px-4 py-2.5 rounded-lg border ${errors.phone ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                        className={`w-full px-4 py-2.5 rounded-lg border ${errors.phone ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
+                                        placeholder="01712345678"
                                     />
-                                    {errors.phone && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.phone}</p>}
+                                    {errors.phone && <p className="text-red-400 text-xs mt-1.5 font-medium">{errors.phone}</p>}
                                 </div>
                             </div>
 
                             {/* Email */}
                             <div>
-                                <label className="block text-slate-600 font-semibold text-sm mb-2">Email Address <span className="text-red-500">*</span></label>
+                                <label className="block text-slate-300 font-semibold text-sm mb-2">Email Address <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className={`w-full px-4 py-2.5 rounded-lg border ${errors.email ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                    className={`w-full px-4 py-2.5 rounded-lg border ${errors.email ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
+                                    placeholder="you@example.com"
                                 />
-                                {errors.email && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.email}</p>}
+                                {errors.email && <p className="text-red-400 text-xs mt-1.5 font-medium">{errors.email}</p>}
                             </div>
 
                             {/* Address */}
                             <div>
-                                <label className="block text-slate-600 font-semibold text-sm mb-2">Address <span className="text-red-500">*</span></label>
+                                <label className="block text-slate-300 font-semibold text-sm mb-2">Address <span className="text-red-500">*</span></label>
                                 <textarea
                                     name="address"
                                     rows={2}
                                     value={formData.address}
                                     onChange={handleChange}
-                                    className={`w-full px-4 py-2.5 rounded-lg border ${errors.address ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium resize-none`}
+                                    className={`w-full px-4 py-2.5 rounded-lg border ${errors.address ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium resize-none placeholder-slate-500`}
+                                    placeholder="Your address"
                                 />
-                                {errors.address && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.address}</p>}
+                                {errors.address && <p className="text-red-400 text-xs mt-1.5 font-medium">{errors.address}</p>}
                             </div>
 
                             {/* Profile Pic */}
                             <div>
-                                <label className="block text-slate-600 font-semibold text-sm mb-2">Profile Picture (Optional)</label>
+                                <label className="block text-slate-300 font-semibold text-sm mb-2">Profile Picture (Optional)</label>
                                 <input
                                     type="file"
                                     accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                                     onChange={handleFileChange}
-                                    className={`w-full px-3 py-2 rounded-lg border ${errors.profile_pic ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer`}
+                                    className={`w-full px-3 py-2 rounded-lg border ${errors.profile_pic ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-teal-600/20 file:text-teal-300 hover:file:bg-teal-600/30 transition-all cursor-pointer`}
                                 />
-                                {errors.profile_pic && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.profile_pic}</p>}
+                                {errors.profile_pic && <p className="text-red-400 text-xs mt-1.5 font-medium">{errors.profile_pic}</p>}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Password */}
                                 <div>
-                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Password <span className="text-red-500">*</span></label>
+                                    <label className="block text-slate-300 font-semibold text-sm mb-2">Password <span className="text-red-500">*</span></label>
                                     <div className="relative">
                                         <input
                                             type={showPassword ? "text" : "password"}
                                             name="password"
                                             value={formData.password}
                                             onChange={handleChange}
-                                            className={`w-full px-4 py-2.5 pr-10 rounded-lg border ${errors.password ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                            className={`w-full px-4 py-2.5 pr-10 rounded-lg border ${errors.password ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
+                                            placeholder="••••••••"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                                         >
                                             {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                                         </button>
                                     </div>
-                                    {errors.password && <p className="text-red-500 text-xs mt-1.5 font-medium leading-tight">{errors.password}</p>}
+                                    {errors.password && <p className="text-red-400 text-xs mt-1.5 font-medium leading-tight">{errors.password}</p>}
                                 </div>
 
                                 {/* Confirm Password */}
                                 <div>
-                                    <label className="block text-slate-600 font-semibold text-sm mb-2">Confirm Password <span className="text-red-500">*</span></label>
+                                    <label className="block text-slate-300 font-semibold text-sm mb-2">Confirm Password <span className="text-red-500">*</span></label>
                                     <div className="relative">
                                         <input
                                             type={showConfirmPassword ? "text" : "password"}
                                             name="confirmPassword"
                                             value={formData.confirmPassword}
                                             onChange={handleChange}
-                                            className={`w-full px-4 py-2.5 pr-10 rounded-lg border ${errors.confirmPassword ? 'border-red-500 bg-red-50/50' : 'border-slate-300 bg-slate-50'} focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-800 font-medium`}
+                                            className={`w-full px-4 py-2.5 pr-10 rounded-lg border ${errors.confirmPassword ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
+                                            placeholder="••••••••"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                                         >
                                             {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
                                         </button>
                                     </div>
-                                    {errors.confirmPassword && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.confirmPassword}</p>}
+                                    {errors.confirmPassword && <p className="text-red-400 text-xs mt-1.5 font-medium">{errors.confirmPassword}</p>}
                                 </div>
                             </div>
 
@@ -333,30 +339,30 @@ const Registration = () => {
                             <button
                                 type="submit"
                                 disabled={!!successMessage || isLoading}
-                                className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold rounded-lg shadow-lg shadow-blue-500/30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 mt-8 active:scale-[0.98]"
+                                className="w-full py-3.5 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-700 text-white font-bold rounded-lg shadow-lg shadow-teal-900/30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:ring-offset-2 focus:ring-offset-slate-900 mt-8 active:scale-[0.98]"
                             >
                                 {isLoading ? 'REGISTERING...' : 'REGISTER'}
                             </button>
                         </form>
 
                         <div className="flex justify-center items-center mt-8 text-sm">
-                            <p className="text-slate-500 font-medium">
-                                Already have an account? <Link to="/login" className="text-blue-600 hover:text-blue-800 hover:underline font-bold transition-colors ml-1">Login here.</Link>
+                            <p className="text-slate-400 font-medium">
+                                Already have an account? <Link to="/login" className="text-teal-400 hover:text-teal-300 hover:underline font-bold transition-colors ml-1">Login here.</Link>
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Side - Blue Gradient Background */}
-                <div className="w-full md:w-[45%] bg-gradient-to-bl from-cyan-400 to-blue-500 p-10 lg:p-14 text-white flex flex-col justify-between relative overflow-hidden hidden md:flex rounded-l-none md:rounded-l-3xl shadow-[-10px_0_30px_rgb(0,0,0,0.1)] z-20">
+                {/* Right Side - Theme Gradient Background */}
+                <div className="w-full md:w-[45%] bg-gradient-to-bl from-teal-900 via-slate-900 to-slate-800 p-10 lg:p-14 text-white flex flex-col justify-between relative overflow-hidden hidden md:flex rounded-l-none md:rounded-l-3xl shadow-[-10px_0_30px_rgb(0,0,0,0.1)] z-20 border-l border-slate-800">
                     {/* Decorative SVGs for the wave effect (Inverted X axis horizontally) */}
-                    <svg className="absolute bottom-0 right-0 w-full text-blue-600/20 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <svg className="absolute bottom-0 right-0 w-full text-slate-700/30 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
                         <path fill="currentColor" fillOpacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                     </svg>
-                    <svg className="absolute bottom-0 right-0 w-full text-cyan-400/20 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <svg className="absolute bottom-0 right-0 w-full text-teal-500/20 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
                         <path fill="currentColor" fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                     </svg>
-                    <svg className="absolute bottom-0 right-0 w-full text-blue-500/40 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                    <svg className="absolute bottom-0 right-0 w-full text-slate-800/50 transform scale-x-[-1]" viewBox="0 0 1440 320" preserveAspectRatio="none">
                         <path fill="currentColor" fillOpacity="1" d="M0,256L48,245.3C96,235,192,213,288,213.3C384,213,480,235,576,224C672,213,768,171,864,149.3C960,128,1056,128,1152,144C1248,160,1344,192,1392,208L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                     </svg>
 
