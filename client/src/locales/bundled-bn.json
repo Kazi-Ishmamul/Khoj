@@ -295,6 +295,14 @@
     "report_placeholder": "যেমন: ভুয়া জিনিস, অনুপযুক্ত বিষয়বস্তু, স্প্যাম...",
     "false_reports_warning": "মিথ্যা রিপোর্টে অ্যাকাউন্ট স্থগিত হতে পারে।",
     "submitting": "জমা হচ্ছে...",
-    "submit_report": "রিপোর্ট জমা দিন"
+    "submit_report": "রিপোর্ট জমা দিন",
+    "qr_label": "আইটেম QR",
+    "qr_download": "PNG ডাউনলোড",
+    "qr_open_scan": "পাবলিক পেজ",
+    "find_by_qr": "QR দিয়ে খুঁজুন",
+    "scan_qr_placeholder": "স্ক্যান লিংক বা টোকেন পেস্ট করুন",
+    "scan_qr_go": "যান",
+    "scan_qr_hint": "QR স্টিকারের লিংক বা /scan/ এর পরের টোকেন দিন",
+    "qr_not_found": "এই QR কোডের জন্য কোনো আইটেম পাওয়া যায়নি।"
   }
 }

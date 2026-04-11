@@ -295,6 +295,14 @@
     "report_placeholder": "e.g., Fake item, inappropriate content, spam...",
     "false_reports_warning": "False reports may result in account suspension.",
     "submitting": "Submitting...",
-    "submit_report": "Submit Report"
+    "submit_report": "Submit Report",
+    "qr_label": "Item QR",
+    "qr_download": "Download PNG",
+    "qr_open_scan": "Public page",
+    "find_by_qr": "Find by QR",
+    "scan_qr_placeholder": "Paste scan URL or token",
+    "scan_qr_go": "Go",
+    "scan_qr_hint": "Paste the link from a Khoj QR sticker or the token after /scan/",
+    "qr_not_found": "No item matches this QR code."
   }
 }

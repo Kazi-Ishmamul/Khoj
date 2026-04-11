@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Admin\AdminLoginController;
+use App\Http\Controllers\ItemPublicQrController;
 use App\Http\Controllers\LocaleController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,12 @@ Route::get('/api/locale/current', [LocaleController::class, 'current'])
 Route::get('/api/locale/use/{locale}', [LocaleController::class, 'useLocale'])
     ->where('locale', 'en|bn')
     ->name('locale.use');
+
+/*
+| Public item QR scan (Blade; register before SPA catch-all)
+*/
+Route::get('/scan/{token}', [ItemPublicQrController::class, 'show'])->name('items.scan');
+Route::get('/scan/{token}/download', [ItemPublicQrController::class, 'downloadImage'])->name('items.qr.download');
 
 /*
 | Admin analytics (Blade + session auth; register before SPA catch-all)
