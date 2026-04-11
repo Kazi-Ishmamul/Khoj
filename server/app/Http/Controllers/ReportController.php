@@ -165,9 +165,6 @@ class ReportController extends Controller
             // 5. Decline all claims on this item
             Claim::where('item_id', $itemId)->update(['validity' => -1]);
 
-            $ownerInfo = UserInfo::firstOrCreate(['user_id' => $item->user_id]);
-            $ownerInfo->increment('report_strikes');
-
             $notifications->notifyUser(
                 (int) $item->user_id,
                 'item_struck',

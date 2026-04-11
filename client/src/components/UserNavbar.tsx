@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
@@ -99,6 +99,9 @@ const UserNavbar = () => {
     const [notificationActionId, setNotificationActionId] = useState<number | null>(null);
     const [bellPulse, setBellPulse] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const isActive = (path: string) => location.pathname === path;
 
     const fetchUnreadCount = async () => {
         try {
@@ -372,12 +375,15 @@ const UserNavbar = () => {
 
                         {/* Desktop Nav */}
                         <div className="hidden md:flex items-center gap-1">
-                            {/* Items and My Activity */}
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.path}
                                     to={link.path}
-                                    className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                                    className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 no-underline ${
+                                        isActive(link.path)
+                                            ? 'text-white'
+                                            : 'text-slate-400 hover:text-white'
+                                    }`}
                                     style={{ textDecoration: 'none' }}
                                 >
                                     <span className="text-base text-slate-500">
@@ -409,7 +415,11 @@ const UserNavbar = () => {
                             {/* Profile */}
                             <Link
                                 to="/user-dashboard/profile"
-                                className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 no-underline ${
+                                    isActive('/user-dashboard/profile')
+                                        ? 'text-white'
+                                        : 'text-slate-400 hover:text-white'
+                                }`}
                                 style={{ textDecoration: 'none' }}
                             >
                                 <span className="text-base text-slate-500">
