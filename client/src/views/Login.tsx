@@ -97,13 +97,19 @@ const Login = () => {
                 });
                 
                 const data = response.data;
+                if (!data.user) {
+                    setErrorMessage('Login failed: No user data received');
+                    return;
+                }
+                
                 localStorage.setItem('token', data.access_token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 
                 setSuccessMessage('Login successful!');
                 
                 setTimeout(() => {
-                    if (data.user.role === 'admin') {
+                    const userRole = data.user?.role || 'user';
+                    if (userRole === 'admin') {
                         navigate('/admin-dashboard');
                     } else {
                         navigate('/user-dashboard/items');
