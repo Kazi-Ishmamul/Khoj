@@ -52,6 +52,34 @@ const Stat = ({ value, label, icon }: { value: string; label: string; icon: stri
     );
 };
 
+const FaqItem = ({ question, answer, index }: { question: string; answer: string; index: number }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div
+            className="group rounded-2xl border border-slate-800 bg-slate-900/70 overflow-hidden hover:border-slate-700 transition-all duration-300"
+            style={{ animationDelay: `${index * 0.05}s` }}
+        >
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full px-6 py-5 flex items-center justify-between gap-4 hover:bg-slate-800/50 transition-colors duration-200"
+            >
+                <span className="font-bold text-white text-left text-sm">{question}</span>
+                <span className={`text-xl text-slate-400 flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                    ▼
+                </span>
+            </button>
+            <div
+                className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-48' : 'max-h-0'}`}
+            >
+                <p className="px-6 pb-5 text-slate-400 text-sm leading-relaxed">
+                    {answer}
+                </p>
+            </div>
+        </div>
+    );
+};
+
 /* ─────────────────────────── data ─────────────────────────── */
 
 const HOW_IT_WORKS = [
@@ -479,6 +507,191 @@ export default function HomePage() {
                     </div>
                 </section>
 
+
+                {/* ════════════════════════════════════════════════
+                    SUCCESS STORIES
+                ════════════════════════════════════════════════ */}
+                <section className="py-28 px-6 relative overflow-hidden">
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[40rem] h-[20rem] rounded-full bg-emerald-900/10 blur-[100px]" />
+                    </div>
+
+                    <div className="relative max-w-6xl mx-auto">
+                        <div className="text-center mb-20">
+                            <p className="text-xs font-bold text-emerald-400 uppercase tracking-[0.3em] mb-4">Success Stories</p>
+                            <h2 className="text-4xl md:text-5xl font-black text-white leading-tight mb-4">
+                                Reunited with their belongings
+                            </h2>
+                            <p className="text-slate-400 text-lg max-w-xl mx-auto">
+                                Real stories from real people who recovered their lost items through Khoj.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Story 1 */}
+                            <div className="card-hover bg-gradient-to-br from-emerald-500/10 to-teal-600/10 border border-emerald-500/30 rounded-3xl p-8 backdrop-blur-sm hover:border-emerald-500/60">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-2xl font-bold text-white">
+                                        AK
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-white">Arjun Khan</p>
+                                        <p className="text-xs text-slate-400">Dhaka</p>
+                                    </div>
+                                </div>
+                                <p className="text-slate-300 mb-4 leading-relaxed">
+                                    "Lost my MacBook, thought it was gone forever. Khoj's AI found it within 2 hours. Amazing service!"
+                                </p>
+                                <div className="flex items-center gap-1 mb-3">
+                                    {[...Array(5)].map((_, i) => (
+                                        <span key={i} className="text-amber-400">⭐</span>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-slate-500">Recovered in 2 hours • 💻 Electronics</p>
+                            </div>
+
+                            {/* Story 2 */}
+                            <div className="card-hover bg-gradient-to-br from-sky-500/10 to-blue-600/10 border border-sky-500/30 rounded-3xl p-8 backdrop-blur-sm hover:border-sky-500/60">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center text-2xl font-bold text-white">
+                                        SR
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-white">Sarah Rahman</p>
+                                        <p className="text-xs text-slate-400">Chittagong</p>
+                                    </div>
+                                </div>
+                                <p className="text-slate-300 mb-4 leading-relaxed">
+                                    "Found someone's important documents here. The community helped me return them. Love this!"
+                                </p>
+                                <div className="flex items-center gap-1 mb-3">
+                                    {[...Array(5)].map((_, i) => (
+                                        <span key={i} className="text-amber-400">⭐</span>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-slate-500">Reunited in 24 hours • 📄 Documents</p>
+                            </div>
+
+                            {/* Story 3 */}
+                            <div className="card-hover bg-gradient-to-br from-violet-500/10 to-purple-600/10 border border-violet-500/30 rounded-3xl p-8 backdrop-blur-sm hover:border-violet-500/60">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-2xl font-bold text-white">
+                                        MH
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-white">Marzin Hassan</p>
+                                        <p className="text-xs text-slate-400">Sylhet</p>
+                                    </div>
+                                </div>
+                                <p className="text-slate-300 mb-4 leading-relaxed">
+                                    "My heirloom ring was missing for weeks. Found it through a perfect AI match. Grateful forever!"
+                                </p>
+                                <div className="flex items-center gap-1 mb-3">
+                                    {[...Array(5)].map((_, i) => (
+                                        <span key={i} className="text-amber-400">⭐</span>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-slate-500">Recovered in 3 weeks • 💍 Jewellery</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ════════════════════════════════════════════════
+                    LIVE ACTIVITY FEED
+                ════════════════════════════════════════════════ */}
+                <section className="py-28 px-6 relative overflow-hidden">
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute bottom-0 right-0 w-[40rem] h-[20rem] rounded-full bg-rose-900/10 blur-[100px]" />
+                    </div>
+
+                    <div className="relative max-w-4xl mx-auto">
+                        <div className="text-center mb-16">
+                            <p className="text-xs font-bold text-rose-400 uppercase tracking-[0.3em] mb-4">Live Activity</p>
+                            <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+                                Happening right now
+                            </h2>
+                        </div>
+
+                        <div className="space-y-3 max-h-96 overflow-hidden relative">
+                            {[
+                                { emoji: '🔴', action: 'Maria lost', item: 'Red AirPods', location: 'AIUB Library', time: '2 mins ago' },
+                                { emoji: '🟢', action: 'Ahmed found', item: 'Blue Wallet', location: 'Dhanmondi Lake', time: '5 mins ago' },
+                                { emoji: '✨', action: 'AI matched', item: 'Black Backpack ↔️ Dark Bag', match: '94%', time: '7 mins ago' },
+                                { emoji: '🔔', action: 'Claim accepted', item: 'iPhone 13 recovered', person: 'by Tarek', time: '12 mins ago' },
+                                { emoji: '🔴', action: 'Rashid lost', item: 'Car Keys', location: 'Gulshan Mall', time: '15 mins ago' },
+                            ].map((activity, i) => (
+                                <div
+                                    key={i}
+                                    className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition-all duration-300 hover:translate-x-1"
+                                    style={{ animationDelay: `${i * 100}ms` }}
+                                >
+                                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-xl">
+                                        {activity.emoji}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-white">
+                                            {activity.action} <span className="text-slate-400">{activity.item}</span>
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            {activity.location && `📍 ${activity.location}`}
+                                            {activity.match && `• ${activity.match} match`}
+                                            {activity.person && `${activity.person}`}
+                                        </p>
+                                    </div>
+                                    <p className="text-xs text-slate-600 flex-shrink-0">{activity.time}</p>
+                                </div>
+                            ))}
+
+                            {/* Gradient fade at bottom */}
+                            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-slate-950 to-transparent pointer-events-none" />
+                        </div>
+                    </div>
+                </section>
+
+                {/* ════════════════════════════════════════════════
+                    FAQ SECTION
+                ════════════════════════════════════════════════ */}
+                <section className="py-28 px-6 relative overflow-hidden">
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[30rem] h-[30rem] rounded-full bg-sky-900/10 blur-[100px]" />
+                    </div>
+
+                    <div className="relative max-w-3xl mx-auto">
+                        <div className="text-center mb-16">
+                            <p className="text-xs font-bold text-sky-400 uppercase tracking-[0.3em] mb-4">FAQ</p>
+                            <h2 className="text-4xl md:text-5xl font-black text-white leading-tight mb-4">
+                                Questions? We have answers.
+                            </h2>
+                            <p className="text-slate-400 text-lg">
+                                Everything you need to know about Khoj and how it works.
+                            </p>
+                        </div>
+
+                        <div className="space-y-3">
+                            {[
+                                {
+                                    q: 'Is Khoj free to use?',
+                                    a: 'Yes! Khoj is completely free. Post items, search, and communicate with other users at no cost. We believe in making lost & found accessible to everyone.',
+                                },
+                                {
+                                    q: 'How does the AI matching work?',
+                                    a: 'Our Gemini AI analyzes descriptions, locations, dates, and images to find the best matches. It understands context and can match items even with vague descriptions.',
+                                },
+                                {
+                                    q: 'Is my information secure?',
+                                    a: 'We use bank-level encryption for all data. Personal information is only visible to verified users, and you control what you share.',
+                                },
+                                {
+                                    q: 'How long does it take to recover an item?',
+                                    a: 'Recovery times vary, but our users report average resolution times of 3-7 days. Some items are recovered within hours!',
+                                },
+                            ].map((faq, i) => (
+                                <FaqItem key={i} question={faq.q} answer={faq.a} index={i} />
+                            ))}
+                        </div>
+                    </div>
+                </section>
 
                 {/* ════════════════════════════════════════════════
                     FINAL CTA
