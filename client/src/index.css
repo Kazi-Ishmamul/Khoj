@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Tailwind v4: load JS config (animations, darkMode: 'class', etc.) */
+@config "../tailwind.config.js";
+
+/* Ensure dark: variants follow .dark on <html>, not prefers-color-scheme */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   font-family: 'Inter', sans-serif;
   line-height: 1.5;
