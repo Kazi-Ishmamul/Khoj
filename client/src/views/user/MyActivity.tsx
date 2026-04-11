@@ -306,10 +306,10 @@ export default function MyActivity() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 py-10">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-10 text-slate-100">
                 <div className="container mx-auto px-4 max-w-7xl">
-                    <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-                        <p className="text-xl text-gray-500">Loading your activity...</p>
+                    <div className="text-center py-16 bg-slate-900/80 rounded-3xl shadow-sm border border-slate-700/60">
+                        <p className="text-xl text-slate-300">Loading your activity...</p>
                     </div>
                 </div>
             </div>
@@ -318,14 +318,14 @@ export default function MyActivity() {
 
     if (error || !activityData) {
         return (
-            <div className="min-h-screen bg-gray-50 py-10">
+            <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-10 text-slate-100">
                 <div className="container mx-auto px-4 max-w-7xl">
-                    <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-                        <p className="text-xl text-red-500 font-semibold">Error</p>
-                        <p className="text-gray-600 mt-2">{error || 'Failed to load activity data'}</p>
+                    <div className="text-center py-16 bg-slate-900/80 rounded-3xl shadow-sm border border-slate-700/60">
+                        <p className="text-xl text-rose-300 font-semibold">Error</p>
+                        <p className="text-slate-300 mt-2">{error || 'Failed to load activity data'}</p>
                         <button
                             onClick={() => window.location.reload()}
-                            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="mt-4 px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700"
                         >
                             Try Again
                         </button>
@@ -390,16 +390,20 @@ export default function MyActivity() {
     const paginatedItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
-        <div className="min-h-screen bg-gray-50 py-10">
-            <div className="container mx-auto px-4 max-w-7xl">
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-10 text-slate-100 relative">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[-8rem] left-[-6rem] h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
+                <div className="absolute bottom-[-8rem] right-[-6rem] h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
+            </div>
+            <div className="container mx-auto px-4 max-w-7xl relative z-10">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-800 mb-2">My Activity</h1>
-                    <p className="text-gray-600">Track all your lost & found items, claims, and resolutions</p>
+                    <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-sky-300 mb-2">My Activity</h1>
+                    <p className="text-slate-400">Track all your lost & found items, claims, and resolutions</p>
                 </div>
 
                 {/* Tabs with Counts */}
-                <div className="bg-white rounded-lg shadow-sm border mb-8 overflow-x-auto">
+                <div className="bg-slate-900/80 rounded-2xl shadow-sm border border-slate-700/70 mb-8 overflow-x-auto backdrop-blur-xl">
                     <div className="flex">
                         {(Object.entries(tabsConfig) as Array<[TabType, typeof tabsConfig[TabType]]>).map(([tabKey, tab]) => {
                     const count =
@@ -415,13 +419,13 @@ export default function MyActivity() {
                                     }}
                                     className={`flex-1 min-w-max px-6 py-4 font-medium transition-all border-b-2 text-center ${
                                         activeTab === tabKey
-                                            ? `border-${tab.color}-600 text-${tab.color}-600 bg-${tab.color}-50`
-                                            : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                            ? `border-${tab.color}-500 text-${tab.color}-300 bg-slate-800/80`
+                                            : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                                     }`}
                                 >
                                     <span className="mr-2">{tab.icon}</span>
                                     <span className="font-semibold">{tab.label}</span>
-                                    <span className="ml-2 bg-gray-200 text-gray-800 px-2 py-0.5 rounded-full text-sm font-bold">
+                                    <span className="ml-2 bg-slate-700 text-slate-100 px-2 py-0.5 rounded-full text-sm font-bold">
                                         {count}
                                     </span>
                                 </button>
@@ -432,8 +436,8 @@ export default function MyActivity() {
 
                 {/* Items Grid */}
                 {paginatedItems.length === 0 ? (
-                    <div className="text-center py-16 bg-white rounded-xl shadow-sm border">
-                        <p className="text-xl text-gray-500 mb-2">No items in this category.</p>
+                    <div className="text-center py-16 bg-slate-900/80 rounded-3xl shadow-sm border border-slate-700/60">
+                        <p className="text-xl text-slate-300 mb-2">No items in this category.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -445,10 +449,10 @@ export default function MyActivity() {
                             return (
                             <div
                                 key={claimCardId}
-                                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col group"
+                                className="bg-slate-900/90 rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-slate-700/70 flex flex-col group backdrop-blur-sm"
                             >
                                 {/* Image Container with Status Badge */}
-                                <div className="relative overflow-hidden h-56 bg-gradient-to-br from-gray-100 to-gray-200">
+                                <div className="relative overflow-hidden h-56 bg-gradient-to-br from-slate-800 to-slate-900">
                                     {item.item_image_url && (
                                         <img
                                             src={item.item_image_url}
@@ -470,21 +474,21 @@ export default function MyActivity() {
 
                                 <div className="p-6 flex-1 flex flex-col">
                                     {/* Item Title and Category */}
-                                    <h3 className="text-2xl font-bold text-gray-900 mb-1 line-clamp-2">
+                                    <h3 className="text-2xl font-bold text-slate-100 mb-1 line-clamp-2">
                                         {item.item_name}
                                     </h3>
-                                    <p className="text-sm font-semibold text-blue-600 mb-4 capitalize">
+                                    <p className="text-sm font-semibold text-sky-300 mb-4 capitalize">
                                         {item.category || 'Uncategorized'}
                                     </p>
 
                                     {/* Description */}
-                                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+                                    <p className="text-slate-400 text-sm mb-4 line-clamp-2 leading-relaxed">
                                         {item.description}
                                     </p>
 
                                     {/* Item Poster Info */}
                                     {item.user && (
-                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-4 border border-blue-100">
+                                        <div className="bg-slate-800/70 rounded-2xl p-3 mb-4 border border-slate-700/60">
                                             <div
                                                 className="flex items-center gap-3 cursor-pointer"
                                                 onClick={() => {
@@ -495,11 +499,11 @@ export default function MyActivity() {
                                                 <img
                                                     src={item.user.pic_url || 'https://ui-avatars.com/api/?name=User&background=random'}
                                                     alt={item.user.name}
-                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-blue-500 transition-all"
+                                                    className="w-10 h-10 rounded-full object-cover border-2 border-slate-700 shadow-md hover:ring-2 hover:ring-sky-500 transition-all"
                                                 />
                                                 <div>
-                                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Posted by</p>
-                                                    <p className="text-sm font-bold text-gray-900 hover:text-blue-600 transition-colors">{item.user.name}</p>
+                                                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Posted by</p>
+                                                    <p className="text-sm font-bold text-slate-100 hover:text-sky-300 transition-colors">{item.user.name}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -507,23 +511,23 @@ export default function MyActivity() {
 
                                     {/* Info Grid */}
                                     <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-                                        <div className="bg-gray-50 rounded-lg p-2">
-                                            <p className="text-gray-500 font-semibold mb-1">📍 Location</p>
-                                            <p className="text-gray-800 font-medium line-clamp-1">{item.location}</p>
+                                        <div className="bg-slate-800/60 rounded-xl p-2 border border-slate-700/60">
+                                            <p className="text-slate-400 font-semibold mb-1">📍 Location</p>
+                                            <p className="text-slate-100 font-medium line-clamp-1">{item.location}</p>
                                         </div>
-                                        <div className="bg-gray-50 rounded-lg p-2">
-                                            <p className="text-gray-500 font-semibold mb-1">📅 When</p>
-                                            <p className="text-gray-800 font-medium">{new Date(item.date_time).toLocaleDateString()}</p>
+                                        <div className="bg-slate-800/60 rounded-xl p-2 border border-slate-700/60">
+                                            <p className="text-slate-400 font-semibold mb-1">📅 When</p>
+                                            <p className="text-slate-100 font-medium">{new Date(item.date_time).toLocaleDateString()}</p>
                                         </div>
-                                        <div className="bg-gray-50 rounded-lg p-2 col-span-2">
-                                            <p className="text-gray-500 font-semibold mb-1">📞 Contact</p>
-                                            <p className="text-gray-800 font-medium truncate">{item.contact_info}</p>
+                                        <div className="bg-slate-800/60 rounded-xl p-2 col-span-2 border border-slate-700/60">
+                                            <p className="text-slate-400 font-semibold mb-1">📞 Contact</p>
+                                            <p className="text-slate-100 font-medium truncate">{item.contact_info}</p>
                                         </div>
                                     </div>
 
                                     {/* Claimer Info */}
                                     {item.claimedByUser && (activeTab === 'claim_requests' || activeTab === 'resolved') && (
-                                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-4 border border-purple-200">
+                                        <div className="bg-slate-800/70 rounded-2xl p-3 mb-4 border border-slate-700/60">
                                             <div
                                                 className="flex items-center gap-3 cursor-pointer"
                                                 onClick={() => {
@@ -534,13 +538,13 @@ export default function MyActivity() {
                                                 <img
                                                     src={item.claimedByUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.claimedByUser.name) + '&background=random'}
                                                     alt={item.claimedByUser.name}
-                                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-purple-500 transition-all"
+                                                    className="w-10 h-10 rounded-full object-cover border-2 border-slate-700 shadow-md hover:ring-2 hover:ring-sky-500 transition-all"
                                                 />
                                                 <div>
-                                                    <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">
+                                                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">
                                                         {activeTab === 'claim_requests' ? '🙋 Your Claim' : '✓ Resolved with'}
                                                     </p>
-                                                    <p className="text-sm font-bold text-gray-900 hover:text-purple-600 transition-colors">{item.claimedByUser.name}</p>
+                                                    <p className="text-sm font-bold text-slate-100 hover:text-sky-300 transition-colors">{item.claimedByUser.name}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -552,7 +556,7 @@ export default function MyActivity() {
                                                 (() => {
                                                     const claimer = claim.claimedBy || claim.claimed_by;
                                                     return (
-                                                <div key={claim.claim_id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200">
+                                                <div key={claim.claim_id} className="bg-slate-800/70 rounded-2xl p-3 border border-slate-700/60">
                                                     <div
                                                         className="flex items-center gap-3 cursor-pointer"
                                                         onClick={() => {
@@ -564,11 +568,11 @@ export default function MyActivity() {
                                                         <img
                                                             src={claimer?.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(claimer?.name || 'User') + '&background=random'}
                                                             alt={claimer?.name || 'User'}
-                                                            className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:ring-2 hover:ring-purple-500 transition-all"
+                                                            className="w-10 h-10 rounded-full object-cover border-2 border-slate-700 shadow-md hover:ring-2 hover:ring-sky-500 transition-all"
                                                         />
                                                         <div>
-                                                            <p className="text-xs text-gray-600 font-medium uppercase tracking-wide">👤 Claimed by</p>
-                                                            <p className="text-sm font-bold text-gray-900 hover:text-purple-600 transition-colors">{claimer?.name || 'Unknown User'}</p>
+                                                            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">👤 Claimed by</p>
+                                                            <p className="text-sm font-bold text-slate-100 hover:text-sky-300 transition-colors">{claimer?.name || 'Unknown User'}</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -585,7 +589,7 @@ export default function MyActivity() {
                                                 <button
                                                     type="button"
                                                     onClick={() => openEditModal(item)}
-                                                    className="flex-1 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 font-semibold text-sm transition"
+                                                    className="flex-1 px-3 py-2 rounded-lg bg-sky-500/15 text-sky-300 border border-sky-500/30 hover:bg-sky-500/25 font-semibold text-sm transition"
                                                 >
                                                     Edit
                                                 </button>
@@ -593,7 +597,7 @@ export default function MyActivity() {
                                                     type="button"
                                                     onClick={() => handleDeleteItem(item.id)}
                                                     disabled={deletingItemId === item.id}
-                                                    className="flex-1 px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 font-semibold text-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    className="flex-1 px-3 py-2 rounded-lg bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 font-semibold text-sm transition disabled:opacity-60 disabled:cursor-not-allowed"
                                                 >
                                                     {deletingItemId === item.id ? 'Deleting...' : 'Delete'}
                                                 </button>
@@ -604,10 +608,10 @@ export default function MyActivity() {
                                             <span
                                                 className={`inline-block px-4 py-2 rounded-full text-xs font-bold mb-3 ${
                                                     item.resolution_status === 'resolved'
-                                                        ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-300'
+                                                        ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
                                                         : item.resolution_status === 'claimed'
-                                                            ? 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-300'
-                                                            : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300'
+                                                            ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                                                            : 'bg-slate-700/50 text-slate-300 border border-slate-600'
                                                 }`}
                                             >
                                                 {item.resolution_status === 'resolved'
@@ -655,17 +659,17 @@ export default function MyActivity() {
                         <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="px-5 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 font-medium"
+                            className="px-5 py-2 bg-slate-900/80 text-slate-100 border border-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 font-medium"
                         >
                             Previous
                         </button>
-                        <span className="text-gray-700 font-medium">
+                        <span className="text-slate-300 font-medium">
                             Page {currentPage} of {totalPages}
                         </span>
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="px-5 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 font-medium"
+                            className="px-5 py-2 bg-slate-900/80 text-slate-100 border border-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 font-medium"
                         >
                             Next
                         </button>
@@ -677,20 +681,20 @@ export default function MyActivity() {
             {showUserModal && selectedUser && (
                 <>
                     <div
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+                        className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-[9998]"
                         onClick={() => setShowUserModal(false)}
                     />
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                        <div className="bg-slate-900 rounded-3xl shadow-2xl ring-1 ring-slate-700/70 w-full max-w-sm overflow-hidden text-slate-100">
 
                             {/* Modal Header Banner */}
-                            <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 h-28 flex-shrink-0">
+                            <div className="relative bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 h-28 flex-shrink-0">
                                 <button
                                     onClick={() => setShowUserModal(false)}
                                     aria-label="Close"
-                                    className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:shadow-xl transition-all duration-150"
+                                    className="absolute top-3 right-3 w-9 h-9 bg-slate-100 rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:shadow-xl transition-all duration-150"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <line x1="18" y1="6" x2="6" y2="18"/>
                                         <line x1="6" y1="6" x2="18" y2="18"/>
                                     </svg>
@@ -703,42 +707,42 @@ export default function MyActivity() {
                                     <img
                                         src={selectedUser.pic_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(selectedUser.name) + '&background=4F46E5&color=fff&size=150'}
                                         alt={selectedUser.name}
-                                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl bg-white"
+                                        className="w-24 h-24 rounded-full object-cover border-4 border-slate-800 shadow-xl bg-slate-800"
                                     />
-                                    <h2 className="text-xl font-bold text-gray-900 text-center mt-3">{selectedUser.name}</h2>
+                                    <h2 className="text-xl font-bold text-white text-center mt-3">{selectedUser.name}</h2>
                                     {selectedUser.info?.bio && (
                                         <div className="mt-3 px-2 text-center">
-                                            <p className="text-sm text-gray-600 italic leading-relaxed">"{selectedUser.info.bio}"</p>
+                                            <p className="text-sm text-slate-400 italic leading-relaxed">"{selectedUser.info.bio}"</p>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Contact Info */}
-                                <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-4 mb-4 border border-blue-100 space-y-3">
+                                <div className="bg-slate-800/70 rounded-2xl p-4 mb-4 border border-slate-700/60 space-y-3">
                                     {selectedUser.email && (
                                         <div className="flex items-center gap-3">
-                                            <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                                            <span className="w-8 h-8 rounded-full bg-sky-500/15 flex items-center justify-center text-sky-300 flex-shrink-0">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                     <rect x="2" y="4" width="20" height="16" rx="2"/>
                                                     <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
                                                 </svg>
                                             </span>
                                             <div>
-                                                <p className="text-xs text-gray-400 font-medium">Email</p>
-                                                <p className="text-sm font-semibold text-gray-800">{selectedUser.email}</p>
+                                                <p className="text-xs text-slate-400 font-medium">Email</p>
+                                                <p className="text-sm font-semibold text-slate-100">{selectedUser.email}</p>
                                             </div>
                                         </div>
                                     )}
                                     {selectedUser.phone && (
                                         <div className="flex items-center gap-3">
-                                            <span className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                                            <span className="w-8 h-8 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-300 flex-shrink-0">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.98-2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.09a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.33v-.41z"/>
                                                 </svg>
                                             </span>
                                             <div>
-                                                <p className="text-xs text-gray-400 font-medium">Phone</p>
-                                                <p className="text-sm font-semibold text-gray-800">{selectedUser.phone}</p>
+                                                <p className="text-xs text-slate-400 font-medium">Phone</p>
+                                                <p className="text-sm font-semibold text-slate-100">{selectedUser.phone}</p>
                                             </div>
                                         </div>
                                     )}
@@ -799,7 +803,7 @@ export default function MyActivity() {
 
                                     return socials.length > 0 ? (
                                         <div className="mb-5">
-                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 text-center">Connect on Social</p>
+                                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 text-center">Connect on Social</p>
                                             <div className="flex justify-center gap-3">
                                                 {socials.map(social => (
                                                     <a
@@ -808,7 +812,7 @@ export default function MyActivity() {
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         title={social.label}
-                                                        className={`w-11 h-11 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center transition-all duration-200 hover:text-white hover:scale-110 hover:shadow-lg ${social.color}`}
+                                                        className={`w-11 h-11 rounded-full bg-slate-800 text-slate-300 border border-slate-700 flex items-center justify-center transition-all duration-200 hover:text-white hover:scale-110 hover:shadow-lg ${social.color}`}
                                                     >
                                                         {social.icon}
                                                     </a>
@@ -828,18 +832,18 @@ export default function MyActivity() {
             {showEditModal && editingItem && (
                 <>
                     <div
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]"
+                        className="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-[9998]"
                         onClick={closeEditModal}
                     />
                     <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto pt-20 md:pt-24">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 my-8 max-h-[calc(100vh-10rem)] overflow-y-auto">
-                            <div className="p-6 md:p-8">
-                                <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2 border-b">
-                                    <h2 className="text-2xl font-bold text-gray-800">Edit Report</h2>
+                        <div className="bg-slate-900 rounded-3xl shadow-2xl ring-1 ring-slate-700/70 w-full max-w-2xl mx-4 my-8 max-h-[calc(100vh-10rem)] overflow-y-auto">
+                            <div className="p-6 md:p-8 text-slate-100">
+                                <div className="flex justify-between items-center mb-6 sticky top-0 bg-slate-900 z-10 pb-2 border-b border-slate-700">
+                                    <h2 className="text-2xl font-bold text-white">Edit Post</h2>
                                     <button
                                         type="button"
                                         onClick={closeEditModal}
-                                        className="text-gray-600 hover:text-gray-900 text-3xl font-bold leading-none"
+                                        className="text-slate-300 hover:text-white text-3xl font-bold leading-none"
                                     >
                                         ×
                                     </button>
@@ -847,84 +851,84 @@ export default function MyActivity() {
 
                                 <form onSubmit={handleUpdateItem} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Item Name *</label>
                                         <input
                                             type="text"
                                             name="item_name"
                                             value={editForm.item_name}
                                             onChange={handleEditInputChange}
                                             required
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
                                         <input
                                             type="text"
                                             name="category"
                                             value={editForm.category}
                                             onChange={handleEditInputChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Description *</label>
                                         <textarea
                                             name="description"
                                             value={editForm.description}
                                             onChange={handleEditInputChange}
                                             required
                                             rows={3}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Date & Time *</label>
                                         <input
                                             type="datetime-local"
                                             name="date_time"
                                             value={editForm.date_time}
                                             onChange={handleEditInputChange}
                                             required
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Location *</label>
                                         <input
                                             type="text"
                                             name="location"
                                             value={editForm.location}
                                             onChange={handleEditInputChange}
                                             required
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contact Info *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Contact Info *</label>
                                         <input
                                             type="text"
                                             name="contact_info"
                                             value={editForm.contact_info}
                                             onChange={handleEditInputChange}
                                             required
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">Item Image (optional)</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-3">Item Image (optional)</label>
                                         <div className="flex items-center gap-4">
                                             {(imagePreview || editForm.item_image_url) && (
                                                 <img
                                                     src={imagePreview || editForm.item_image_url}
                                                     alt="Preview"
-                                                    className="w-20 h-20 rounded-lg object-cover border-2 border-blue-300"
+                                                    className="w-20 h-20 rounded-lg object-cover border-2 border-slate-600"
                                                 />
                                             )}
                                             <input
@@ -932,7 +936,7 @@ export default function MyActivity() {
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={handleImageChange}
-                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-sky-500/15 file:text-sky-200 hover:file:bg-sky-500/25"
                                             />
                                         </div>
                                     </div>
@@ -941,14 +945,14 @@ export default function MyActivity() {
                                         <button
                                             type="button"
                                             onClick={closeEditModal}
-                                            className="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                                            className="px-6 py-2.5 bg-slate-800 text-slate-200 rounded-xl hover:bg-slate-700 transition-colors border border-slate-700"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={editSaving}
-                                            className="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                            className="px-8 py-2.5 bg-sky-600 text-white rounded-xl hover:bg-sky-700 font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
                                             {editSaving ? 'Saving...' : 'Save Changes'}
                                         </button>
