@@ -50,11 +50,18 @@ RUN cp -r client/dist/* public/ && rm -rf client
 # Copy Nginx config
 COPY docker/nginx.conf /etc/nginx/sites-available/default
 
-# Copy Supervisor config (runs nginx + php-fpm together)
+# Copy Supervisor config
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Disable default nginx site and re-enable ours
+RUN rm -f /etc/nginx/sites-enabled/default \
+    && ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 # Final permissions
 RUN chown -R www-data:www-data /var/www/html
+
+# Verify nginx config is valid during build
+RUN nginx -t
 
 EXPOSE 80
 
