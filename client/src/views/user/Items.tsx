@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface UserInfo {
     bio?: string | null;
@@ -40,6 +41,7 @@ interface Item {
 const ITEMS_PER_PAGE = 15;
 
 export default function Items() {
+    const { t } = useI18n();
     const [filter, setFilter] = useState<'all' | 'lost' | 'found'>('all');
     const [activeView, setActiveView] = useState<'database' | 'search' | 'suggestions'>('database');
     const [searchTerm, setSearchTerm] = useState('');
@@ -70,7 +72,7 @@ export default function Items() {
             setDbItems(response.data.items);
             setError(null);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
+            setError(err instanceof Error ? err.message : t('items_page.unknown_error'));
             setDbItems([]);
         } finally {
             setLoading(false);
@@ -105,7 +107,7 @@ export default function Items() {
             setCurrentPage(1);
             const token = localStorage.getItem('token');
             if (!token) {
-                toast.error('Please login to get suggestions');
+                toast.error(t('items_page.toast_login_suggestions'));
                 setSuggestionItems([]);
                 return;
             }
@@ -120,11 +122,11 @@ export default function Items() {
             setError(null);
 
             if (forceRefresh) {
-                toast.success('Suggestions refreshed successfully!');
+                toast.success(t('items_page.toast_suggestions_ok'));
             }
         } catch (err) {
             console.error('Suggestions error:', err);
-            setError(err instanceof Error ? err.message : 'Suggestions failed to load');
+            setError(err instanceof Error ? err.message : t('items_page.unknown_error'));
             setSuggestionItems([]);
         } finally {
             setLoading(false);
@@ -162,7 +164,7 @@ export default function Items() {
             setError(null);
         } catch (err) {
             console.error('Search error:', err);
-            setError(err instanceof Error ? err.message : 'Search failed');
+            setError(err instanceof Error ? err.message : t('items_page.unknown_error'));
             setSearchItems([]);
         } finally {
             setLoading(false);
@@ -301,7 +303,7 @@ export default function Items() {
     const toggleClaim = async (id: number) => {
         const token = localStorage.getItem('token');
         if (!token) {
-            toast.error('Please login to claim items');
+            toast.error(t('items_page.toast_login_claim'));
             return;
         }
 
@@ -315,12 +317,12 @@ export default function Items() {
                 }
             });
             console.log('Claim response:', response.data);
-            toast.success(response.data.message || 'Claim updated successfully');
+            toast.success(response.data.message || t('items_page.toast_claim_ok'));
             await fetchItems();
             await fetchClaimedItemIds();
         } catch (err: any) {
             console.error('Error toggling claim:', err);
-            const errorMsg = err.response?.data?.message || 'Failed to update claim status';
+            const errorMsg = err.response?.data?.message || t('items_page.toast_claim_fail');
             toast.error(errorMsg);
         } finally {
             setClaimLoadingId(null);
@@ -338,12 +340,12 @@ export default function Items() {
         const token = localStorage.getItem('token');
 
         if (!token) {
-            toast.error('Please login to report items');
+            toast.error(t('items_page.toast_login_report'));
             return;
         }
 
         if (!selectedItemForReport || !violationReason.trim()) {
-            toast.error('Please provide a reason for the report');
+            toast.error(t('items_page.toast_report_reason_required'));
             return;
         }
 
@@ -363,7 +365,7 @@ export default function Items() {
                 }
             );
 
-            toast.success('Report submitted successfully. Admins will review it.');
+            toast.success(t('items_page.toast_violation_ok'));
             setShowViolationModal(false);
             setSelectedItemForReport(null);
             setViolationReason('');
@@ -372,7 +374,7 @@ export default function Items() {
             fetchReportedItemIds();
         } catch (err: any) {
             console.error('Error submitting report:', err);
-            const errorMsg = err.response?.data?.message || 'Failed to submit report';
+            const errorMsg = err.response?.data?.message || t('items_page.toast_submit_fail');
             toast.error(errorMsg);
         } finally {
             setReportingId(null);
@@ -426,7 +428,7 @@ export default function Items() {
         const token = localStorage.getItem('token');
 
         if (!token) {
-            toast.error('Please login to report items');
+            toast.error(t('items_page.toast_login_report'));
             return;
         }
 
@@ -443,7 +445,7 @@ export default function Items() {
                     const cloudinaryRes = await axios.post('https://api.cloudinary.com/v1_1/dait0sacc/image/upload', uploadData);
                     imageUrl = cloudinaryRes.data.secure_url;
                 } catch (err) {
-                    toast.error('Failed to upload image to Cloudinary.');
+                    toast.error(t('items_page.toast_cloudinary_fail'));
                     return;
                 }
             }
@@ -466,7 +468,7 @@ export default function Items() {
                 }
             });
 
-            toast.success('Report submitted successfully!');
+            toast.success(t('items_page.toast_submit_ok'));
             setFormData({
                 itemName: '',
                 category: '',
@@ -485,7 +487,7 @@ export default function Items() {
             await fetchClaimedItemIds();
         } catch (err) {
             console.error('Error submitting report:', err);
-            toast.error(err instanceof Error ? err.message : 'Failed to submit report');
+            toast.error(err instanceof Error ? err.message : t('items_page.toast_submit_fail'));
         }
     };
 
@@ -497,12 +499,12 @@ export default function Items() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
                     <div>
                         <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 mb-3 tracking-tight">
-                            Lost & Found
+                            {t('items_page.title')}
                         </h1>
                         <p className="text-gray-500 text-lg max-w-xl">
-                            {activeView === 'database' && "Browse reported physical items across the ecosystem."}
-                            {activeView === 'search' && `AI Search Results for "${searchTerm}"`}
-                            {activeView === 'suggestions' && "AI-powered proactive matching for your registered items."}
+                            {activeView === 'database' && t('items_page.subtitle_db')}
+                            {activeView === 'search' && t('items_page.subtitle_search').replace('{{q}}', searchTerm)}
+                            {activeView === 'suggestions' && t('items_page.subtitle_suggestions')}
                         </p>
                     </div>
 
@@ -515,14 +517,14 @@ export default function Items() {
                                 }`}
                         >
                             <span className="text-xl">✨</span>
-                            {activeView === 'suggestions' ? 'Refresh Suggestions' : 'Smart Suggestions'}
+                            {activeView === 'suggestions' ? t('items_page.refresh_suggestions') : t('items_page.smart_suggestions')}
                         </button>
 
                         <button
                             onClick={() => setShowReportModal(true)}
                             className="flex-1 md:flex-none justify-center bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-sky-900/30 border border-sky-300/30"
                         >
-                            + Post Item
+                            {t('items_page.post_item')}
                         </button>
                     </div>
                 </div>
@@ -541,7 +543,7 @@ export default function Items() {
                             className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'all' ? 'bg-slate-100 text-slate-950 shadow border border-slate-200' : 'text-slate-400 hover:text-slate-200'
                                 }`}
                         >
-                            All
+                            {t('items_page.filter_all')}
                         </button>
                         <button
                             onClick={() => {
@@ -553,7 +555,7 @@ export default function Items() {
                             className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'lost' ? 'bg-rose-500/15 text-rose-300 shadow border border-rose-500/30' : 'text-slate-400 hover:text-rose-300'
                                 }`}
                         >
-                            Lost
+                            {t('items_page.filter_lost')}
                         </button>
                         <button
                             onClick={() => {
@@ -565,7 +567,7 @@ export default function Items() {
                             className={`flex-1 px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 z-10 ${activeView === 'database' && filter === 'found' ? 'bg-emerald-500/15 text-emerald-300 shadow border border-emerald-500/30' : 'text-slate-400 hover:text-emerald-300'
                                 }`}
                         >
-                            Found
+                            {t('items_page.filter_found')}
                         </button>
                     </div>
 
@@ -586,7 +588,7 @@ export default function Items() {
                         <input
                             ref={searchInputRef}
                             type="text"
-                            placeholder="Ask Gemini to find something..."
+                            placeholder={t('items_page.search_placeholder')}
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             onKeyDown={handleKeyDown}
@@ -596,7 +598,7 @@ export default function Items() {
                         <button
                             onClick={triggerSearch}
                             className="absolute right-2.5 top-1/2 -translate-y-1/2 h-10 w-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
-                            title="Semantic Search"
+                            title={t('items_page.search_title')}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
@@ -608,15 +610,17 @@ export default function Items() {
                 {/* Items Grid */}
                 {loading ? (
                     <div className="text-center py-16 bg-slate-900/80 rounded-3xl shadow-sm border border-slate-700/60">
-                        <p className="text-xl text-slate-300">Loading items...</p>
+                        <p className="text-xl text-slate-300">{t('items_page.loading')}</p>
                     </div>
                 ) : error ? (
                     <div className="text-center py-16 bg-slate-900/80 rounded-3xl shadow-sm border border-slate-700/60">
-                        <p className="text-xl text-rose-300">Error: {error}</p>
+                        <p className="text-xl text-rose-300">
+                            {t('items_page.error_prefix')} {error}
+                        </p>
                     </div>
                 ) : paginatedReports.length === 0 ? (
                     <div className="text-center py-16 bg-slate-900/80 rounded-3xl shadow-sm border border-slate-700/60">
-                        <p className="text-xl text-slate-300">No items found.</p>
+                        <p className="text-xl text-slate-300">{t('items_page.empty')}</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -644,7 +648,9 @@ export default function Items() {
                                                     : 'bg-green-500/90 text-white shadow-lg'
                                                 }`}
                                         >
-                                            {report.status === 'lost' ? '🔴 LOST' : '🟢 FOUND'}
+                                            {report.status === 'lost'
+                                                ? `🔴 ${t('items_page.status_lost')}`
+                                                : `🟢 ${t('items_page.status_found')}`}
                                         </span>
                                     </div>
 
@@ -654,7 +660,7 @@ export default function Items() {
                                             {report.item_name}
                                         </h3>
                                         <p className="text-sm font-semibold text-sky-300 mb-4 capitalize">
-                                            {report.category || 'Uncategorized'}
+                                            {report.category || t('items_page.uncategorized')}
                                         </p>
 
                                         {/* Description */}
@@ -675,7 +681,7 @@ export default function Items() {
                                                         className="w-10 h-10 rounded-full object-cover border-2 border-slate-700 shadow-md hover:ring-2 hover:ring-sky-500 transition-all"
                                                     />
                                                     <div>
-                                                        <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Posted by</p>
+                                                        <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{t('items_page.posted_by')}</p>
                                                         <p className="text-sm font-bold text-slate-100 hover:text-sky-300 transition-colors">{report.user.name}</p>
                                                     </div>
                                                 </div>
@@ -685,15 +691,15 @@ export default function Items() {
                                         {/* Info Grid */}
                                         <div className="grid grid-cols-2 gap-3 mb-5 text-xs">
                                             <div className="bg-slate-800/60 rounded-xl p-2 border border-slate-700/60">
-                                                <p className="text-slate-400 font-semibold mb-1">📍 Location</p>
+                                                <p className="text-slate-400 font-semibold mb-1">📍 {t('items_page.location')}</p>
                                                 <p className="text-slate-100 font-medium line-clamp-1">{report.location}</p>
                                             </div>
                                             <div className="bg-slate-800/60 rounded-xl p-2 border border-slate-700/60">
-                                                <p className="text-slate-400 font-semibold mb-1">📅 Date</p>
+                                                <p className="text-slate-400 font-semibold mb-1">📅 {t('items_page.date')}</p>
                                                 <p className="text-slate-100 font-medium">{new Date(report.date_time).toLocaleDateString()}</p>
                                             </div>
                                             <div className="bg-slate-800/60 rounded-xl p-2 col-span-2 border border-slate-700/60">
-                                                <p className="text-slate-400 font-semibold mb-1">📞 Contact</p>
+                                                <p className="text-slate-400 font-semibold mb-1">📞 {t('items_page.contact')}</p>
                                                 <p className="text-slate-100 font-medium truncate">{report.contact_info}</p>
                                             </div>
                                         </div>
@@ -708,7 +714,11 @@ export default function Items() {
                                                         : 'bg-gradient-to-r from-emerald-500/15 to-sky-500/15 text-emerald-200 hover:from-emerald-500/25 hover:to-sky-500/25 border border-emerald-500/30'
                                                     }`}
                                             >
-                                                {claimLoadingId === report.id ? '⏳ Processing...' : isClaimed ? 'Release' : '🙋 Claim'}
+                                                {claimLoadingId === report.id
+                                                    ? `⏳ ${t('items_page.claim_processing')}`
+                                                    : isClaimed
+                                                      ? t('items_page.claim_release')
+                                                      : `🙋 ${t('items_page.claim')}`}
                                             </button>
 
                                             <button
@@ -719,7 +729,11 @@ export default function Items() {
                                                         : 'bg-gradient-to-r from-amber-500/15 to-rose-500/15 text-amber-200 hover:from-amber-500/25 hover:to-rose-500/25 border border-amber-500/30 transform hover:scale-105 active:scale-100'
                                                     }`}
                                             >
-                                                {reportingId === report.id ? '⏳ Reporting...' : isReported ? '⚠ Reported' : '🚩 Report'}
+                                                {reportingId === report.id
+                                                    ? `⏳ ${t('items_page.reporting')}`
+                                                    : isReported
+                                                      ? `⚠ ${t('items_page.reported')}`
+                                                      : `🚩 ${t('items_page.report')}`}
                                             </button>
                                         </div>
                                     </div>
@@ -737,17 +751,19 @@ export default function Items() {
                             disabled={currentPage === 1}
                             className="px-5 py-2 bg-slate-900/80 text-slate-100 border border-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800"
                         >
-                            Previous
+                            {t('items_page.prev')}
                         </button>
                         <span className="text-slate-300 font-medium">
-                            Page {currentPage} of {totalPages}
+                            {t('items_page.page_of')
+                                .replace('{{current}}', String(currentPage))
+                                .replace('{{total}}', String(totalPages))}
                         </span>
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
                             className="px-5 py-2 bg-slate-900/80 text-slate-100 border border-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800"
                         >
-                            Next
+                            {t('items_page.next')}
                         </button>
                     </div>
                 )}
@@ -765,7 +781,7 @@ export default function Items() {
                         <div className="bg-slate-900 rounded-3xl shadow-2xl ring-1 ring-slate-700/70 w-full max-w-2xl mx-4 my-8 max-h-[calc(100vh-10rem)] overflow-y-auto">
                             <div className="p-6 md:p-8 text-slate-100">
                                 <div className="flex justify-between items-center mb-6 sticky top-0 bg-slate-900 z-10 pb-2 border-b border-slate-700">
-                                    <h2 className="text-2xl font-bold text-white">Post Lost or Found Item</h2>
+                                    <h2 className="text-2xl font-bold text-white">{t('items_page.modal_post_title')}</h2>
                                     <button
                                         onClick={() => setShowReportModal(false)}
                                         className="text-slate-300 hover:text-white text-3xl font-bold leading-none"
@@ -776,7 +792,7 @@ export default function Items() {
 
                                 <form onSubmit={handleSubmitReport} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Item Name *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('items_page.label_item_name')}</label>
                                         <input
                                             type="text"
                                             name="itemName"
@@ -788,7 +804,7 @@ export default function Items() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('items_page.label_category')}</label>
                                         <input
                                             type="text"
                                             name="category"
@@ -799,7 +815,7 @@ export default function Items() {
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Description *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('items_page.label_description')}</label>
                                         <textarea
                                             name="description"
                                             value={formData.description}
@@ -811,7 +827,7 @@ export default function Items() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Date & Time</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('items_page.label_datetime')}</label>
                                         <input
                                             type="datetime-local"
                                             name="dateTime"
@@ -822,7 +838,7 @@ export default function Items() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Location *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('items_page.label_location')}</label>
                                         <input
                                             type="text"
                                             name="location"
@@ -834,33 +850,33 @@ export default function Items() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Status *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('items_page.label_status')}</label>
                                         <select
                                             name="status"
                                             value={formData.status}
                                             onChange={handleFormChange}
                                             className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         >
-                                            <option value="lost">Lost</option>
-                                            <option value="found">Found</option>
+                                            <option value="lost">{t('items_page.status_option_lost')}</option>
+                                            <option value="found">{t('items_page.status_option_found')}</option>
                                         </select>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Contact Info *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">{t('items_page.label_contact')}</label>
                                         <input
                                             type="text"
                                             name="contact"
                                             value={formData.contact}
                                             onChange={handleFormChange}
                                             required
-                                            placeholder="Phone or Email"
+                                            placeholder={t('items_page.contact_placeholder')}
                                             className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-slate-300 mb-3">Item Image (optional)</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-3">{t('items_page.label_image')}</label>
                                         <div className="flex items-center gap-4">
                                             {itemImagePreview && (
                                                 <img
@@ -884,13 +900,13 @@ export default function Items() {
                                             onClick={() => setShowReportModal(false)}
                                             className="px-6 py-2.5 bg-slate-800 text-slate-200 rounded-xl hover:bg-slate-700 transition-colors border border-slate-700"
                                         >
-                                            Cancel
+                                            {t('items_page.cancel')}
                                         </button>
                                         <button
                                             type="submit"
                                             className="px-8 py-2.5 bg-sky-600 text-white rounded-xl hover:bg-sky-700 font-medium transition-colors"
                                         >
-                                            Submit Post
+                                            {t('items_page.submit_post')}
                                         </button>
                                     </div>
                                 </form>
@@ -914,7 +930,7 @@ export default function Items() {
                             <div className="relative bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 h-24">
                                 <button
                                     onClick={() => setShowUserModal(false)}
-                                    aria-label="Close"
+                                    aria-label={t('items_page.close')}
                                     className="absolute top-3 right-3 w-9 h-9 bg-slate-100 rounded-full shadow-lg flex items-center justify-center hover:scale-110 hover:shadow-xl transition-all duration-150"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -951,7 +967,7 @@ export default function Items() {
                                                 </svg>
                                             </span>
                                             <div>
-                                                <p className="text-xs text-slate-400 font-medium">Email</p>
+                                                <p className="text-xs text-slate-400 font-medium">{t('items_page.profile_email')}</p>
                                                 <p className="text-sm font-semibold text-slate-100">{selectedUser.email}</p>
                                             </div>
                                         </div>
@@ -964,7 +980,7 @@ export default function Items() {
                                                 </svg>
                                             </span>
                                             <div>
-                                                <p className="text-xs text-slate-400 font-medium">Phone</p>
+                                                <p className="text-xs text-slate-400 font-medium">{t('items_page.profile_phone')}</p>
                                                 <p className="text-sm font-semibold text-slate-100">{selectedUser.phone}</p>
                                             </div>
                                         </div>
@@ -1027,7 +1043,7 @@ export default function Items() {
 
                                         return socials.length > 0 ? (
                                             <div className="mb-5">
-                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 text-center">Connect on Social</p>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 text-center">{t('items_page.social_connect')}</p>
                                                 <div className="flex justify-center gap-3">
                                                     {socials.map(social => (
                                                         <a
@@ -1079,31 +1095,31 @@ export default function Items() {
                                         🚨
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-white">Report Item</h3>
-                                        <p className="text-sm text-slate-400">Flag this item for admin review</p>
+                                        <h3 className="text-xl font-bold text-white">{t('items_page.report_modal_title')}</h3>
+                                        <p className="text-sm text-slate-400">{t('items_page.report_modal_sub')}</p>
                                     </div>
                                 </div>
 
                                 <div className="bg-slate-800/70 rounded-xl p-3 mb-5 border border-slate-700/60">
-                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Reporting:</p>
+                                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t('items_page.reporting_label')}</p>
                                     <p className="font-bold text-slate-100 line-clamp-1">{selectedItemForReport.item_name}</p>
                                 </div>
 
                                 <form onSubmit={submitViolationReport}>
                                     <label className="block text-sm font-semibold text-slate-300 mb-2">
-                                        Reason for reporting <span className="text-red-500">*</span>
+                                        {t('items_page.report_reason_label')} <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
                                         value={violationReason}
                                         onChange={(e) => setViolationReason(e.target.value)}
-                                        placeholder="e.g., Fake item, inappropriate content, spam..."
+                                        placeholder={t('items_page.report_placeholder')}
                                         rows={4}
                                         required
                                         className="w-full px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-none text-sm text-slate-100 placeholder-slate-500"
                                         disabled={reportingId !== null}
                                     />
                                     <p className="text-xs text-slate-400 mt-2 mb-6">
-                                        False reports may result in account suspension.
+                                        {t('items_page.false_reports_warning')}
                                     </p>
 
                                     <div className="flex gap-3">
@@ -1113,14 +1129,14 @@ export default function Items() {
                                             disabled={reportingId !== null}
                                             className="flex-1 px-4 py-3 rounded-xl border border-slate-700 text-slate-200 font-bold text-sm hover:bg-slate-800 transition-colors disabled:opacity-50"
                                         >
-                                            Cancel
+                                            {t('items_page.cancel')}
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={reportingId !== null || !violationReason.trim()}
                                             className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-bold text-sm shadow-md transition-all disabled:opacity-50"
                                         >
-                                            {reportingId !== null ? 'Submitting...' : 'Submit Report'}
+                                            {reportingId !== null ? t('items_page.submitting') : t('items_page.submit_report')}
                                         </button>
                                     </div>
                                 </form>

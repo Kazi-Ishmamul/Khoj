@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { secrets } from '../secrets';
+import { useI18n } from '../i18n/I18nContext';
 
 const EyeIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
@@ -12,6 +13,7 @@ const EyeOffIcon = () => (
 );
 
 const Login = () => {
+    const { t } = useI18n();
 
     const [email, setEmail] = useState('');
 
@@ -40,7 +42,7 @@ const Login = () => {
 
         if (!email.includes('@') || !email.includes('.')) {
 
-            setEmailError('Please enter a valid email address containing @ and .');
+            setEmailError(t('login.error_email'));
 
             isValid = false;
 
@@ -66,7 +68,7 @@ const Login = () => {
 
         if (password.length < 6 || !hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
 
-            setPasswordError('Password must be at least 6 characters long and contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character.');
+            setPasswordError(t('login.error_password'));
 
             isValid = false;
 
@@ -98,14 +100,14 @@ const Login = () => {
                 
                 const data = response.data;
                 if (!data.user) {
-                    setErrorMessage('Login failed: No user data received');
+                    setErrorMessage(t('login.error_no_user'));
                     return;
                 }
                 
                 localStorage.setItem('token', data.access_token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 
-                setSuccessMessage('Login successful!');
+                setSuccessMessage(t('login.success'));
                 
                 setTimeout(() => {
                     const userRole = data.user?.role || 'user';
@@ -116,7 +118,7 @@ const Login = () => {
                     }
                 }, 1000);
             } catch (error: any) {
-                setErrorMessage(error.response?.data?.error || 'Login failed. Please check your credentials.');
+                setErrorMessage(error.response?.data?.error || t('login.error_generic'));
             }
         }
     };
@@ -159,11 +161,11 @@ const Login = () => {
 
                     <div className="relative z-10 mt-8">
 
-                        <h1 className="text-5xl font-extrabold mb-6 tracking-tight">Welcome to Khoj</h1>
+                        <h1 className="text-5xl font-extrabold mb-6 tracking-tight">{t('login.welcome_title')}</h1>
 
                         <p className="text-lg text-white/90 leading-relaxed max-w-md font-medium">
 
-                            Your trusted platform for recovering lost belongings and building a supportive community.
+                            {t('login.welcome_sub')}
 
                         </p>
 
@@ -173,7 +175,7 @@ const Login = () => {
 
                     <div className="relative z-10 text-sm opacity-90 mt-auto pt-16 font-medium tracking-wide">
 
-                        Reuniting people with their possessions.
+                        {t('login.welcome_footer')}
 
                     </div>
 
@@ -187,10 +189,10 @@ const Login = () => {
 
                     <div className="max-w-md mx-auto w-full">
 
-                        <h2 className="text-4xl font-bold mb-3 text-white">Login</h2>
+                        <h2 className="text-4xl font-bold mb-3 text-white">{t('login.title')}</h2>
 
                         <p className="text-slate-400 text-sm mb-10 font-medium leading-relaxed">
-                            Welcome back! Please enter your credentials to connect with the community.
+                            {t('login.subtitle')}
                         </p>
 
                         {successMessage && (
@@ -210,7 +212,7 @@ const Login = () => {
 
                             <div>
 
-                                <label className="block text-slate-300 font-semibold text-sm mb-2">Email Address</label>
+                                <label className="block text-slate-300 font-semibold text-sm mb-2">{t('login.email')}</label>
 
                                 <input
 
@@ -222,7 +224,7 @@ const Login = () => {
 
                                     className={`w-full px-4 py-3 rounded-lg border ${emailError ? 'border-red-500/50 bg-red-500/10' : 'border-slate-700 bg-slate-800'} focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-white font-medium placeholder-slate-500`}
 
-                                    placeholder="you@example.com"
+                                    placeholder={t('login.placeholder_email')}
 
                                 />
 
@@ -240,7 +242,7 @@ const Login = () => {
 
                             <div>
 
-                                <label className="block text-slate-300 font-semibold text-sm mb-2">Password</label>
+                                <label className="block text-slate-300 font-semibold text-sm mb-2">{t('login.password')}</label>
 
                                 <div className="relative">
                                     <input
@@ -283,7 +285,7 @@ const Login = () => {
 
                                     <input type="checkbox" className="w-4 h-4 rounded border-slate-600 text-teal-600 focus:ring-teal-500 cursor-pointer transition-colors" />
 
-                                    <span className="ml-2 text-sm text-slate-400 font-medium group-hover:text-slate-300 transition-colors">Remember me</span>
+                                    <span className="ml-2 text-sm text-slate-400 font-medium group-hover:text-slate-300 transition-colors">{t('login.remember')}</span>
 
                                 </label>
 
@@ -301,7 +303,7 @@ const Login = () => {
 
                             >
 
-                                LOGIN
+                                {t('login.submit')}
 
                             </button>
 
@@ -313,7 +315,10 @@ const Login = () => {
 
                             <p className="text-slate-400 font-medium">
 
-                                Don't have an account? <Link to="/register" className="text-teal-400 hover:text-teal-300 hover:underline font-bold transition-colors ml-1">Register here.</Link>
+                                {t('login.no_account')}{' '}
+                                <Link to="/register" className="text-teal-400 hover:text-teal-300 hover:underline font-bold transition-colors ml-1">
+                                    {t('login.register_link')}
+                                </Link>
 
                             </p>
 

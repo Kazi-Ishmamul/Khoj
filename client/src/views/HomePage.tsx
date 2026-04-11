@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 
 /* ─────────────────────────── tiny helpers ─────────────────────────── */
 
@@ -82,12 +83,12 @@ const FaqItem = ({ question, answer, index }: { question: string; answer: string
 
 /* ─────────────────────────── data ─────────────────────────── */
 
-const HOW_IT_WORKS = [
+const HOW_IT_WORKS_META = [
     {
         step: '01',
         icon: '📢',
-        title: 'Post Your Item',
-        desc: 'Lost something? Found something? Post it in seconds — add a photo, location, date, and contact info.',
+        titleKey: 'how.step1_title',
+        descKey: 'how.step1_desc',
         color: 'from-sky-500/20 to-blue-600/10',
         border: 'border-sky-500/30',
         dot: 'bg-sky-400',
@@ -96,8 +97,8 @@ const HOW_IT_WORKS = [
     {
         step: '02',
         icon: '🔍',
-        title: 'Search & Discover',
-        desc: 'Browse the live database or let our Gemini-powered AI search understand what you\'re looking for — even in natural language.',
+        titleKey: 'how.step2_title',
+        descKey: 'how.step2_desc',
         color: 'from-violet-500/20 to-purple-600/10',
         border: 'border-violet-500/30',
         dot: 'bg-violet-400',
@@ -106,52 +107,65 @@ const HOW_IT_WORKS = [
     {
         step: '03',
         icon: '🤝',
-        title: 'Claim & Resolve',
-        desc: 'Found a match? Send a claim request. The poster reviews it and accepts — marking the item as officially resolved.',
+        titleKey: 'how.step3_title',
+        descKey: 'how.step3_desc',
         color: 'from-emerald-500/20 to-teal-600/10',
         border: 'border-emerald-500/30',
         dot: 'bg-emerald-400',
         linkTo: '/user-dashboard/activity?tab=claims_received',
     },
-];
+] as const;
 
-const FEATURES = [
+const FEATURES_META = [
     {
         icon: '✨',
-        title: 'AI-Powered Matching',
-        desc: 'Advanced Gemini AI engine intelligently matches lost and found items, understanding context, location, and descriptions to surface relevant results instantly.',
-        badge: 'Gemini AI',
+        titleKey: 'features.f1_title',
+        descKey: 'features.f1_desc',
+        badgeKey: 'features.f1_badge',
         badgeColor: 'bg-violet-500/20 text-violet-300 border-violet-500/30',
         glow: 'shadow-violet-900/30',
     },
     {
         icon: '🛡️',
-        title: 'Community Moderation',
-        desc: 'Built-in reporting system with dedicated admin review. Suspected fraud or inappropriate listings are investigated and struck to maintain community trust.',
-        badge: 'Trust & Safety',
+        titleKey: 'features.f2_title',
+        descKey: 'features.f2_desc',
+        badgeKey: 'features.f2_badge',
         badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
         glow: 'shadow-rose-900/30',
     },
     {
         icon: '⚡',
-        title: 'Fast & Secure',
-        desc: 'Optimized for speed with secure authentication, encrypted communications, and verified user profiles to ensure safe transactions and quick reunions.',
-        badge: 'Performance',
+        titleKey: 'features.f3_title',
+        descKey: 'features.f3_desc',
+        badgeKey: 'features.f3_badge',
         badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
         glow: 'shadow-cyan-900/30',
     },
-];
+] as const;
 
-const CATEGORIES = [
-    { name: 'Electronics', icon: '📱', count: '128 items', color: 'text-sky-400' },
-    { name: 'Wallets & Cards', icon: '💳', count: '94 items', color: 'text-emerald-400' },
-    { name: 'Bags & Luggage', icon: '🎒', count: '76 items', color: 'text-violet-400' },
-    { name: 'Jewellery', icon: '💍', count: '52 items', color: 'text-amber-400' },
-];
+const CATEGORIES_META = [
+    { nameKey: 'categories.electronics', icon: '📱', countNum: 128, color: 'text-sky-400' },
+    { nameKey: 'categories.wallets', icon: '💳', countNum: 94, color: 'text-emerald-400' },
+    { nameKey: 'categories.bags', icon: '🎒', countNum: 76, color: 'text-violet-400' },
+    { nameKey: 'categories.jewellery', icon: '💍', countNum: 52, color: 'text-amber-400' },
+] as const;
 
 /* ─────────────────────────── component ─────────────────────────── */
 
 export default function HomePage() {
+    const { t } = useI18n();
+
+    const faqItems = useMemo(
+        () =>
+            [
+                { qKey: 'faq.q1', aKey: 'faq.a1' },
+                { qKey: 'faq.q2', aKey: 'faq.a2' },
+                { qKey: 'faq.q3', aKey: 'faq.a3' },
+                { qKey: 'faq.q4', aKey: 'faq.a4' },
+            ] as const,
+        []
+    );
+
     return (
         <>
             {/* ── Keyframe styles ── */}
@@ -235,20 +249,19 @@ export default function HomePage() {
                         <div className="fade-up inline-flex items-center gap-2 bg-white/80 border border-slate-200/80 rounded-full px-5 py-2 mb-10 backdrop-blur-sm dark:bg-slate-800/70 dark:border-slate-700/60 transition-colors duration-300">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse dark:bg-emerald-400" />
                             <span className="text-xs font-bold text-slate-600 uppercase tracking-widest dark:text-slate-300">
-                                AI-Powered Lost &amp; Found Portal
+                                {t('hero.badge')}
                             </span>
                         </div>
 
                         {/* Headline */}
                         <h1 className="fade-up-delay-1 text-5xl sm:text-6xl md:text-8xl font-black leading-none mb-8">
-                            <span className="block text-slate-900 mb-2 dark:text-white transition-colors duration-300">Lost something?</span>
-                            <span className="gradient-text">Khoj finds it.</span>
+                            <span className="block text-slate-900 mb-2 dark:text-white transition-colors duration-300">{t('hero.title_line1')}</span>
+                            <span className="gradient-text">{t('hero.title_gradient')}</span>
                         </h1>
 
                         {/* Sub-headline */}
                         <p className="fade-up-delay-2 text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-12 leading-relaxed font-medium dark:text-slate-400 transition-colors duration-300">
-                            Report lost &amp; found items, let Gemini AI match them intelligently,
-                            claim ownership and reunite with your belongings — all in one place.
+                            {t('hero.subtitle')}
                         </p>
 
                         {/* CTAs */}
@@ -258,7 +271,7 @@ export default function HomePage() {
                                 className="group flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-bold text-base shadow-2xl shadow-blue-900/40 transition-all duration-300 hover:shadow-blue-800/60 hover:scale-105"
                                 style={{ textDecoration: 'none' }}
                             >
-                                <span>Get Started</span>
+                                <span>{t('hero.cta_start')}</span>
                                 <span className="text-xl group-hover:translate-x-1 transition-transform duration-200">→</span>
                             </Link>
                             <Link
@@ -267,7 +280,7 @@ export default function HomePage() {
                                 style={{ textDecoration: 'none' }}
                             >
                                 <span className="text-xl">🔐</span>
-                                <span>Sign In</span>
+                                <span>{t('hero.cta_signin')}</span>
                             </Link>
                         </div>
 
@@ -315,7 +328,7 @@ export default function HomePage() {
                     {/* Scroll indicator */}
                     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce opacity-50 dark:opacity-40">
                         <div className="w-px h-8 bg-gradient-to-b from-transparent to-slate-500 dark:to-slate-400" />
-                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">scroll</span>
+                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">{t('hero.scroll')}</span>
                     </div>
                 </section>
 
@@ -326,10 +339,10 @@ export default function HomePage() {
                     <div className="absolute inset-0 bg-gradient-to-r from-slate-100 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 transition-colors duration-300" />
                     <div className="relative max-w-5xl mx-auto px-6">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-                            <Stat value="500+" label="Items Posted" icon="📦" />
-                            <Stat value="320+" label="Successfully Resolved" icon="✅" />
-                            <Stat value="1200+" label="Registered Users" icon="👥" />
-                            <Stat value="98%" label="AI Match Accuracy" icon="🤖" />
+                            <Stat value="500+" label={t('stats.items_posted')} icon="📦" />
+                            <Stat value="320+" label={t('stats.resolved')} icon="✅" />
+                            <Stat value="1200+" label={t('stats.users')} icon="👥" />
+                            <Stat value="98%" label={t('stats.ai_accuracy')} icon="🤖" />
                         </div>
                     </div>
                 </section>
@@ -340,12 +353,12 @@ export default function HomePage() {
                 <section className="py-28 px-6">
                     <div className="max-w-6xl mx-auto">
                         <div className="text-center mb-20">
-                            <p className="text-xs font-bold text-violet-600 uppercase tracking-[0.3em] mb-4 dark:text-violet-400">How It Works</p>
+                            <p className="text-xs font-bold text-violet-600 uppercase tracking-[0.3em] mb-4 dark:text-violet-400">{t('how.kicker')}</p>
                             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-4 transition-colors duration-300">
-                                Three steps to reunion
+                                {t('how.title')}
                             </h2>
                             <p className="text-slate-600 text-lg max-w-xl mx-auto dark:text-slate-400 transition-colors duration-300">
-                                Khoj is designed to get your belongings back as fast as possible.
+                                {t('how.subtitle')}
                             </p>
                         </div>
 
@@ -353,7 +366,7 @@ export default function HomePage() {
                             {/* Connector line (desktop) */}
                             <div className="hidden md:block absolute top-14 left-[16.5%] right-[16.5%] h-px bg-gradient-to-r from-sky-500/40 via-violet-500/40 to-emerald-500/40 pointer-events-none" />
 
-                            {HOW_IT_WORKS.map((step) => (
+                            {HOW_IT_WORKS_META.map((step) => (
                                 <Link
                                     key={step.step}
                                     to={step.linkTo}
@@ -366,8 +379,8 @@ export default function HomePage() {
                                     <div className="absolute top-8 right-8">
                                         <span className="text-6xl font-black text-slate-900/[0.06] select-none pointer-events-none dark:text-white/5">{step.step}</span>
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-900 mb-3 dark:text-white transition-colors duration-300">{step.title}</h3>
-                                    <p className="text-slate-600 text-sm leading-relaxed dark:text-slate-400 transition-colors duration-300">{step.desc}</p>
+                                    <h3 className="text-xl font-bold text-slate-900 mb-3 dark:text-white transition-colors duration-300">{t(step.titleKey)}</h3>
+                                    <p className="text-slate-600 text-sm leading-relaxed dark:text-slate-400 transition-colors duration-300">{t(step.descKey)}</p>
                                     <div className={`mt-6 w-8 h-1 rounded-full ${step.dot}`} />
                                 </Link>
                             ))}
@@ -390,25 +403,27 @@ export default function HomePage() {
                             <div>
                                 <div className="inline-flex items-center gap-2 bg-violet-500/15 border border-violet-400/40 rounded-full px-4 py-1.5 mb-6 dark:bg-violet-500/10 dark:border-violet-500/30">
                                     <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse dark:bg-violet-400" />
-                                    <span className="text-xs font-bold text-violet-800 uppercase tracking-widest dark:text-violet-300">Gemini AI</span>
+                                    <span className="text-xs font-bold text-violet-800 uppercase tracking-widest dark:text-violet-300">{t('ai_spotlight.kicker')}</span>
                                 </div>
                                 <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-6 transition-colors duration-300">
-                                    Don't just search. <br />
-                                    <span className="gradient-text">Think out loud.</span>
+                                    {t('ai_spotlight.title_line1')} <br />
+                                    <span className="gradient-text">{t('ai_spotlight.title_gradient')}</span>
                                 </h2>
                                 <p className="text-slate-600 text-lg leading-relaxed mb-8 dark:text-slate-400 transition-colors duration-300">
-                                    Type exactly what happened — <em className="text-slate-800 dark:text-slate-300">"I lost my black backpack near the TSC canteen on Tuesday evening"</em> — and Gemini understands the context, location, and time to surface the best matches from the entire database.
+                                    {t('ai_spotlight.body')}
                                 </p>
                                 <ul className="space-y-3 mb-10">
-                                    {[
-                                        ['✨', 'Proactive Smart Suggestions — we find matches before you search'],
-                                        ['🧠', 'Semantic Search — natural language, not just keywords'],
-                                        ['📍', 'Location-aware ranking for nearby results'],
-                                        ['🔄', 'Results cached intelligently for blazing speed'],
-                                    ].map(([icon, text]) => (
-                                        <li key={text} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+                                    {(
+                                        [
+                                            ['✨', 'ai_spotlight.bullet1'],
+                                            ['🧠', 'ai_spotlight.bullet2'],
+                                            ['📍', 'ai_spotlight.bullet3'],
+                                            ['🔄', 'ai_spotlight.bullet4'],
+                                        ] as const
+                                    ).map(([icon, key]) => (
+                                        <li key={key} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
                                             <span className="text-base mt-0.5 flex-shrink-0">{icon}</span>
-                                            <span>{text}</span>
+                                            <span>{t(key)}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -417,7 +432,7 @@ export default function HomePage() {
                                     className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold shadow-xl shadow-violet-900/30 transition-all hover:scale-105"
                                     style={{ textDecoration: 'none' }}
                                 >
-                                    Try AI Search <span>→</span>
+                                    {t('ai_spotlight.cta')} <span>→</span>
                                 </Link>
                             </div>
 
@@ -430,12 +445,12 @@ export default function HomePage() {
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
                                             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500" />
                                         </span>
-                                        <span className="text-sm text-slate-700 font-medium dark:text-slate-300">black backpack near TSC canteen...</span>
-                                        <div className="ml-auto bg-violet-600 hover:bg-violet-500 text-white rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer">Ask AI</div>
+                                        <span className="text-sm text-slate-700 font-medium dark:text-slate-300">{t('ai_spotlight.mock_query')}</span>
+                                        <div className="ml-auto bg-violet-600 hover:bg-violet-500 text-white rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer">{t('ai_spotlight.mock_button')}</div>
                                     </div>
 
                                     {/* Result cards */}
-                                    <p className="text-xs font-bold text-violet-700 uppercase tracking-widest mb-3 dark:text-violet-400">AI Results — 3 matches</p>
+                                    <p className="text-xs font-bold text-violet-700 uppercase tracking-widest mb-3 dark:text-violet-400">{t('ai_spotlight.mock_results')}</p>
                                     <div className="space-y-3">
                                         {[
                                             { name: 'Black Adidas Backpack', location: 'TSC Area, Dhaka', date: 'Apr 9', match: '97%', status: 'found', matchColor: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
@@ -458,7 +473,7 @@ export default function HomePage() {
 
                                 {/* Decorative floating badge */}
                                 <div className="absolute -top-4 -right-4 bg-gradient-to-br from-violet-600 to-purple-700 text-white rounded-2xl px-4 py-2 shadow-xl text-xs font-black uppercase tracking-wide">
-                                    Gemini AI ✨
+                                    {t('ai_spotlight.mock_badge')}
                                 </div>
                             </div>
                         </div>
@@ -471,27 +486,27 @@ export default function HomePage() {
                 <section className="py-28 px-6">
                     <div className="max-w-6xl mx-auto">
                         <div className="text-center mb-20">
-                            <p className="text-xs font-bold text-sky-600 uppercase tracking-[0.3em] mb-4 dark:text-sky-400">Core Features</p>
+                            <p className="text-xs font-bold text-sky-600 uppercase tracking-[0.3em] mb-4 dark:text-sky-400">{t('features.kicker')}</p>
                             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-4 transition-colors duration-300">
-                                Intelligent & Secure
+                                {t('features.title')}
                             </h2>
                             <p className="text-slate-600 text-lg max-w-xl mx-auto dark:text-slate-400 transition-colors duration-300">
-                                Advanced AI matching combined with trusted community moderation ensures fast, safe recoveries.
+                                {t('features.subtitle')}
                             </p>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {FEATURES.map((feat) => (
+                            {FEATURES_META.map((feat) => (
                                 <div
-                                    key={feat.title}
+                                    key={feat.titleKey}
                                     className={`card-hover bg-white/90 border border-slate-200 rounded-3xl p-7 hover:border-slate-300 shadow-lg dark:bg-slate-900/70 dark:border-slate-800 dark:hover:border-slate-600 dark:shadow-xl transition-colors duration-300 ${feat.glow}`}
                                 >
                                     <div className="text-4xl mb-5">{feat.icon}</div>
                                     <span className={`inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border mb-4 ${feat.badgeColor}`}>
-                                        {feat.badge}
+                                        {t(feat.badgeKey)}
                                     </span>
-                                    <h3 className="text-xl font-bold text-slate-900 mb-3 dark:text-white transition-colors duration-300">{feat.title}</h3>
-                                    <p className="text-slate-600 text-sm leading-relaxed dark:text-slate-400 transition-colors duration-300">{feat.desc}</p>
+                                    <h3 className="text-xl font-bold text-slate-900 mb-3 dark:text-white transition-colors duration-300">{t(feat.titleKey)}</h3>
+                                    <p className="text-slate-600 text-sm leading-relaxed dark:text-slate-400 transition-colors duration-300">{t(feat.descKey)}</p>
                                 </div>
                             ))}
                         </div>
@@ -504,21 +519,21 @@ export default function HomePage() {
                 <section className="py-20 px-6">
                     <div className="max-w-4xl mx-auto">
                         <div className="text-center mb-14">
-                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4 dark:text-emerald-400">Popular Categories</p>
-                            <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white transition-colors duration-300">Start browsing</h2>
+                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4 dark:text-emerald-400">{t('categories.kicker')}</p>
+                            <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white transition-colors duration-300">{t('categories.title')}</h2>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            {CATEGORIES.map((cat) => (
+                            {CATEGORIES_META.map((cat) => (
                                 <Link
-                                    key={cat.name}
+                                    key={cat.nameKey}
                                     to="/login"
                                     className="card-hover group bg-white/90 border border-slate-200 hover:border-slate-300 rounded-2xl p-5 text-center block transition-all dark:bg-slate-900/70 dark:border-slate-800 dark:hover:border-slate-600"
                                     style={{ textDecoration: 'none' }}
                                 >
                                     <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-200">{cat.icon}</div>
-                                    <p className={`font-bold text-sm ${cat.color} mb-1`}>{cat.name}</p>
-                                    <p className="text-xs text-slate-500">{cat.count}</p>
+                                    <p className={`font-bold text-sm ${cat.color} mb-1`}>{t(cat.nameKey)}</p>
+                                    <p className="text-xs text-slate-500">{cat.countNum} {t('categories.count_suffix')}</p>
                                 </Link>
                             ))}
                         </div>
@@ -536,12 +551,12 @@ export default function HomePage() {
 
                     <div className="relative max-w-6xl mx-auto">
                         <div className="text-center mb-20">
-                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4 dark:text-emerald-400">Success Stories</p>
+                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4 dark:text-emerald-400">{t('stories.kicker')}</p>
                             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-4 transition-colors duration-300">
-                                Reunited with their belongings
+                                {t('stories.title')}
                             </h2>
                             <p className="text-slate-600 text-lg max-w-xl mx-auto dark:text-slate-400 transition-colors duration-300">
-                                Real stories from real people who recovered their lost items through Khoj.
+                                {t('stories.subtitle')}
                             </p>
                         </div>
 
@@ -558,14 +573,14 @@ export default function HomePage() {
                                     </div>
                                 </div>
                                 <p className="text-slate-700 mb-4 leading-relaxed dark:text-slate-300">
-                                    "Lost my MacBook, thought it was gone forever. Khoj's AI found it within 2 hours. Amazing service!"
+                                    {t('stories.story1')}
                                 </p>
                                 <div className="flex items-center gap-1 mb-3">
                                     {[...Array(5)].map((_, i) => (
                                         <span key={i} className="text-amber-400">⭐</span>
                                     ))}
                                 </div>
-                                <p className="text-xs text-slate-500">Recovered in 2 hours • 💻 Electronics</p>
+                                <p className="text-xs text-slate-500">{t('stories.meta1')}</p>
                             </div>
 
                             {/* Story 2 */}
@@ -580,14 +595,14 @@ export default function HomePage() {
                                     </div>
                                 </div>
                                 <p className="text-slate-700 mb-4 leading-relaxed dark:text-slate-300">
-                                    "Found someone's important documents here. The community helped me return them. Love this!"
+                                    {t('stories.story2')}
                                 </p>
                                 <div className="flex items-center gap-1 mb-3">
                                     {[...Array(5)].map((_, i) => (
                                         <span key={i} className="text-amber-400">⭐</span>
                                     ))}
                                 </div>
-                                <p className="text-xs text-slate-500">Reunited in 24 hours • 📄 Documents</p>
+                                <p className="text-xs text-slate-500">{t('stories.meta2')}</p>
                             </div>
 
                             {/* Story 3 */}
@@ -602,14 +617,14 @@ export default function HomePage() {
                                     </div>
                                 </div>
                                 <p className="text-slate-700 mb-4 leading-relaxed dark:text-slate-300">
-                                    "My heirloom ring was missing for weeks. Found it through a perfect AI match. Grateful forever!"
+                                    {t('stories.story3')}
                                 </p>
                                 <div className="flex items-center gap-1 mb-3">
                                     {[...Array(5)].map((_, i) => (
                                         <span key={i} className="text-amber-400">⭐</span>
                                     ))}
                                 </div>
-                                <p className="text-xs text-slate-500">Recovered in 3 weeks • 💍 Jewellery</p>
+                                <p className="text-xs text-slate-500">{t('stories.meta3')}</p>
                             </div>
                         </div>
                     </div>
@@ -625,9 +640,9 @@ export default function HomePage() {
 
                     <div className="relative max-w-4xl mx-auto">
                         <div className="text-center mb-16">
-                            <p className="text-xs font-bold text-rose-600 uppercase tracking-[0.3em] mb-4 dark:text-rose-400">Live Activity</p>
+                            <p className="text-xs font-bold text-rose-600 uppercase tracking-[0.3em] mb-4 dark:text-rose-400">{t('activity.kicker')}</p>
                             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight transition-colors duration-300">
-                                Happening right now
+                                {t('activity.title')}
                             </h2>
                         </div>
 
@@ -677,35 +692,18 @@ export default function HomePage() {
 
                     <div className="relative max-w-3xl mx-auto">
                         <div className="text-center mb-16">
-                            <p className="text-xs font-bold text-sky-600 uppercase tracking-[0.3em] mb-4 dark:text-sky-400">FAQ</p>
+                            <p className="text-xs font-bold text-sky-600 uppercase tracking-[0.3em] mb-4 dark:text-sky-400">{t('faq.kicker')}</p>
                             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-4 transition-colors duration-300">
-                                Questions? We have answers.
+                                {t('faq.title')}
                             </h2>
                             <p className="text-slate-600 text-lg dark:text-slate-400 transition-colors duration-300">
-                                Everything you need to know about Khoj and how it works.
+                                {t('faq.subtitle')}
                             </p>
                         </div>
 
                         <div className="space-y-3">
-                            {[
-                                {
-                                    q: 'Is Khoj free to use?',
-                                    a: 'Yes! Khoj is completely free. Post items, search, and communicate with other users at no cost. We believe in making lost & found accessible to everyone.',
-                                },
-                                {
-                                    q: 'How does the AI matching work?',
-                                    a: 'Our Gemini AI analyzes descriptions, locations, dates, and images to find the best matches. It understands context and can match items even with vague descriptions.',
-                                },
-                                {
-                                    q: 'Is my information secure?',
-                                    a: 'We use bank-level encryption for all data. Personal information is only visible to verified users, and you control what you share.',
-                                },
-                                {
-                                    q: 'How long does it take to recover an item?',
-                                    a: 'Recovery times vary, but our users report average resolution times of 3-7 days. Some items are recovered within hours!',
-                                },
-                            ].map((faq, i) => (
-                                <FaqItem key={i} question={faq.q} answer={faq.a} index={i} />
+                            {faqItems.map((faq, i) => (
+                                <FaqItem key={faq.qKey} question={t(faq.qKey)} answer={t(faq.aKey)} index={i} />
                             ))}
                         </div>
                     </div>
@@ -728,11 +726,11 @@ export default function HomePage() {
                             💫
                         </div>
                         <h2 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 leading-tight transition-colors duration-300">
-                            Ready to reunite <br />
-                            <span className="gradient-text">with your belongings?</span>
+                            {t('cta_final.title_line1')} <br />
+                            <span className="gradient-text">{t('cta_final.title_gradient')}</span>
                         </h2>
                         <p className="text-xl text-slate-600 leading-relaxed mb-12 max-w-xl mx-auto dark:text-slate-400 transition-colors duration-300">
-                            Join thousands of users already using Khoj. Post, search, and recover lost items with AI-powered matching.
+                            {t('cta_final.subtitle')}
                         </p>
 
                         <Link
@@ -740,11 +738,11 @@ export default function HomePage() {
                             className="group inline-flex items-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-bold text-lg shadow-2xl shadow-blue-900/40 transition-all hover:scale-105"
                             style={{ textDecoration: 'none' }}
                         >
-                            Create Account (Free)
+                            {t('cta_final.button')}
                             <span className="group-hover:translate-x-1 transition-transform duration-200">→</span>
                         </Link>
 
-                        <p className="mt-8 text-sm text-slate-500 dark:text-slate-600">No credit card required &bull; Powered by Gemini AI</p>
+                        <p className="mt-8 text-sm text-slate-500 dark:text-slate-600">{t('cta_final.footnote')}</p>
                     </div>
                 </section>
 
@@ -755,32 +753,32 @@ export default function HomePage() {
                     <div className="max-w-6xl mx-auto">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 mb-4 dark:text-slate-300">Product</p>
+                                <p className="text-sm font-semibold text-slate-800 mb-4 dark:text-slate-300">{t('footer.product')}</p>
                                 <div className="space-y-2">
-                                    <Link to="/login" className="block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>Sign In</Link>
-                                    <Link to="/register" className="block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>Create Account</Link>
+                                    <Link to="/login" className="block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>{t('footer.sign_in')}</Link>
+                                    <Link to="/register" className="block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>{t('footer.create_account')}</Link>
                                 </div>
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 mb-4 dark:text-slate-300">About</p>
+                                <p className="text-sm font-semibold text-slate-800 mb-4 dark:text-slate-300">{t('footer.about')}</p>
                                 <div className="space-y-2">
-                                    <Link to="/about" className="block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>About Khoj</Link>
+                                    <Link to="/about" className="block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>{t('footer.about_khoj')}</Link>
                                 </div>
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 mb-4 dark:text-slate-300">Legal</p>
+                                <p className="text-sm font-semibold text-slate-800 mb-4 dark:text-slate-300">{t('footer.legal')}</p>
                                 <div className="space-y-2">
-                                    <a href="#" className="block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>Privacy Policy</a>
-                                    <a href="#" className="block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>Terms of Service</a>
+                                    <a href="#" className="block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>{t('footer.privacy')}</a>
+                                    <a href="#" className="block text-sm text-slate-600 hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300 transition-colors" style={{ textDecoration: 'none' }}>{t('footer.terms')}</a>
                                 </div>
                             </div>
                         </div>
                         <div className="pt-8 border-t border-slate-200/80 dark:border-slate-800/60 flex flex-col md:flex-row items-center justify-between transition-colors duration-300">
                             <p className="text-xs text-slate-500 dark:text-slate-600">
-                                © 2026 Khoj. All rights reserved.
+                                {t('footer.copyright')}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-600 mt-4 md:mt-0">
-                                Built with ❤️ by the Khoj team &bull; Powered by Gemini AI
+                                {t('footer.tagline')}
                             </p>
                         </div>
                     </div>
