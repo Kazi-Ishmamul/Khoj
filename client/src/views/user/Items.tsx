@@ -1,5 +1,6 @@
 // Items.tsx
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -57,6 +58,8 @@ export default function Items() {
     const [claimLoadingId, setClaimLoadingId] = useState<number | null>(null);
     const [reportedItemIds, setReportedItemIds] = useState<number[]>([]);
     const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const fetchItems = async () => {
         try {
@@ -250,6 +253,28 @@ export default function Items() {
             }
         };
     }, []);
+
+    useEffect(() => {
+        const focus = searchParams.get('focus');
+        if (!focus) return;
+
+        if (focus === 'post') {
+            setShowReportModal(true);
+        } else if (focus === 'search') {
+            setActiveView('database');
+            setFilter('all');
+            setCurrentPage(1);
+            setSearchTerm('');
+            window.setTimeout(() => {
+                searchInputRef.current?.focus();
+                searchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 150);
+        }
+
+        const next = new URLSearchParams(searchParams);
+        next.delete('focus');
+        setSearchParams(next, { replace: true });
+    }, [searchParams, setSearchParams]);
 
     // Report item form state (for submitting lost/found)
     const [formData, setFormData] = useState({
@@ -559,6 +584,7 @@ export default function Items() {
                             )}
                         </div>
                         <input
+                            ref={searchInputRef}
                             type="text"
                             placeholder="Ask Gemini to find something..."
                             value={searchTerm}
