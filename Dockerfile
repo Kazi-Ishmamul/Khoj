@@ -13,8 +13,10 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm
 
-# Enable mod_rewrite
-RUN a2enmod rewrite
+# Enable mod_rewrite and explicitly manage MPMs to prevent conflicts
+RUN a2dismod mpm_event mpm_worker || true \
+    && a2enmod mpm_prefork \
+    && a2enmod rewrite
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
