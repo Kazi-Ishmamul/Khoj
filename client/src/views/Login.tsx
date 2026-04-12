@@ -118,7 +118,15 @@ const Login = () => {
                     }
                 }, 1000);
             } catch (error: any) {
-                setErrorMessage(error.response?.data?.error || t('login.error_generic'));
+                const data = error.response?.data;
+                let message: string | undefined = data?.error ?? data?.message;
+                if (!message && data && typeof data === 'object') {
+                    const first = Object.values(data).find((v) => Array.isArray(v) && v.length) as string[] | undefined;
+                    if (first?.[0]) {
+                        message = first[0];
+                    }
+                }
+                setErrorMessage(message || t('login.error_generic'));
             }
         }
     };
