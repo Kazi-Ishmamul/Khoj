@@ -1,16 +1,11 @@
+import { useI18n } from '../i18n/I18nContext';
+
 const Forbidden = () => {
+    const { t } = useI18n();
     return (
-        <div style={{ 
-            height: '100vh', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            fontFamily: 'sans-serif',
-            color: '#333'
-        }}>
-            <h1 style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>403 Forbidden</h1>
-            <p style={{ fontSize: '1.25rem' }}>User does not have access to this page.</p>
+        <div className="min-h-screen flex flex-col justify-center items-center bg-slate-950 text-slate-100 px-4 font-sans">
+            <h1 className="text-4xl md:text-5xl font-bold mb-2">{t('forbidden.title')}</h1>
+            <p className="text-lg text-slate-400 text-center max-w-md">{t('forbidden.message')}</p>
         </div>
     );
 };

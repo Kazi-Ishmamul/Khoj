@@ -1,17 +1,40 @@
 @import "tailwindcss";
 
+/* Tailwind v4: load JS config (animations, darkMode: 'class', etc.) */
+@config "../tailwind.config.js";
+
+/* Ensure dark: variants follow .dark on <html>, not prefers-color-scheme */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  font-family: 'Josefin Sans', serif;
+  font-family: 'Inter', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html,
 body {
-  font-family: 'Josefin Sans', serif;
-  background-color: #020617;
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+html.dark,
+html.dark body {
+  background-color: #020617;
+}
+
+/* Bangla: readable Unicode stack when locale is bn */
+html[lang='bn'],
+html[lang='bn'] body,
+html[lang='bn'] #root {
+  font-family: 'Noto Sans Bengali', 'Inter', system-ui, sans-serif;
 }
 
 .layout {
@@ -50,4 +73,27 @@ footer {
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
   display: none;
+}
+
+/* Smooth transitions throughout */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Enhanced scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #764ba2 0%, #667eea 100%);
 }

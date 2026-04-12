@@ -23,6 +23,7 @@ Route::post('/register', [App\Http\Controllers\ApiAuthController::class, 'regist
 Route::post('/login', [App\Http\Controllers\ApiAuthController::class, 'login']);
 
 Route::get('/items', [App\Http\Controllers\ItemController::class, 'index']);
+Route::get('/items/qr/{token}', [App\Http\Controllers\ItemController::class, 'findByQrToken']);
 Route::get('/items/search', [App\Http\Controllers\ItemController::class, 'geminiSearch']);
 
 Route::middleware('jwt.auth')->group(function () {

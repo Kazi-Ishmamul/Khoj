@@ -20,9 +20,21 @@ class Item extends Model
         'contact_info',
         'item_image_url',
         'resolution_status',
+        'valid',
         'lat',
         'lng',
-        'valid'
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'qr_scan_url',
+        'qr_image_url',
+    ];
+
+    protected $hidden = [
+        'qr_token',
     ];
 
     public function user()
@@ -38,5 +50,23 @@ class Item extends Model
     public function reports()
     {
         return $this->hasMany(Report::class, 'item_id', 'id');
+    }
+
+    public function getQrScanUrlAttribute(): ?string
+    {
+        if (! $this->qr_token) {
+            return null;
+        }
+
+        return url('/scan/'.$this->qr_token);
+    }
+
+    public function getQrImageUrlAttribute(): ?string
+    {
+        if (! $this->qr_image_path) {
+            return null;
+        }
+
+        return asset('storage/'.$this->qr_image_path);
     }
 }

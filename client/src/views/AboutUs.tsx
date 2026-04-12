@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import dev1 from '../assets/developer pics/dev1.jpg';
 import dev2 from '../assets/developer pics/dev2.jpg';
 import dev3 from '../assets/developer pics/dev3.jpg';
@@ -5,8 +6,6 @@ import dev3 from '../assets/developer pics/dev3.jpg';
 const developers = [
     {
         name: 'Kazi Ishmamul Haque',
-        role: 'Lead Developer',
-        description: 'Passionate about learning modern web technologies and coordinating team efforts to build meaningful projects.',
         image: dev1,
         socials: {
             gmail: 'kaziishmmamulhaque@gmail.com',
@@ -18,8 +17,6 @@ const developers = [
     },
     {
         name: 'Faiyaz Fardin',
-        role: 'Backend Developer',
-        description: 'Focused on learning database management and building the logic that powers web applications.',
         image: dev2,
         socials: {
             gmail: 'mailto:faiyazfardin07@gmail.com',
@@ -31,8 +28,6 @@ const developers = [
     },
     {
         name: 'Shoaib Mugdho',
-        role: 'Frontend Developer',
-        description: 'Enthusiastic about creating clean user interfaces and bringing designs to life with code.',
         image: dev3,
         socials: {
             gmail: 'mailto:shoaibhossainmugdho@gmail.com',
@@ -66,17 +61,21 @@ const MailIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
 );
 
+const devRoleKeys = ['about_page.dev1_role', 'about_page.dev2_role', 'about_page.dev3_role'] as const;
+const devDescKeys = ['about_page.dev1_desc', 'about_page.dev2_desc', 'about_page.dev3_desc'] as const;
+
 const AboutUs = () => {
+    const { t } = useI18n();
     return (
         <div className="min-h-screen bg-slate-950 py-16 px-4 md:px-8 font-sans w-full text-slate-100">
             <div className="max-w-7xl mx-auto w-full">
                 <div className="text-center mb-24">
-                    <p className="text-sm font-bold tracking-[0.2em] text-violet-400 uppercase mb-4">About</p>
+                    <p className="text-sm font-bold tracking-[0.2em] text-violet-400 uppercase mb-4">{t('about_page.kicker')}</p>
                     <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
-                        Meet the Khoj Team.
+                        {t('about_page.title')}
                     </h1>
                     <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
-                        Building communities, one lost item at a time.
+                        {t('about_page.tagline')}
                     </p>
                 </div>
 
@@ -97,9 +96,9 @@ const AboutUs = () => {
                                 </div>
 
                                 <div className="relative z-10 pt-4">
-                                    <h3 className="text-2xl font-bold text-white mb-3">{dev.role}</h3>
+                                    <h3 className="text-2xl font-bold text-white mb-3">{t(devRoleKeys[index])}</h3>
                                     <p className="text-slate-400 leading-relaxed mb-8 min-h-[4rem]">
-                                        {dev.description}
+                                        {t(devDescKeys[index])}
                                     </p>
 
                                     <div className="flex flex-wrap items-center gap-3">
@@ -120,23 +119,23 @@ const AboutUs = () => {
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle,rgba(99,102,241,0.1)_0%,transparent_50%)]"></div>
 
                     <div className="relative z-10 max-w-4xl mx-auto">
-                        <h2 className="text-sm font-bold tracking-[0.2em] text-violet-400 uppercase mb-6">Our Mission</h2>
+                        <h2 className="text-sm font-bold tracking-[0.2em] text-violet-400 uppercase mb-6">{t('about_page.mission_kicker')}</h2>
                         <h3 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-8 leading-tight">
-                            Reuniting people with <br className="hidden md:block" /> their belongings.
+                            {t('about_page.mission_title')}
                         </h3>
                         <p className="text-lg md:text-xl text-slate-400 leading-relaxed max-w-3xl mx-auto mb-12 font-light">
-                            Khoj is a dedicated platform designed to help individuals find their lost belongings and assist those who have found items in returning them to their rightful owners. We believe that by creating an accessible and easy-to-use platform, we can increase the chances of happy reunions between people and their cherished possessions.
+                            {t('about_page.mission_body')}
                         </p>
 
                         <div className="flex justify-center flex-wrap gap-4">
                             <span className="bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 transition-colors backdrop-blur-md rounded-full px-6 py-3 text-blue-300 font-medium flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-blue-400"></span> Trustworthy
+                                <span className="w-2.5 h-2.5 rounded-full bg-blue-400"></span> {t('about_page.pill_trust')}
                             </span>
                             <span className="bg-violet-600/20 border border-violet-500/30 hover:bg-violet-600/30 transition-colors backdrop-blur-md rounded-full px-6 py-3 text-violet-300 font-medium flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-violet-400"></span> Accessible
+                                <span className="w-2.5 h-2.5 rounded-full bg-violet-400"></span> {t('about_page.pill_access')}
                             </span>
                             <span className="bg-teal-600/20 border border-teal-500/30 hover:bg-teal-600/30 transition-colors backdrop-blur-md rounded-full px-6 py-3 text-teal-300 font-medium flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-teal-400"></span> Community Driven
+                                <span className="w-2.5 h-2.5 rounded-full bg-teal-400"></span> {t('about_page.pill_community')}
                             </span>
                         </div>
                     </div>

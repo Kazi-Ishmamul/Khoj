@@ -82,11 +82,18 @@ class ApiAuthController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        if (!$token = JWTAuth::attempt($validator->validated())) {
+        $credentials = $validator->validated();
+
+        if (!$token = JWTAuth::attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        return $this->createNewToken($token);
+        $user = JWTAuth::user();
+        if (!$user instanceof User) {
+            $user = User::where('email', $credentials['email'])->first();
+        }
+
+        return $this->createNewToken($token, $user);
     }
 
     public function logout()
@@ -95,13 +102,13 @@ class ApiAuthController extends Controller
         return response()->json(['message' => 'User successfully signed out']);
     }
 
-    protected function createNewToken($token)
+    protected function createNewToken($token, ?User $user = null)
     {
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => config('jwt.ttl') * 60,
-            'user' => auth()->user()
+            'user' => $user ?? JWTAuth::user(),
         ]);
     }
 }
