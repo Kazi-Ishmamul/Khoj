@@ -196,6 +196,7 @@
   },
   "user_nav": {
     "items": "Items",
+    "global_map": "Global Map",
     "my_activity": "My Activity",
     "profile": "Profile",
     "logout": "Logout",

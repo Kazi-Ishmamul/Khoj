@@ -140,7 +140,9 @@ class ItemController extends Controller
             'location' => 'required|string|max:255',
             'status' => 'required|in:lost,found',
             'contact_info' => 'required|string|max:255',
-            'item_image_url' => 'nullable|string'
+            'item_image_url' => 'nullable|string',
+            'lat' => 'nullable|numeric',
+            'lng' => 'nullable|numeric',
         ]);
 
         if ($validator->fails()) {

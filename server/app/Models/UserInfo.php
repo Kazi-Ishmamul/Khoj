@@ -55,8 +55,6 @@ class UserInfo extends Model
 
     /**
      * Get items lost count - active lost items (not resolved).
-     * 
-     * @return int
      */
     public function getItemsLostCountAttribute()
     {
@@ -68,8 +66,6 @@ class UserInfo extends Model
 
     /**
      * Get items found count - active found items (not resolved).
-     * 
-     * @return int
      */
     public function getItemsFoundCountAttribute()
     {
@@ -81,15 +77,13 @@ class UserInfo extends Model
 
     /**
      * Get report strikes count - reports against user's items that were marked as struck (fake).
-     * 
-     * @return int
      */
     public function getReportStrikesAttribute()
     {
         return Report::whereHas('item', function ($query) {
             $query->where('user_id', $this->user_id);
         })
-        ->where('status', -1)
-        ->count();
+            ->where('status', -1)
+            ->count();
     }
 }

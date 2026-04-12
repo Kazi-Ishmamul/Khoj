@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import axios from 'axios';
 import {
     FaBars, FaBell, FaTimes, FaBoxOpen, FaClipboardList,
-    FaUserCircle, FaSignOutAlt
+    FaUserCircle, FaSignOutAlt, FaGlobeAmericas
 } from 'react-icons/fa';
 import KhojLogo from './KhojLogo';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -94,6 +94,7 @@ const UserNavbar = () => {
         () => [
             { labelKey: 'user_nav.items' as const, path: '/user-dashboard/items', icon: <FaBoxOpen /> },
             { labelKey: 'user_nav.my_activity' as const, path: '/user-dashboard/activity', icon: <FaClipboardList /> },
+            { labelKey: 'user_nav.global_map' as const, path: '/user-dashboard/map', icon: <FaGlobeAmericas /> },
         ],
         []
     );

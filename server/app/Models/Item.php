@@ -21,6 +21,8 @@ class Item extends Model
         'item_image_url',
         'resolution_status',
         'valid',
+        'lat',
+        'lng',
     ];
 
     /**
