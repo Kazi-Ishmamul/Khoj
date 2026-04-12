@@ -35,6 +35,7 @@ class UserInfo extends Model
     ];
 
     /**
+<<<<<<< Updated upstream
      * The accessors to append to model arrays.
      *
      * @var array
@@ -43,53 +44,16 @@ class UserInfo extends Model
         'items_lost_count',
         'items_found_count',
         'report_strikes',
+        'wallet_balance',
     ];
 
     /**
+=======
+>>>>>>> Stashed changes
      * Get the user that owns the user info.
      */
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Get items lost count - active lost items (not resolved).
-     * 
-     * @return int
-     */
-    public function getItemsLostCountAttribute()
-    {
-        return Item::where('user_id', $this->user_id)
-            ->where('status', 'lost')
-            ->where('resolution_status', '!=', 'resolved')
-            ->count();
-    }
-
-    /**
-     * Get items found count - active found items (not resolved).
-     * 
-     * @return int
-     */
-    public function getItemsFoundCountAttribute()
-    {
-        return Item::where('user_id', $this->user_id)
-            ->where('status', 'found')
-            ->where('resolution_status', '!=', 'resolved')
-            ->count();
-    }
-
-    /**
-     * Get report strikes count - reports against user's items that were marked as struck (fake).
-     * 
-     * @return int
-     */
-    public function getReportStrikesAttribute()
-    {
-        return Report::whereHas('item', function ($query) {
-            $query->where('user_id', $this->user_id);
-        })
-        ->where('status', -1)
-        ->count();
     }
 }

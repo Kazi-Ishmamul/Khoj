@@ -37,9 +37,6 @@ CREATE TABLE user_info (
     x_url VARCHAR(255),
     insta_url VARCHAR(255),
     linkedin_url VARCHAR(255),
-    items_lost_count INT DEFAULT 0,
-    items_found_count INT DEFAULT 0,
-    report_strikes INT DEFAULT 0,
     CONSTRAINT fk_user_stats FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 )
 

@@ -17,7 +17,20 @@ class ProfileController extends Controller
      */
     public function show(Request $request)
     {
-        $user = $request->user()->load('info');
+        $user = $request->user();
+        if (!$user->info) {
+            $user->info()->create([
+                'bio' => null,
+                'fb_url' => null,
+                'x_url' => null,
+                'insta_url' => null,
+                'linkedin_url' => null,
+            ]);
+            $user->load('info');
+        } else {
+            $user->load('info');
+        }
+
         return response()->json([
             'user' => $user
         ]);
