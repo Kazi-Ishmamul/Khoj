@@ -494,7 +494,20 @@ export default function Items() {
                         </button>
 
                         <button
-                            onClick={() => setShowReportModal(true)}
+                            onClick={() => {
+                                const userStr = localStorage.getItem('user');
+                                if (userStr) {
+                                    try {
+                                        const user = JSON.parse(userStr);
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            contact: user.phone || prev.contact,
+                                            location: user.address || prev.location
+                                        }));
+                                    } catch (e) {}
+                                }
+                                setShowReportModal(true);
+                            }}
                             className="flex-1 md:flex-none justify-center bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-sky-900/30 border border-sky-300/30"
                         >
                             + Post Item
@@ -763,13 +776,19 @@ export default function Items() {
 
                                     <div>
                                         <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="category"
                                             value={formData.category}
                                             onChange={handleFormChange}
                                             className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
-                                        />
+                                        >
+                                            <option value="" disabled>Select category</option>
+                                            <option value="electronics">Electronics</option>
+                                            <option value="personal belongings">Personal Belongings</option>
+                                            <option value="documents">Documents</option>
+                                            <option value="clothing">Clothing</option>
+                                            <option value="others">Others</option>
+                                        </select>
                                     </div>
 
                                     <div className="md:col-span-2">
@@ -791,7 +810,7 @@ export default function Items() {
                                             name="dateTime"
                                             value={formData.dateTime}
                                             onChange={handleFormChange}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none [color-scheme:dark]"
                                         />
                                     </div>
 
@@ -821,14 +840,14 @@ export default function Items() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Contact Info *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Contact Info (Phone only) *</label>
                                         <input
-                                            type="text"
+                                            type="tel"
                                             name="contact"
                                             value={formData.contact}
                                             onChange={handleFormChange}
                                             required
-                                            placeholder="Phone or Email"
+                                            placeholder="Phone Number"
                                             className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>
