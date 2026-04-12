@@ -1,7 +1,8 @@
-// Items.tsx
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { FaGlobeAmericas } from 'react-icons/fa';
+import MapPicker from '../../components/MapPicker';
 
 interface UserInfo {
     bio?: string | null;
@@ -131,7 +132,7 @@ export default function Items() {
     const performGeminiSearch = async (query: string) => {
         const normalizedQuery = query.trim().toLowerCase();
         if (!normalizedQuery) return;
-        
+
         // Try to load exact query match from localStorage cache
         const cacheKey = `khoj_search_cache_${normalizedQuery}`;
         const cached = localStorage.getItem(cacheKey);
@@ -153,7 +154,7 @@ export default function Items() {
             const params = { q: query, filter: 'all' }; // Search across all initially
             const response = await axios.get('http://localhost:8000/api/items/search', { params });
             const items = response.data.items || [];
-            
+
             setSearchItems(items);
             localStorage.setItem(cacheKey, JSON.stringify(items));
             setError(null);
@@ -260,6 +261,8 @@ export default function Items() {
         location: '',
         status: 'lost' as 'lost' | 'found',
         contact: '',
+        lat: null as number | null,
+        lng: null as number | null,
     });
 
     const [itemImage, setItemImage] = useState<File | null>(null);
@@ -450,6 +453,8 @@ export default function Items() {
                 location: '',
                 status: 'lost',
                 contact: '',
+                lat: null,
+                lng: null,
             });
             setItemImage(null);
             setItemImagePreview(null);
@@ -485,8 +490,8 @@ export default function Items() {
                         <button
                             onClick={() => activeView === 'suggestions' ? fetchSuggestions(true) : handleViewSuggestions()}
                             className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-sm border ${activeView === 'suggestions'
-                                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-purple-500/30 border-transparent'
-                                    : 'bg-slate-900/80 text-slate-100 border-slate-700 hover:bg-slate-800 hover:shadow-md'
+                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-purple-500/30 border-transparent'
+                                : 'bg-slate-900/80 text-slate-100 border-slate-700 hover:bg-slate-800 hover:shadow-md'
                                 }`}
                         >
                             <span className="text-xl">✨</span>
@@ -494,7 +499,20 @@ export default function Items() {
                         </button>
 
                         <button
-                            onClick={() => setShowReportModal(true)}
+                            onClick={() => {
+                                const userStr = localStorage.getItem('user');
+                                if (userStr) {
+                                    try {
+                                        const user = JSON.parse(userStr);
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            contact: user.phone || prev.contact,
+                                            location: user.address || prev.location
+                                        }));
+                                    } catch (e) {}
+                                }
+                                setShowReportModal(true);
+                            }}
                             className="flex-1 md:flex-none justify-center bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white px-6 py-3.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-sky-900/30 border border-sky-300/30"
                         >
                             + Post Item
@@ -614,8 +632,8 @@ export default function Items() {
                                         {/* Status Badge - Floating */}
                                         <span
                                             className={`absolute top-3 right-3 px-4 py-2 rounded-full text-xs font-bold backdrop-blur-md ${report.status === 'lost'
-                                                    ? 'bg-red-500/90 text-white shadow-lg'
-                                                    : 'bg-green-500/90 text-white shadow-lg'
+                                                ? 'bg-red-500/90 text-white shadow-lg'
+                                                : 'bg-green-500/90 text-white shadow-lg'
                                                 }`}
                                         >
                                             {report.status === 'lost' ? '🔴 LOST' : '🟢 FOUND'}
@@ -678,8 +696,8 @@ export default function Items() {
                                                 onClick={() => toggleClaim(report.id)}
                                                 disabled={claimLoadingId === report.id}
                                                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 active:scale-100 ${isClaimed
-                                                        ? 'bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg hover:shadow-xl'
-                                                        : 'bg-gradient-to-r from-emerald-500/15 to-sky-500/15 text-emerald-200 hover:from-emerald-500/25 hover:to-sky-500/25 border border-emerald-500/30'
+                                                    ? 'bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg hover:shadow-xl'
+                                                    : 'bg-gradient-to-r from-emerald-500/15 to-sky-500/15 text-emerald-200 hover:from-emerald-500/25 hover:to-sky-500/25 border border-emerald-500/30'
                                                     }`}
                                             >
                                                 {claimLoadingId === report.id ? '⏳ Processing...' : isClaimed ? 'Release' : '🙋 Claim'}
@@ -689,8 +707,8 @@ export default function Items() {
                                                 onClick={() => !isReported && toggleReport(report)}
                                                 disabled={isReported || reportingId === report.id}
                                                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 ${isReported
-                                                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
-                                                        : 'bg-gradient-to-r from-amber-500/15 to-rose-500/15 text-amber-200 hover:from-amber-500/25 hover:to-rose-500/25 border border-amber-500/30 transform hover:scale-105 active:scale-100'
+                                                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                                    : 'bg-gradient-to-r from-amber-500/15 to-rose-500/15 text-amber-200 hover:from-amber-500/25 hover:to-rose-500/25 border border-amber-500/30 transform hover:scale-105 active:scale-100'
                                                     }`}
                                             >
                                                 {reportingId === report.id ? '⏳ Reporting...' : isReported ? '⚠ Reported' : '🚩 Report'}
@@ -763,13 +781,19 @@ export default function Items() {
 
                                     <div>
                                         <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="category"
                                             value={formData.category}
                                             onChange={handleFormChange}
                                             className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
-                                        />
+                                        >
+                                            <option value="" disabled>Select category</option>
+                                            <option value="electronics">Electronics</option>
+                                            <option value="personal belongings">Personal Belongings</option>
+                                            <option value="documents">Documents</option>
+                                            <option value="clothing">Clothing</option>
+                                            <option value="others">Others</option>
+                                        </select>
                                     </div>
 
                                     <div className="md:col-span-2">
@@ -791,12 +815,24 @@ export default function Items() {
                                             name="dateTime"
                                             value={formData.dateTime}
                                             onChange={handleFormChange}
-                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
+                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none [color-scheme:dark]"
+                                        />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-slate-300 mb-2 flex items-center gap-2">
+                                            <FaGlobeAmericas className="text-sky-400" />
+                                            Pin Point Location (Optional)
+                                        </label>
+                                        <MapPicker 
+                                            lat={formData.lat} 
+                                            lng={formData.lng} 
+                                            onChange={(lat: number, lng: number) => setFormData(prev => ({ ...prev, lat, lng }))} 
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Location *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Text Location *</label>
                                         <input
                                             type="text"
                                             name="location"
@@ -821,14 +857,14 @@ export default function Items() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1">Contact Info *</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Contact Info (Phone only) *</label>
                                         <input
-                                            type="text"
+                                            type="tel"
                                             name="contact"
                                             value={formData.contact}
                                             onChange={handleFormChange}
                                             required
-                                            placeholder="Phone or Email"
+                                            placeholder="Phone Number"
                                             className="w-full px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/60 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
                                         />
                                     </div>

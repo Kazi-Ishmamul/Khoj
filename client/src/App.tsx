@@ -18,6 +18,7 @@ import Forbidden from './views/Forbidden';
 import Items from './views/user/Items';
 import MyActivity from './views/user/MyActivity';
 import Profile from './views/user/Profile';
+import MapView from './views/user/MapView';
 
 import Reports from './views/admin/Reports';
 import AdminProfile from './views/admin/AdminProfile';
@@ -52,6 +53,7 @@ function App() {
             <Route path="items" element={<Items />} />
             <Route path="activity" element={<MyActivity />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="map" element={<MapView />} />
           </Route>
         </Route>
 

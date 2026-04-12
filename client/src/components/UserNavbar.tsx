@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import axios from 'axios';
 import {
     FaBars, FaBell, FaTimes, FaBoxOpen, FaClipboardList,
-    FaUserCircle, FaSignOutAlt
+    FaUserCircle, FaSignOutAlt, FaGlobeAmericas
 } from 'react-icons/fa';
 import KhojLogo from './KhojLogo';
 import { clearAuthStorage } from '../helpers/auth';
@@ -88,6 +88,7 @@ const getNotificationTimeLabel = (notification: NotificationItem) =>
 const navLinks = [
     { label: 'Items', path: '/user-dashboard/items', icon: <FaBoxOpen /> },
     { label: 'My Activity', path: '/user-dashboard/activity', icon: <FaClipboardList /> },
+    { label: 'Global Map', path: '/user-dashboard/map', icon: <FaGlobeAmericas /> },
 ];
 
 const UserNavbar = () => {

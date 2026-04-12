@@ -1,4 +1,24 @@
 services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - ./server:/var/www/html
+    environment:
+      - APP_ENV=local
+
+  frontend:
+    image: node:20
+    working_dir: /app/client
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app/client
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_BACKEND_ENDPOINT=http://localhost:8080/api
   db:
     image: mysql:8.0
     container_name: khoj_db
