@@ -19,3 +19,70 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
       - VITE_BACKEND_ENDPOINT=http://localhost:8080/api
+  db:
+    image: mysql:8.0
+    container_name: khoj_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: khoj
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      # Mount migrations so they run automatically on first init
+      - ./database/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - khoj_network
+
+  backend:
+    build:
+      context: .
+      args:
+        VITE_BACKEND_ENDPOINT: http://localhost:8000
+    container_name: khoj_backend
+    restart: always
+    depends_on:
+      - db
+    env_file:
+      - .env.docker
+    ports:
+      - "8000:80"
+    networks:
+      - khoj_network
+
+  frontend:
+    image: node:20-alpine
+    container_name: khoj_frontend
+    working_dir: /app
+    volumes:
+      - ./client:/app
+      - /app/node_modules # prevent overriding node_modules from container
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_BACKEND_ENDPOINT=http://localhost:8000
+    # Install dependencies if missing and run dev server
+    command: >
+      sh -c "npm install && npm run dev -- --host"
+    networks:
+      - khoj_network
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: khoj_pma
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=db
+    networks:
+      - khoj_network
+
+volumes:
+  db_data:
+
+networks:
+  khoj_network:
+    driver: bridge
